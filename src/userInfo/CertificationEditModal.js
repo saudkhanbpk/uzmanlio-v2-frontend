@@ -1,5 +1,7 @@
+import { useState } from "react";
+
 // Certification Edit Modal Component
-const CertificationEditModal = ({ onClose }) => {
+export const CertificationEditModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
     name: 'Google Analytics Sertifikası',
     issuer: 'Google',
