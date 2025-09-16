@@ -1,4 +1,12 @@
 import { useState } from "react";
+import { TitleModal } from "./TitleModal";
+import { TitleEditModal } from "./TitleEditModal";
+import { SkillModal } from "./SkillModal";
+import { EducationModal } from "./EducationModal";
+import { EducationEditModal } from "./EducationEditModal";
+import { CertificationModal } from "./CertificationModal";
+import { CertificationEditModal } from "./CertificationEditModal";
+import { ExperienceModal } from "./ExperienceModal";
 
 // Expertise Component
 export const Expertise = () => {

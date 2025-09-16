@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // Education Edit Modal Component
 export const EducationEditModal = ({ onClose }) => {
   const [formData, setFormData] = useState({

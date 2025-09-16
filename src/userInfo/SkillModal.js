@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // Skill Modal Component
 export const SkillModal = ({ onClose }) => {
   const [formData, setFormData] = useState({
