@@ -1,18 +1,41 @@
 import { useState } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 
 // Certification Modal Component
 export const CertificationModal = ({ onClose }) => {
+  const { addCertificate, loading } = useExpertData();
   const [formData, setFormData] = useState({
     name: '',
     issuer: '',
     date: '',
-    expiryDate: ''
+    expiryDate: '',
+    credentialId: '',
+    credentialUrl: ''
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Sertifika eklendi:', formData);
-    onClose();
+    setError('');
+
+    try {
+      // For now, using a mock userId - in a real app, this would come from auth context
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID
+
+      const certificateData = {
+        name: formData.name,
+        company: formData.issuer,
+        issueDate: formData.date ? new Date(formData.date) : null,
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
+        credentialId: formData.credentialId,
+        credentialUrl: formData.credentialUrl
+      };
+
+      await addCertificate(userId, certificateData);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to add certificate');
+    }
   };
 
   return (
@@ -22,7 +45,13 @@ export const CertificationModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold text-gray-900">Sertifika Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Sertifika Adı *</label>
@@ -70,7 +99,29 @@ export const CertificationModal = ({ onClose }) => {
               />
             </div>
           </div>
-          
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sertifika ID</label>
+            <input
+              type="text"
+              value={formData.credentialId}
+              onChange={(e) => setFormData({...formData, credentialId: e.target.value})}
+              placeholder="Sertifika kimlik numarası (opsiyonel)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Sertifika URL</label>
+            <input
+              type="url"
+              value={formData.credentialUrl}
+              onChange={(e) => setFormData({...formData, credentialUrl: e.target.value})}
+              placeholder="Sertifika doğrulama linki (opsiyonel)"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
@@ -81,9 +132,10 @@ export const CertificationModal = ({ onClose }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading.certificates}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ekle
+              {loading.certificates ? 'Ekleniyor...' : 'Ekle'}
             </button>
           </div>
         </form>

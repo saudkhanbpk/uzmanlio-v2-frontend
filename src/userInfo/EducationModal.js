@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 
 // Education Modal Component
 export const EducationModal = ({ onClose }) => {
+  const { addEducation, loading } = useExpertData();
   const [formData, setFormData] = useState({
     institution: '',
     degree: '',
@@ -10,11 +12,28 @@ export const EducationModal = ({ onClose }) => {
     endDate: '',
     current: false
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Eğitim eklendi:', formData);
-    onClose();
+    setError('');
+
+    try {
+      // For now, using a mock userId - in a real app, this would come from auth context
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID
+
+      const educationData = {
+        level: formData.degree,
+        name: formData.institution, // university name
+        department: formData.field,
+        graduationYear: formData.endDate ? new Date(formData.endDate).getFullYear() : null
+      };
+
+      await addEducation(userId, educationData);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to add education');
+    }
   };
 
   return (
@@ -24,7 +43,13 @@ export const EducationModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold text-gray-900">Eğitim Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kurum *</label>
@@ -114,9 +139,10 @@ export const EducationModal = ({ onClose }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading.education}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ekle
+              {loading.education ? 'Ekleniyor...' : 'Ekle'}
             </button>
           </div>
         </form>

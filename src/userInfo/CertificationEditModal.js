@@ -1,18 +1,54 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 
 // Certification Edit Modal Component
-export const CertificationEditModal = ({ onClose }) => {
+export const CertificationEditModal = ({ onClose, certificate }) => {
+  const { updateCertificate, loading } = useExpertData();
   const [formData, setFormData] = useState({
-    name: 'Google Analytics Sertifikası',
-    issuer: 'Google',
-    date: '2023-01-15',
-    expiryDate: '2025-01-15'
+    name: '',
+    issuer: '',
+    date: '',
+    expiryDate: '',
+    credentialId: '',
+    credentialUrl: ''
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (certificate) {
+      setFormData({
+        name: certificate.name || '',
+        issuer: certificate.company || '',
+        date: certificate.issueDate ? new Date(certificate.issueDate).toISOString().split('T')[0] : '',
+        expiryDate: certificate.expiryDate ? new Date(certificate.expiryDate).toISOString().split('T')[0] : '',
+        credentialId: certificate.credentialId || '',
+        credentialUrl: certificate.credentialUrl || ''
+      });
+    }
+  }, [certificate]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Sertifika güncellendi:', formData);
-    onClose();
+    setError('');
+
+    try {
+      // For now, using a mock userId - in a real app, this would come from auth context
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID
+
+      const certificateData = {
+        name: formData.name,
+        company: formData.issuer,
+        issueDate: formData.date ? new Date(formData.date) : null,
+        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : null,
+        credentialId: formData.credentialId,
+        credentialUrl: formData.credentialUrl
+      };
+
+      await updateCertificate(userId, certificate.id, certificateData);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to update certificate');
+    }
   };
 
   return (
@@ -22,7 +58,13 @@ export const CertificationEditModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold text-gray-900">Sertifika Düzenle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Sertifika Adı *</label>
@@ -81,9 +123,10 @@ export const CertificationEditModal = ({ onClose }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading.certificates}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Güncelle
+              {loading.certificates ? 'Güncelleniyor...' : 'Güncelle'}
             </button>
           </div>
         </form>
