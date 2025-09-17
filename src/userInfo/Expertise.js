@@ -23,7 +23,7 @@ export const Expertise = () => {
     titles,
     services,
     packages,
-    gallery,
+    galleryFiles,
     loading,
     errors,
     loadExpertProfile,
@@ -224,12 +224,12 @@ export const Expertise = () => {
 
     try {
       const userId = '68c94094d011cdb0e5fa2caa';
-      for (const file of validFiles) {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', file.type.includes('pdf') ? 'pdf' : 'image');
-        await uploadGalleryFile(userId, formData);
-      }
+      const fileDataArray = validFiles.map(file => ({
+        file,
+        type: file.type.includes('pdf') ? 'pdf' : 'image'
+      }));
+
+      await uploadGalleryFile(userId, fileDataArray);
     } catch (error) {
       console.error('Failed to upload files:', error);
       setUploadError('Dosya yükleme sırasında bir hata oluştu.');
@@ -669,27 +669,27 @@ export const Expertise = () => {
         )}
 
         {/* Uploaded Files List */}
-        {loading.gallery ? (
+        {loading.galleryFiles ? (
           <div className="flex items-center justify-center p-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
             <span className="ml-2 text-gray-600">Dosyalar yükleniyor...</span>
           </div>
-        ) : errors.gallery ? (
+        ) : errors.galleryFiles ? (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-            Dosyalar yüklenirken hata oluştu: {errors.gallery}
+            Dosyalar yüklenirken hata oluştu: {errors.galleryFiles}
           </div>
-        ) : gallery && gallery.length > 0 ? (
+        ) : galleryFiles && galleryFiles.length > 0 ? (
           <div>
             <h4 className="text-md font-medium text-gray-900 mb-4">Yüklenen Dosyalar</h4>
             <div className="space-y-3">
-              {gallery.map((file) => (
+              {galleryFiles.map((file) => (
                 <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-white rounded-lg">
                       <span className="text-xl">{getFileIcon(file.type)}</span>
                     </div>
                     <div>
-                      <h5 className="font-medium text-gray-900">{file.filename}</h5>
+                      <h5 className="font-medium text-gray-900">{file.originalname || file.filename}</h5>
                       <p className="text-sm text-gray-600">
                         {file.size && formatFileSize(file.size)} • Yüklendi: {file.uploadDate ? new Date(file.uploadDate).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
                       </p>
@@ -698,10 +698,10 @@ export const Expertise = () => {
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => {
-                        if (file.path) {
-                          window.open(file.path, '_blank');
+                        if (file.filePath) {
+                          window.open(`http://localhost:4000/${file.filePath}`, '_blank');
                         } else {
-                          console.log('Opening file:', file.filename);
+                          console.log('File path not available:', file.filename);
                         }
                       }}
                       className="text-gray-400 hover:text-primary-600 transition-colors"

@@ -192,6 +192,38 @@ export const useExpertData = () => {
     dispatch({ type: EXPERT_ACTIONS.DELETE_SKILL, payload: skillId });
   }, [handleApiCall, dispatch]);
 
+  // Bulk operations
+  const loadExpertProfile = useCallback(async (userId) => {
+    try {
+      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'profile', value: true } });
+
+      const profile = await expertService.getExpertProfile(userId);
+      const titles = await expertService.getTitles(userId);
+
+      // Dispatch multiple actions to populate all data
+      dispatch({ type: EXPERT_ACTIONS.SET_TITLE, payload: profile.title || '' });
+      dispatch({ type: EXPERT_ACTIONS.SET_TITLES, payload: titles.titles || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_CATEGORIES, payload: profile.expertCategories || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_EDUCATION, payload: profile.education || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_CERTIFICATES, payload: profile.certificates || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_EXPERIENCE, payload: profile.experience || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_SKILLS, payload: profile.skills || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.galleryFiles || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_SERVICES, payload: profile.services || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_SERVICES, payload: profile.activeServices || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_PACKAGES, payload: profile.packages || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_PACKAGES, payload: profile.activePackages || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_AVAILABLE_PACKAGES, payload: profile.availablePackages || [] });
+
+      return profile;
+    } catch (error) {
+      dispatch({ type: EXPERT_ACTIONS.SET_ERROR, payload: { field: 'profile', error: error.message } });
+      throw error;
+    } finally {
+      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'profile', value: false } });
+    }
+  }, [dispatch]);
+
   // Gallery files operations
   const loadGalleryFiles = useCallback(async (userId) => {
     return handleApiCall('galleryFiles',
@@ -200,12 +232,31 @@ export const useExpertData = () => {
     );
   }, [handleApiCall]);
 
-  const uploadGalleryFile = useCallback(async (userId, fileData) => {
-    return handleApiCall('galleryFiles',
-      () => expertService.uploadGalleryFile(userId, fileData),
-      (result) => ({ type: EXPERT_ACTIONS.ADD_GALLERY_FILE, payload: result.file })
-    );
+  const uploadGalleryFile = useCallback(async (userId, files) => {
+    try {
+      const uploadedFiles = [];
+      for (const fileData of files) {
+        const formData = new FormData();
+        formData.append("file", fileData.file);
+        formData.append("type", fileData.type);
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/expert/${userId}/gallery`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!response.ok) {
+          throw new Error("Failed to upload file");
+        }
+        const data = await response.json();
+        uploadedFiles.push(data.file);
+      }
+      await loadExpertProfile(userId);
+      return uploadedFiles;
+    } catch (error) {
+      console.error("Error uploading gallery files:", error);
+      throw error;
+    }
   }, [handleApiCall]);
+
 
   const deleteGalleryFile = useCallback(async (userId, fileId) => {
     await handleApiCall('galleryFiles',
@@ -306,38 +357,6 @@ export const useExpertData = () => {
     );
     dispatch({ type: EXPERT_ACTIONS.TOGGLE_PACKAGE_AVAILABLE, payload: packageId });
   }, [handleApiCall, dispatch]);
-
-  // Bulk operations
-  const loadExpertProfile = useCallback(async (userId) => {
-    try {
-      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'profile', value: true } });
-
-      const profile = await expertService.getExpertProfile(userId);
-      const titles = await expertService.getTitles(userId);
-
-      // Dispatch multiple actions to populate all data
-      dispatch({ type: EXPERT_ACTIONS.SET_TITLE, payload: profile.title || '' });
-      dispatch({ type: EXPERT_ACTIONS.SET_TITLES, payload: titles.titles || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_CATEGORIES, payload: profile.expertCategories || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_EDUCATION, payload: profile.education || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_CERTIFICATES, payload: profile.certificates || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_EXPERIENCE, payload: profile.experience || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_SKILLS, payload: profile.skills || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.galleryFiles || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_SERVICES, payload: profile.services || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_SERVICES, payload: profile.activeServices || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_PACKAGES, payload: profile.packages || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_PACKAGES, payload: profile.activePackages || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_AVAILABLE_PACKAGES, payload: profile.availablePackages || [] });
-
-      return profile;
-    } catch (error) {
-      dispatch({ type: EXPERT_ACTIONS.SET_ERROR, payload: { field: 'profile', error: error.message } });
-      throw error;
-    } finally {
-      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'profile', value: false } });
-    }
-  }, [dispatch]);
 
   return {
     // State
