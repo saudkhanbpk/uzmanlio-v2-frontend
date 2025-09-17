@@ -1,16 +1,37 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 
 // Title Edit Modal Component
-export const TitleEditModal = ({ onClose }) => {
+export const TitleEditModal = ({ onClose, title }) => {
+  const { updateTitle, loading } = useExpertData();
   const [formData, setFormData] = useState({
-    title: 'Kıdemli Dijital Pazarlama Uzmanı',
-    description: 'Dijital pazarlama alanında uzman'
+    title: '',
+    description: ''
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  useEffect(() => {
+    if (title) {
+      setFormData({
+        title: title.title || '',
+        description: title.description || ''
+      });
+    }
+  }, [title]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Unvan güncellendi:', formData);
-    onClose();
+    setError('');
+
+    try {
+      // TODO: Replace with real user ID from authentication context in production
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+      await updateTitle(userId, title.id, { title: formData.title, description: formData.description });
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to update title');
+    }
   };
 
   return (
@@ -20,7 +41,13 @@ export const TitleEditModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold text-gray-900">Unvan Düzenle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Unvan *</label>
@@ -55,9 +82,10 @@ export const TitleEditModal = ({ onClose }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading.titles}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Güncelle
+              {loading.titles ? 'Güncelleniyor...' : 'Güncelle'}
             </button>
           </div>
         </form>

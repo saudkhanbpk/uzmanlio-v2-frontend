@@ -3,6 +3,7 @@ import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import  Dashboard  from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
+import { ExpertProvider } from './contexts/ExpertContext';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -22,28 +23,30 @@ function App() {
 
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route 
-            path="/login" 
-            element={
-              isAuthenticated ? 
-                <Navigate to="/dashboard" replace /> : 
-                <LoginPage onLogin={handleLogin} />
-            } 
-          />
-          <Route 
-            path="/dashboard/*" 
-            element={
-              isAuthenticated ? 
-                <Dashboard onLogout={handleLogout} /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
-          {/* <Route path="/blog/:slug" element={<BlogPublicView />} /> */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </BrowserRouter>
+      <ExpertProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                isAuthenticated ?
+                  <Navigate to="/dashboard" replace /> :
+                  <LoginPage onLogin={handleLogin} />
+              }
+            />
+            <Route
+              path="/dashboard/*"
+              element={
+                isAuthenticated ?
+                  <Dashboard onLogout={handleLogout} /> :
+                  <Navigate to="/login" replace />
+              }
+            />
+            {/* <Route path="/blog/:slug" element={<BlogPublicView />} /> */}
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </ExpertProvider>
     </div>
   );
 }

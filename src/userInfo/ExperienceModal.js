@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 
 // Experience Modal Component
 export const ExperienceModal = ({ onClose }) => {
+  const { addExperience, loading } = useExpertData();
   const [formData, setFormData] = useState({
     title: '',
     company: '',
@@ -12,11 +14,33 @@ export const ExperienceModal = ({ onClose }) => {
     description: '',
     skills: ''
   });
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Deneyim eklendi:', formData);
-    onClose();
+    setError('');
+
+    try {
+      // For now, using a mock userId - in a real app, this would come from auth context
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID
+
+      const experienceData = {
+        company: formData.company,
+        position: formData.title,
+        start: formData.startDate ? new Date(formData.startDate).getFullYear() : null,
+        end: formData.current ? null : (formData.endDate ? new Date(formData.endDate).getFullYear() : null),
+        stillWork: formData.current,
+        description: formData.description,
+        skills: formData.skills.split(',').map(skill => skill.trim()),
+        // For now, we'll store location as a string, but in a real app you'd have country/city references
+        location: formData.location
+      };      
+
+      await addExperience(userId, experienceData);
+      onClose();
+    } catch (err) {
+      setError(err.message || 'Failed to add experience');
+    }
   };
 
   return (
@@ -26,7 +50,13 @@ export const ExperienceModal = ({ onClose }) => {
           <h3 className="text-lg font-semibold text-gray-900">Deneyim Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+            {error}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Pozisyon *</label>
@@ -131,9 +161,10 @@ export const ExperienceModal = ({ onClose }) => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading.experience}
+              className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Ekle
+              {loading.experience ? 'Ekleniyor...' : 'Ekle'}
             </button>
           </div>
         </form>

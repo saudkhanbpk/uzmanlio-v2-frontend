@@ -1,41 +1,191 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useExpertData } from "../hooks/useExpertData";
 import { TitleModal } from "./TitleModal";
 import { TitleEditModal } from "./TitleEditModal";
-import { SkillModal } from "./SkillModal";
 import { EducationModal } from "./EducationModal";
 import { EducationEditModal } from "./EducationEditModal";
 import { CertificationModal } from "./CertificationModal";
 import { CertificationEditModal } from "./CertificationEditModal";
 import { ExperienceModal } from "./ExperienceModal";
+import { SkillModal } from "./SkillModal";
+import { SkillEditModal } from "./SkillEditModal";
+import { ServiceModal } from "./ServiceModal";
+import { ServiceEditModal } from "./ServiceEditModal";
+import { PackageModal } from "./PackageModal";
+import { PackageEditModal } from "./PackageEditModal";
 
-// Expertise Component
 export const Expertise = () => {
-  const [skills, setSkills] = useState([
-    { name: 'Dijital Pazarlama', level: 95 },
-    { name: 'Web Geliştirme', level: 90 },
-    { name: 'React.js', level: 88 },
-    { name: 'SEO Optimizasyonu', level: 92 },
-    { name: 'İçerik Pazarlama', level: 85 },
-  ]);
+  const {
+    education,
+    certificates,
+    experience,
+    skills,
+    titles,
+    services,
+    packages,
+    gallery,
+    loading,
+    errors,
+    loadExpertProfile,
+    deleteEducation,
+    deleteCertificate,
+    deleteExperience,
+    deleteSkill,
+    deleteTitle,
+    deleteService,
+    deletePackage,
+    uploadGalleryFile,
+    deleteGalleryFile
+  } = useExpertData();
 
-  const [showSkillModal, setShowSkillModal] = useState(false);
   const [showCertModal, setCertModal] = useState(false);
   const [showExpModal, setExpModal] = useState(false);
   const [showEduModal, setEduModal] = useState(false);
+  const [showSkillModal, setShowSkillModal] = useState(false);
   const [showTitleModal, setTitleModal] = useState(false);
   const [showTitleEditModal, setTitleEditModal] = useState(false);
   const [showEduEditModal, setEduEditModal] = useState(false);
   const [showCertEditModal, setCertEditModal] = useState(false);
-  
-  // Files state and functionality
-  const [uploadedFiles, setUploadedFiles] = useState([
-    { id: 1, name: 'Google Analytics Sertifikası.pdf', type: 'pdf', size: '245 KB', uploadDate: '2024-01-15' },
-    { id: 2, name: 'Diploma_Bilgisayar_Mühendisliği.pdf', type: 'pdf', size: '1.2 MB', uploadDate: '2024-01-10' },
-    { id: 3, name: 'Profil_Fotoğrafı.jpg', type: 'image', size: '512 KB', uploadDate: '2024-01-12' }
-  ]);
-  const [isDragging, setIsDragging] = useState(false);
+  const [showSkillEditModal, setShowSkillEditModal] = useState(false);
+  const [showServiceModal, setServiceModal] = useState(false);
+  const [showServiceEditModal, setServiceEditModal] = useState(false);
+  const [showPackageModal, setPackageModal] = useState(false);
+  const [showPackageEditModal, setPackageEditModal] = useState(false);
 
-  // File handling functions
+  const [selectedEducation, setSelectedEducation] = useState(null);
+  const [selectedCertificate, setSelectedCertificate] = useState(null);
+  const [selectedExperience, setSelectedExperience] = useState(null);
+  const [selectedSkill, setSelectedSkill] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [selectedPackage, setSelectedPackage] = useState(null);
+  const [selectedTitle, setSelectedTitle] = useState(null);
+
+  useEffect(() => {
+    const userId = '68c94094d011cdb0e5fa2caa';
+    loadExpertProfile(userId).catch(console.error);
+  }, [loadExpertProfile]);
+
+  const educationData = useMemo(() => {
+    return education || [];
+  }, [education]);
+
+  const handleEditEducation = (edu) => {
+    setSelectedEducation(edu);
+    setEduEditModal(true);
+  };
+
+  const handleDeleteEducation = async (educationId) => {
+    if (window.confirm('Bu eğitim kaydını silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteEducation(userId, educationId);
+      } catch (error) {
+        console.error('Failed to delete education:', error);
+        alert('Eğitim kaydı silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleEditCertificate = (cert) => {
+    setSelectedCertificate(cert);
+    setCertEditModal(true);
+  };
+
+  const handleDeleteCertificate = async (certificateId) => {
+    if (window.confirm('Bu sertifikayı silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteCertificate(userId, certificateId);
+      } catch (error) {
+        console.error('Failed to delete certificate:', error);
+        alert('Sertifika silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleEditExperience = (exp) => {
+    setSelectedExperience(exp);
+    setExpModal(true);
+  };
+
+  const handleDeleteExperience = async (experienceId) => {
+    if (window.confirm('Bu deneyim kaydını silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteExperience(userId, experienceId);
+      } catch (error) {
+        console.error('Failed to delete experience:', error);
+        alert('Deneyim kaydı silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleEditSkill = (skill) => {
+    setSelectedSkill(skill);
+    setShowSkillEditModal(true);
+  };
+
+  const handleDeleteSkill = async (skillId) => {
+    if (window.confirm('Bu beceriyi silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteSkill(userId, skillId);
+      } catch (error) {
+        console.error('Failed to delete skill:', error);
+        alert('Beceri silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleEditService = (service) => {
+    setSelectedService(service);
+    setServiceEditModal(true);
+  };
+
+  const handleDeleteService = async (serviceId) => {
+    if (window.confirm('Bu hizmeti silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteService(userId, serviceId);
+      } catch (error) {
+        console.error('Failed to delete service:', error);
+        alert('Hizmet silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleEditPackage = (packageData) => {
+    setSelectedPackage(packageData);
+    setPackageEditModal(true);
+  };
+
+  const handleDeletePackage = async (packageId) => {
+    if (window.confirm('Bu paketi silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deletePackage(userId, packageId);
+      } catch (error) {
+        console.error('Failed to delete package:', error);
+        alert('Paket silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const handleDeleteTitle = async (titleId) => {
+    if (window.confirm('Bu unvanı silmek istediğinizden emin misiniz?')) {
+      try {
+        const userId = '68c94094d011cdb0e5fa2caa';
+        await deleteTitle(userId, titleId);
+      } catch (error) {
+        console.error('Failed to delete title:', error);
+        alert('Unvan silinirken bir hata oluştu.');
+      }
+    }
+  };
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+
   const handleFileUpload = (event) => {
     const files = Array.from(event.target.files);
     uploadFiles(files);
@@ -58,22 +208,32 @@ export const Expertise = () => {
     setIsDragging(false);
   };
 
-  const uploadFiles = (files) => {
+  const uploadFiles = async (files) => {
+    setUploadError('');
+
     const validFiles = files.filter(file => {
       const isValidType = file.type.includes('pdf') || file.type.includes('image');
-      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      const isValidSize = file.size <= 10 * 1024 * 1024;
       return isValidType && isValidSize;
     });
 
-    const newFiles = validFiles.map(file => ({
-      id: Date.now() + Math.random(),
-      name: file.name,
-      type: file.type.includes('pdf') ? 'pdf' : 'image',
-      size: formatFileSize(file.size),
-      uploadDate: new Date().toISOString().split('T')[0]
-    }));
+    if (validFiles.length === 0) {
+      setUploadError('Lütfen geçerli dosya türleri seçin (PDF veya resim, maksimum 10MB)');
+      return;
+    }
 
-    setUploadedFiles(prev => [...prev, ...newFiles]);
+    try {
+      const userId = '68c94094d011cdb0e5fa2caa';
+      for (const file of validFiles) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('type', file.type.includes('pdf') ? 'pdf' : 'image');
+        await uploadGalleryFile(userId, formData);
+      }
+    } catch (error) {
+      console.error('Failed to upload files:', error);
+      setUploadError('Dosya yükleme sırasında bir hata oluştu.');
+    }
   };
 
   const formatFileSize = (bytes) => {
@@ -84,8 +244,14 @@ export const Expertise = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
-  const deleteFile = (fileId) => {
-    setUploadedFiles(prev => prev.filter(file => file.id !== fileId));
+  const deleteFile = async (fileId) => {
+    try {
+      const userId = '68c94094d011cdb0e5fa2caa';
+      await deleteGalleryFile(userId, fileId);
+    } catch (error) {
+      console.error('Failed to delete file:', error);
+      alert('Dosya silinirken bir hata oluştu.');
+    }
   };
 
   const getFileIcon = (type) => {
@@ -109,23 +275,45 @@ export const Expertise = () => {
           </button>
         </div>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-4 bg-primary-50 rounded-lg">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
-                <span className="text-lg">👑</span>
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900">Kıdemli Dijital Pazarlama Uzmanı</h4>
-                <p className="text-sm text-gray-600">Unvan</p>
-              </div>
+          {loading.titles ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Unvanlar yükleniyor...</span>
             </div>
-            <button 
-              onClick={() => setTitleEditModal(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ⚙️
-            </button>
-          </div>
+          ) : errors.titles ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Unvanlar yüklenirken hata oluştu: {errors.titles}
+            </div>
+          ) : !titles || titles.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">👑</span>
+              <p>Henüz unvan eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Unvan Ekle" butonunu kullanarak unvanlarınızı ekleyebilirsiniz.</p>
+            </div>
+          ) : (
+            titles.map((title) => (
+              <div key={title.id} className="flex items-center justify-between p-4 bg-primary-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-primary-100 rounded-lg">
+                    <span className="text-lg">👑</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{title.title}</h4>
+                    <p className="text-sm text-gray-600">Unvan</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setSelectedTitle(title);
+                    setTitleEditModal(true);
+                  }}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ⚙️
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -141,20 +329,37 @@ export const Expertise = () => {
           </button>
         </div>
         <div className="space-y-4">
-          {skills.map((skill, index) => (
-            <div key={index} className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm font-medium text-gray-700">{skill.name}</span>
-                <span className="text-sm text-gray-600">{skill.level}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-primary-600 h-2 rounded-full"
-                  style={{ width: `${skill.level}%` }}
-                ></div>
-              </div>
+          {loading.skills ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Beceriler yükleniyor...</span>
             </div>
-          ))}
+          ) : errors.skills ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Beceriler yüklenirken hata oluştu: {errors.skills}
+            </div>
+          ) : !skills || skills.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">🎯</span>
+              <p>Henüz beceri eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Yeni Alan Ekle" butonunu kullanarak becerilerinizi ekleyebilirsiniz.</p>
+            </div>
+          ) : (
+            skills.map((skill) => (
+              <div key={skill.id} className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm font-medium text-gray-700">{skill.name}</span>
+                  <span className="text-sm text-gray-600">{skill.level}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-primary-600 h-2 rounded-full"
+                    style={{ width: `${skill.level}%` }}
+                  ></div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -170,36 +375,40 @@ export const Expertise = () => {
           </button>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="p-3 bg-blue-100 rounded-lg mr-4">
-              <span className="text-2xl">🎓</span>
+          {loading.education ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Eğitim bilgileri yükleniyor...</span>
             </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-900">Bilgisayar Mühendisliği Lisans</h4>
-              <p className="text-sm text-gray-600">İstanbul Teknik Üniversitesi • 2016-2020</p>
+          ) : errors.education ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Eğitim bilgileri yüklenirken hata oluştu: {errors.education}
             </div>
-            <button 
-              onClick={() => setEduEditModal(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ⚙️
-            </button>
-          </div>
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="p-3 bg-green-100 rounded-lg mr-4">
-              <span className="text-2xl">📚</span>
+          ) : educationData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">🎓</span>
+              <p>Henüz eğitim bilgisi eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Eğitim Ekle" butonunu kullanarak eğitim bilgilerinizi ekleyebilirsiniz.</p>
             </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-900">Dijital Pazarlama Yüksek Lisans</h4>
-              <p className="text-sm text-gray-600">Boğaziçi Üniversitesi • 2020-2022</p>
-            </div>
-            <button 
-              onClick={() => setEduEditModal(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ⚙️
-            </button>
-          </div>
+          ) : (
+            educationData.map((edu) => (
+              <div key={edu.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                  <span className="text-2xl">🎓</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{edu.department} {edu.level}</h4>
+                  <p className="text-sm text-gray-600">{edu.name} • {edu.graduationYear}</p>
+                </div>
+                <button
+                  onClick={() => handleEditEducation(edu)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ⚙️
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -215,36 +424,40 @@ export const Expertise = () => {
           </button>
         </div>
         <div className="space-y-4">
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="p-3 bg-primary-100 rounded-lg mr-4">
-              <span className="text-2xl">🏆</span>
+          {loading.certificates ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Sertifikalar yükleniyor...</span>
             </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-900">Google Analytics Sertifikası</h4>
-              <p className="text-sm text-gray-600">Google • 2023</p>
+          ) : errors.certificates ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Sertifikalar yüklenirken hata oluştu: {errors.certificates}
             </div>
-            <button 
-              onClick={() => setCertEditModal(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ⚙️
-            </button>
-          </div>
-          <div className="flex items-center p-4 bg-gray-50 rounded-lg">
-            <div className="p-3 bg-blue-100 rounded-lg mr-4">
-              <span className="text-2xl">📜</span>
+          ) : certificates.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">🏆</span>
+              <p>Henüz sertifika eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Sertifika Ekle" butonunu kullanarak sertifikalarınızı ekleyebilirsiniz.</p>
             </div>
-            <div className="flex-1">
-              <h4 className="font-medium text-gray-900">React Developer Certification</h4>
-              <p className="text-sm text-gray-600">Meta • 2023</p>
-            </div>
-            <button 
-              onClick={() => setCertEditModal(true)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              ⚙️
-            </button>
-          </div>
+          ) : (
+            certificates.map((cert) => (
+              <div key={cert.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-primary-100 rounded-lg mr-4">
+                  <span className="text-2xl">🏆</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{cert.name}</h4>
+                  <p className="text-sm text-gray-600">{cert.company} • {new Date(cert.issueDate).getFullYear()}</p>
+                </div>
+                <button
+                  onClick={() => handleEditCertificate(cert)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ⚙️
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -260,20 +473,132 @@ export const Expertise = () => {
           </button>
         </div>
         <div className="space-y-6">
-          <div className="border-l-4 border-primary-500 pl-4">
-            <h4 className="font-medium text-gray-900">Kıdemli Dijital Pazarlama Uzmanı</h4>
-            <p className="text-sm text-gray-600">TechCorp A.Ş. • 2020 - Devam ediyor</p>
-            <p className="text-sm text-gray-700 mt-2">
-              Dijital pazarlama stratejilerinin geliştirilmesi ve uygulanması, SEO optimizasyonu ve sosyal medya yönetimi.
-            </p>
-          </div>
-          <div className="border-l-4 border-gray-300 pl-4">
-            <h4 className="font-medium text-gray-900">Web Geliştirici</h4>
-            <p className="text-sm text-gray-600">Freelance • 2018 - 2020</p>
-            <p className="text-sm text-gray-700 mt-2">
-              Müşteriler için modern web siteleri geliştirme, React.js ve Node.js teknolojileri kullanarak.
-            </p>
-          </div>
+          {loading.experience ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Deneyim bilgileri yükleniyor...</span>
+            </div>
+          ) : errors.experience ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Deneyim bilgileri yüklenirken hata oluştu: {errors.experience}
+            </div>
+          ) : experience.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">💼</span>
+              <p>Henüz deneyim bilgisi eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Deneyim Ekle" butonunu kullanarak deneyimlerinizi ekleyebilirsiniz.</p>
+            </div>
+          ) : (
+            experience.map((exp) => (
+              <div key={exp.id} className="border-l-4 border-primary-500 pl-4">
+                <h4 className="font-medium text-gray-900">{exp.position}</h4>
+                <p className="text-sm text-gray-600">{exp.company} • {exp.start} - {exp.stillWork ? 'Devam ediyor' : exp.end}</p>
+                {exp.description && (
+                  <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Services */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Hizmetler</h3>
+          <button
+            onClick={() => setServiceModal(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            + Hizmet Ekle
+          </button>
+        </div>
+        <div className="space-y-4">
+          {loading.services ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Hizmetler yükleniyor...</span>
+            </div>
+          ) : errors.services ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Hizmetler yüklenirken hata oluştu: {errors.services}
+            </div>
+          ) : services.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">🛠️</span>
+              <p>Henüz hizmet eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Hizmet Ekle" butonunu kullanarak hizmetlerinizi ekleyebilirsiniz.</p>
+            </div>
+          ) : (
+            services.map((service) => (
+              <div key={service.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                  <span className="text-2xl">🛠️</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{service.title}</h4>
+                  <p className="text-sm text-gray-600">{service.description}</p>
+                  <p className="text-sm text-gray-600">Fiyat: {service.price} TL • Süre: {service.duration} dakika</p>
+                </div>
+                <button
+                  onClick={() => handleEditService(service)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ⚙️
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Packages */}
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-medium text-gray-900">Paketler</h3>
+          <button
+            onClick={() => setPackageModal(true)}
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            + Paket Ekle
+          </button>
+        </div>
+        <div className="space-y-4">
+          {loading.packages ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Paketler yükleniyor...</span>
+            </div>
+          ) : errors.packages ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Paketler yüklenirken hata oluştu: {errors.packages}
+            </div>
+          ) : packages.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">📦</span>
+              <p>Henüz paket eklenmemiş.</p>
+              <p className="text-sm">Yukarıdaki "Paket Ekle" butonunu kullanarak paketlerinizi ekleyebilirsiniz.</p>
+            </div>
+          ) : (
+            packages.map((packageData) => (
+              <div key={packageData.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
+                <div className="p-3 bg-blue-100 rounded-lg mr-4">
+                  <span className="text-2xl">📦</span>
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-medium text-gray-900">{packageData.title}</h4>
+                  <p className="text-sm text-gray-600">{packageData.description}</p>
+                  <p className="text-sm text-gray-600">Fiyat: {packageData.price} TL • Süre: {packageData.duration} dakika</p>
+                </div>
+                <button
+                  onClick={() => handleEditPackage(packageData)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ⚙️
+                </button>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -336,29 +661,48 @@ export const Expertise = () => {
           </div>
         </div>
 
+        {/* Error Message */}
+        {uploadError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            {uploadError}
+          </div>
+        )}
+
         {/* Uploaded Files List */}
-        {uploadedFiles.length > 0 && (
+        {loading.gallery ? (
+          <div className="flex items-center justify-center p-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <span className="ml-2 text-gray-600">Dosyalar yükleniyor...</span>
+          </div>
+        ) : errors.gallery ? (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            Dosyalar yüklenirken hata oluştu: {errors.gallery}
+          </div>
+        ) : gallery && gallery.length > 0 ? (
           <div>
             <h4 className="text-md font-medium text-gray-900 mb-4">Yüklenen Dosyalar</h4>
             <div className="space-y-3">
-              {uploadedFiles.map((file) => (
+              {gallery.map((file) => (
                 <div key={file.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-white rounded-lg">
                       <span className="text-xl">{getFileIcon(file.type)}</span>
                     </div>
                     <div>
-                      <h5 className="font-medium text-gray-900">{file.name}</h5>
+                      <h5 className="font-medium text-gray-900">{file.filename}</h5>
                       <p className="text-sm text-gray-600">
-                        {file.size} • Yüklendi: {new Date(file.uploadDate).toLocaleDateString('tr-TR')}
+                        {file.size && formatFileSize(file.size)} • Yüklendi: {file.uploadDate ? new Date(file.uploadDate).toLocaleDateString('tr-TR') : 'Bilinmiyor'}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() => {
-                        // In a real app, this would open the file
-                        console.log('Opening file:', file.name);
+                        if (file.path) {
+                          window.open(file.path, '_blank');
+                        } else {
+                          console.log('Opening file:', file.filename);
+                        }
                       }}
                       className="text-gray-400 hover:text-primary-600 transition-colors"
                       title="Dosyayı Görüntüle"
@@ -377,18 +721,77 @@ export const Expertise = () => {
               ))}
             </div>
           </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            <span className="text-4xl mb-2 block">📁</span>
+            <p>Henüz dosya yüklenmemiş.</p>
+            <p className="text-sm">Yukarıdaki alana dosyalarınızı sürükleyip bırakın veya "Dosya Seç" butonunu kullanın.</p>
+          </div>
         )}
       </div>
 
       {/* Modals */}
       {showTitleModal && <TitleModal onClose={() => setTitleModal(false)} />}
-      {showTitleEditModal && <TitleEditModal onClose={() => setTitleEditModal(false)} />}
-      {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
+      {showTitleEditModal && (
+        <TitleEditModal
+          onClose={() => {
+            setTitleEditModal(false);
+            setSelectedTitle(null);
+          }}
+          title={selectedTitle}
+        />
+      )}
       {showEduModal && <EducationModal onClose={() => setEduModal(false)} />}
-      {showEduEditModal && <EducationEditModal onClose={() => setEduEditModal(false)} />}
+      {showEduEditModal && (
+        <EducationEditModal
+          onClose={() => {
+            setEduEditModal(false);
+            setSelectedEducation(null);
+          }}
+          education={selectedEducation}
+        />
+      )}
       {showCertModal && <CertificationModal onClose={() => setCertModal(false)} />}
-      {showCertEditModal && <CertificationEditModal onClose={() => setCertEditModal(false)} />}
+      {showCertEditModal && (
+        <CertificationEditModal
+          onClose={() => {
+            setCertEditModal(false);
+            setSelectedCertificate(null);
+          }}
+          certificate={selectedCertificate}
+        />
+      )}
       {showExpModal && <ExperienceModal onClose={() => setExpModal(false)} />}
+      {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
+      {showSkillEditModal && (
+        <SkillEditModal
+          onClose={() => {
+            setShowSkillEditModal(false);
+            setSelectedSkill(null);
+          }}
+          skill={selectedSkill}
+        />
+      )}
+      {showServiceModal && <ServiceModal onClose={() => setServiceModal(false)} />}
+      {showServiceEditModal && (
+        <ServiceEditModal
+          onClose={() => {
+            setServiceEditModal(false);
+            setSelectedService(null);
+          }}
+          service={selectedService}
+        />
+      )}
+      {showPackageModal && <PackageModal onClose={() => setPackageModal(false)} />}
+      {showPackageEditModal && (
+        <PackageEditModal
+          onClose={() => {
+            setPackageEditModal(false);
+            setSelectedPackage(null);
+          }}
+          package={selectedPackage}
+        />
+      )}
     </div>
   );
 };
