@@ -13,6 +13,7 @@ import { ServiceModal } from "./ServiceModal";
 import { ServiceEditModal } from "./ServiceEditModal";
 import { PackageModal } from "./PackageModal";
 import { PackageEditModal } from "./PackageEditModal";
+import Swal from 'sweetalert2';
 
 export const Expertise = () => {
   const {
@@ -245,13 +246,37 @@ export const Expertise = () => {
   };
 
   const deleteFile = async (fileId) => {
-    try {
-      const userId = '68c94094d011cdb0e5fa2caa';
-      await deleteGalleryFile(userId, fileId);
-    } catch (error) {
-      console.error('Failed to delete file:', error);
-      alert('Dosya silinirken bir hata oluştu.');
-    }
+    Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      timer: 900000,
+      confirmButtonText: "Yes, delete it!"
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const userId = '68c94094d011cdb0e5fa2caa';
+          await deleteGalleryFile(userId, fileId);
+          Swal.fire({
+            title: "Deleted!",
+            timer: 900000,
+            text: "Your file has been deleted.",
+            icon: "success"
+          });
+        } catch (error) {
+          console.error('Failed to delete file:', error);
+          Swal.fire({
+            title: "Error!",
+            timer: 900000,
+            text: "Dosya silinirken bir hata oluştu.",
+            icon: "error"
+          });
+        }
+      }
+    });
   };
 
   const getFileIcon = (type) => {
