@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 // Login Page Component
 export default function LoginPage({ onLogin }){
@@ -51,9 +52,9 @@ export default function LoginPage({ onLogin }){
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Hoş geldiniz!</h2>
             <p className="text-gray-600 text-sm">
               Korvo hesabınız yok mu? 
-              <a href="#" className="text-primary-600 hover:text-primary-700 ml-1">
+              <Link to="https://www.uzmanlio.com/kayit-ol" className="text-primary-600 hover:text-primary-700 ml-1">
                 Hemen ücretsiz hesap oluşturun
-              </a>
+              </Link>
             </p>
           </div>
 

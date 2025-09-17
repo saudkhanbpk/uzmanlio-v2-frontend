@@ -6,7 +6,7 @@ import { renderMarkdownToHtml } from "../utility/renderMarkdownToHtml";
 export const Blog = () => {
   const [blogPosts, setBlogPosts] = useState(mockBlogPosts);
   const [filter, setFilter] = useState('all');
-
+// Categories
   const categories = ["Psikoloji", "Kişisel Gelişim", "Spor", "Beslenme", "Teknoloji", "Business", "Tasarım", "Lifestyle"];
 
   const filteredPosts = filter === 'all' 

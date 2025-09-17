@@ -1,5 +1,205 @@
-// Profile Component
+import axios from "axios";
+import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+
 export const Profile = () => {
+  const SERVER_URL = process.env.SERVER_URL || "http://localhost:4000";
+  const userId = "68c94094d011cdb0e5fa2caa";
+  const [profile, setProfile] = useState({
+    pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    ppFile: "", // store filename for replacement
+    information: {
+      name: "",
+      surname: "",
+      email: "",
+      phone: "",
+      about: "",
+      address: "",
+    },
+    socialMedia: {
+      website: "",
+      linkedin: "",
+      twitter: "",
+      instagram: "",
+      youtube: "",
+      tiktok: "",
+      facebook: "",
+    },
+    expertPaymentInfo: {
+      type: false,
+      owner: "",
+      iban: "",
+      taxNumber: "",
+      taxOffice: "",
+    },
+  });
+
+  // Fetch Profile
+  const getProfile = async () => {
+    try {
+      const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
+      if (res.data) {
+        setProfile((prevProfile) => ({
+          ...prevProfile,
+          pp: res.data.pp || prevProfile.pp,
+          ppFile: res.data.ppFile || "",
+          information: {
+            ...prevProfile.information,
+            ...(res.data.information || {}),
+          },
+          socialMedia: {
+            ...prevProfile.socialMedia,
+            ...(res.data.socialMedia || {}),
+          },
+          expertPaymentInfo: {
+            ...prevProfile.expertPaymentInfo,
+            ...(res.data.expertPaymentInfo || {}),
+          },
+        }));
+        Swal.fire({
+          icon: "success",
+          title: "Başarılı!",
+          text: "Profil bilgileri başarıyla yüklendi.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      }
+      console.log("Profile fetched:", profile.pp);
+    } catch (error) {
+      console.error("Fetch profile failed:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: `${SERVER_URL}/api/expert/${userId}`,
+      });
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: `Profil yüklenemedi: ${error.response?.data?.error || error.message}`,
+      });
+    }
+  };
+
+// Profile Picture Upload
+const handleProfileUpload = async (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("profileImage", file);
+
+  // Get existing filename for replacement if available
+  const existingFilename = profile.ppFile ? profile.ppFile.split("/").pop() : "";
+  
+  //  include /upload in the path
+  const uploadUrl = `${SERVER_URL}/api/expert/${userId}/upload${existingFilename ? `?imageId=${existingFilename}` : ""}`;
+
+  try {
+    const response = await axios.post(
+      uploadUrl,
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+    
+    // Add cache buster to force image reload
+    const imageUrlWithCacheBuster = `${response.data.pp}?t=${Date.now()}`;
+    
+    setProfile({
+      ...profile,
+      pp: imageUrlWithCacheBuster,
+      ppFile: response.data.expertInformation?.ppFile || ""
+    });
+    
+    console.log("Image data ", imageUrlWithCacheBuster, response.data.expertInformation?.ppFile);
+    
+    Swal.fire({
+      icon: "success",
+      title: "Başarılı!",
+      text: "Profil fotoğrafı başarıyla güncellendi.",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  } catch (error) {
+    console.error("Upload failed:", {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      url: uploadUrl,
+    });
+    Swal.fire({
+      icon: "error",
+      title: "Hata!",
+      text: `Fotoğraf yüklenemedi: ${error.response?.data?.error || error.message}`,
+    });
+  }
+};
+  // Update Profile
+  const updateProfile = async () => {
+    try {
+      const response = await axios.put(`${SERVER_URL}/api/expert/${userId}`, {
+        information: profile.information,
+        socialMedia: profile.socialMedia,
+        expertPaymentInfo: profile.expertPaymentInfo,
+      });
+      console.log("Profile updated:", response.data);
+      if (response.data && response.data.expertInformation) {
+        const { expertInformation } = response.data;
+        setProfile((prevProfile) => ({
+          ...prevProfile,
+          pp: expertInformation.pp || prevProfile.pp,
+          information: { ...prevProfile.information, ...(expertInformation.information || {}) },
+          socialMedia: { ...prevProfile.socialMedia, ...(expertInformation.socialMedia || {}) },
+          expertPaymentInfo: { ...prevProfile.expertPaymentInfo, ...(expertInformation.expertPaymentInfo || {}) },
+        }));
+      }
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: "Profil bilgileri başarıyla güncellendi.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Update failed:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: `Güncelleme başarısız: ${error.response?.data?.error || error.message}`,
+      });
+    }
+  };
+
+  // Handle input changes
+  const handleInputChange = (e, section, field) => {
+    setProfile({
+      ...profile,
+      [section]: {
+        ...profile[section],
+        [field]: e.target.value,
+      },
+    });
+  };
+
+  // Handle payment type change
+  const handlePaymentTypeChange = (e) => {
+    setProfile({
+      ...profile,
+      expertPaymentInfo: {
+        ...profile.expertPaymentInfo,
+        type: e.target.value === "kurumsal",
+      },
+    });
+  };
+
+  // Call getProfile on component mount
+  useEffect(() => {
+    getProfile();
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -11,19 +211,26 @@ export const Profile = () => {
           <div className="relative">
             <img
               className="h-24 w-24 rounded-full object-cover"
-              src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+              src={profile.pp}
               alt="Profil Fotoğrafı"
             />
-            <button className="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full p-2 hover:bg-primary-700 transition-colors">
+            <label htmlFor="profile-upload" className="absolute bottom-0 right-0 bg-primary-600 text-white rounded-full p-2 hover:bg-primary-700 transition-colors cursor-pointer">
               📷
-            </button>
+            </label>
+            <input
+              id="profile-upload"
+              type="file"
+              accept="image/jpeg,image/png,image/gif"
+              className="hidden"
+              onChange={handleProfileUpload}
+            />
           </div>
           <div>
             <h3 className="text-lg font-medium text-gray-900">Profil Fotoğrafı</h3>
             <p className="text-gray-600">JPG, PNG veya GIF formatında, maksimum 5MB</p>
-            <button className="mt-2 text-primary-600 hover:text-primary-700 text-sm font-medium">
+            <label htmlFor="profile-upload" className="mt-2 text-primary-600 hover:text-primary-700 text-sm font-medium cursor-pointer">
               Fotoğraf Değiştir
-            </button>
+            </label>
           </div>
         </div>
       </div>
@@ -36,7 +243,8 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Ad</label>
             <input
               type="text"
-              defaultValue="Ahmet"
+              value={profile.information.name}
+              onChange={(e) => handleInputChange(e, "information", "name")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -44,7 +252,8 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Soyad</label>
             <input
               type="text"
-              defaultValue="Yılmaz"
+              value={profile.information.surname}
+              onChange={(e) => handleInputChange(e, "information", "surname")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -52,7 +261,8 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">E-posta</label>
             <input
               type="email"
-              defaultValue="ahmet@korvo.co"
+              value={profile.information.email}
+              onChange={(e) => handleInputChange(e, "information", "email")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -60,7 +270,8 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
             <input
               type="tel"
-              defaultValue="+90 532 123 4567"
+              value={profile.information.phone}
+              onChange={(e) => handleInputChange(e, "information", "phone")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -68,13 +279,26 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">Hakkımda</label>
             <textarea
               rows={4}
-              defaultValue="Dijital pazarlama ve web geliştirme alanında 8 yıllık deneyime sahip bir uzmanım. Modern teknolojiler kullanarak işletmelerin dijital dönüşümüne yardımcı oluyorum."
+              value={profile.information.about}
+              onChange={(e) => handleInputChange(e, "information", "about")}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Adres</label>
+            <textarea
+              rows={3}
+              value={profile.information.address}
+              onChange={(e) => handleInputChange(e, "information", "address")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
         <div className="mt-6">
-          <button className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+          <button
+            onClick={updateProfile}
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
             Güncelle
           </button>
         </div>
@@ -91,7 +315,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://www.website.com"
+              value={profile.socialMedia.website}
+              onChange={(e) => handleInputChange(e, "socialMedia", "website")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -102,7 +327,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://linkedin.com/in/..."
+              value={profile.socialMedia.linkedin}
+              onChange={(e) => handleInputChange(e, "socialMedia", "linkedin")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -113,7 +339,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://twitter.com/..."
+              value={profile.socialMedia.twitter}
+              onChange={(e) => handleInputChange(e, "socialMedia", "twitter")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -124,7 +351,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://instagram.com/..."
+              value={profile.socialMedia.instagram}
+              onChange={(e) => handleInputChange(e, "socialMedia", "instagram")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -135,7 +363,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://youtube.com/@..."
+              value={profile.socialMedia.youtube}
+              onChange={(e) => handleInputChange(e, "socialMedia", "youtube")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -146,7 +375,8 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://tiktok.com/@..."
+              value={profile.socialMedia.tiktok}
+              onChange={(e) => handleInputChange(e, "socialMedia", "tiktok")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
@@ -157,13 +387,17 @@ export const Profile = () => {
             </label>
             <input
               type="url"
-              placeholder="https://facebook.com/..."
+              value={profile.socialMedia.facebook}
+              onChange={(e) => handleInputChange(e, "socialMedia", "facebook")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
         <div className="mt-6">
-          <button className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+          <button
+            onClick={updateProfile}
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
             Güncelle
           </button>
         </div>
@@ -177,70 +411,66 @@ export const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Hesap Türü *
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent">
+            <select
+              value={profile.expertPaymentInfo.type ? "kurumsal" : "bireysel"}
+              onChange={handlePaymentTypeChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
               <option value="">Hesap türü seçin</option>
               <option value="bireysel">Bireysel</option>
               <option value="kurumsal">Kurumsal</option>
             </select>
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ad Soyad / Şirket Unvanı *
             </label>
             <input
               type="text"
-              placeholder="Ahmet Yılmaz veya ABC Şirketi A.Ş."
+              value={profile.expertPaymentInfo.owner}
+              onChange={(e) => handleInputChange(e, "expertPaymentInfo", "owner")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               IBAN Numarası *
             </label>
             <input
               type="text"
-              placeholder="TR32 0001 0000 0000 0000 0000 01"
+              value={profile.expertPaymentInfo.iban}
+              onChange={(e) => handleInputChange(e, "expertPaymentInfo", "iban")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               TCKN / Vergi No *
             </label>
             <input
               type="text"
-              placeholder="12345678901 veya 1234567890"
+              value={profile.expertPaymentInfo.taxNumber}
+              onChange={(e) => handleInputChange(e, "expertPaymentInfo", "taxNumber")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Vergi Dairesi
             </label>
             <input
               type="text"
-              placeholder="Kadıköy Vergi Dairesi"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Adres *
-            </label>
-            <textarea
-              rows={3}
-              placeholder="Tam adres bilginizi giriniz..."
+              value={profile.expertPaymentInfo.taxOffice}
+              onChange={(e) => handleInputChange(e, "expertPaymentInfo", "taxOffice")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
         <div className="mt-6">
-          <button className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+          <button
+            onClick={updateProfile}
+            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
             Güncelle
           </button>
         </div>

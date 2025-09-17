@@ -50,7 +50,7 @@ export const Calendar = () => {
     // Night/Early morning hours (00:00 - 06:00)
     '00:00', '00:30', '01:00', '01:30', '02:00', '02:30', '03:00', '03:30', '04:00', '04:30', '05:00', '05:30', '06:00'
   ];
-
+  //All Week Days
   const weekDays = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
   // Get days for current month
