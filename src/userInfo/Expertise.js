@@ -9,10 +9,7 @@ import { CertificationEditModal } from "./CertificationEditModal";
 import { ExperienceModal } from "./ExperienceModal";
 import { SkillModal } from "./SkillModal";
 import { SkillEditModal } from "./SkillEditModal";
-import { ServiceModal } from "./ServiceModal";
-import { ServiceEditModal } from "./ServiceEditModal";
-import { PackageModal } from "./PackageModal";
-import { PackageEditModal } from "./PackageEditModal";
+
 import Swal from 'sweetalert2';
 
 export const Expertise = () => {
