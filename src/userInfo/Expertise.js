@@ -48,11 +48,6 @@ export const Expertise = () => {
   const [showEduEditModal, setEduEditModal] = useState(false);
   const [showCertEditModal, setCertEditModal] = useState(false);
   const [showSkillEditModal, setShowSkillEditModal] = useState(false);
-  const [showServiceModal, setServiceModal] = useState(false);
-  const [showServiceEditModal, setServiceEditModal] = useState(false);
-  const [showPackageModal, setPackageModal] = useState(false);
-  const [showPackageEditModal, setPackageEditModal] = useState(false);
-
   const [selectedEducation, setSelectedEducation] = useState(null);
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [selectedExperience, setSelectedExperience] = useState(null);
@@ -527,105 +522,7 @@ export const Expertise = () => {
         </div>
       </div>
 
-      {/* Services */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Hizmetler</h3>
-          <button
-            onClick={() => setServiceModal(true)}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            + Hizmet Ekle
-          </button>
-        </div>
-        <div className="space-y-4">
-          {loading.services ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-2 text-gray-600">Hizmetler yükleniyor...</span>
-            </div>
-          ) : errors.services ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              Hizmetler yüklenirken hata oluştu: {errors.services}
-            </div>
-          ) : services.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <span className="text-4xl mb-2 block">🛠️</span>
-              <p>Henüz hizmet eklenmemiş.</p>
-              <p className="text-sm">Yukarıdaki "Hizmet Ekle" butonunu kullanarak hizmetlerinizi ekleyebilirsiniz.</p>
-            </div>
-          ) : (
-            services.map((service) => (
-              <div key={service.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
-                <div className="p-3 bg-blue-100 rounded-lg mr-4">
-                  <span className="text-2xl">🛠️</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{service.title}</h4>
-                  <p className="text-sm text-gray-600">{service.description}</p>
-                  <p className="text-sm text-gray-600">Fiyat: {service.price} TL • Süre: {service.duration} dakika</p>
-                </div>
-                <button
-                  onClick={() => handleEditService(service)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ⚙️
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
-      {/* Packages */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium text-gray-900">Paketler</h3>
-          <button
-            onClick={() => setPackageModal(true)}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            + Paket Ekle
-          </button>
-        </div>
-        <div className="space-y-4">
-          {loading.packages ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-2 text-gray-600">Paketler yükleniyor...</span>
-            </div>
-          ) : errors.packages ? (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-              Paketler yüklenirken hata oluştu: {errors.packages}
-            </div>
-          ) : packages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <span className="text-4xl mb-2 block">📦</span>
-              <p>Henüz paket eklenmemiş.</p>
-              <p className="text-sm">Yukarıdaki "Paket Ekle" butonunu kullanarak paketlerinizi ekleyebilirsiniz.</p>
-            </div>
-          ) : (
-            packages.map((packageData) => (
-              <div key={packageData.id} className="flex items-center p-4 bg-gray-100 rounded-lg">
-                <div className="p-3 bg-blue-100 rounded-lg mr-4">
-                  <span className="text-2xl">📦</span>
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium text-gray-900">{packageData.title}</h4>
-                  <p className="text-sm text-gray-600">{packageData.description}</p>
-                  <p className="text-sm text-gray-600">Fiyat: {packageData.price} TL • Süre: {packageData.duration} dakika</p>
-                </div>
-                <button
-                  onClick={() => handleEditPackage(packageData)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ⚙️
-                </button>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
       {/* Dosyalar (Files) Section */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -797,26 +694,7 @@ export const Expertise = () => {
           skill={selectedSkill}
         />
       )}
-      {showServiceModal && <ServiceModal onClose={() => setServiceModal(false)} />}
-      {showServiceEditModal && (
-        <ServiceEditModal
-          onClose={() => {
-            setServiceEditModal(false);
-            setSelectedService(null);
-          }}
-          service={selectedService}
-        />
-      )}
-      {showPackageModal && <PackageModal onClose={() => setPackageModal(false)} />}
-      {showPackageEditModal && (
-        <PackageEditModal
-          onClose={() => {
-            setPackageEditModal(false);
-            setSelectedPackage(null);
-          }}
-          package={selectedPackage}
-        />
-      )}
+     
     </div>
   );
 };
