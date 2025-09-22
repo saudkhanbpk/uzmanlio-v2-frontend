@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 // Add Customer Modal Component
 export const AddCustomerModal = ({ onClose, onAdd }) => {
   const [formData, setFormData] = useState({

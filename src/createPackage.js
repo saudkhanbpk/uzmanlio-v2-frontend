@@ -1,25 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import Swal from "sweetalert2";
+import { AddCustomerModal } from "./customers/AddCustomerModal";
 
 // CreatePackage Component
 export const CreatePackage = () => {
-  const [packageData, setPackageData] = useState({
-    title: '',
-    description: '',
-    date: '',
-    time: '',
-    duration: '',
-    location: '',
-    platform: '',
-    eventType: 'online',
-    meetingType: '', // 1-1 Özel or Grup
-    price: '',
-    maxAttendees: '',
-    category: '',
-    appointmentCount: '1', // New field for number of appointments
-    isOfflineEvent: false,
-    selectedClients: []
-  });
 
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -37,6 +24,116 @@ export const CreatePackage = () => {
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
+  const navigate = useNavigate();
+  const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+  const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:4000';
+
+  const [packageData, setPackageData] = useState({
+    title: '',
+    description: '',
+    date: '',
+    time: '',
+    duration: '',
+    location: '',
+    platform: '',
+    eventType: 'online',
+    meetingType: '',
+    price: '',
+    maxAttendees: '',
+    category: '',
+    appointmentCount: '1',
+    icon: '',
+    iconColor: '#3B82F6',
+    status: 'active',
+    isOfflineEvent: false,
+    selectedClients: []
+  });
+
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Validation
+    if (packageData.isOfflineEvent && packageData.selectedClients.length === 0) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı!',
+        text: 'Offline paket için en az bir danışan seçmelisiniz.',
+      });
+      return;
+    }
+
+    try {
+      // Show loading
+      Swal.fire({
+        title: 'Paket oluşturuluyor...',
+        text: 'Lütfen bekleyin',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      // Prepare data for API
+      const packageDataToSend = {
+        title: packageData.title,
+        description: packageData.description,
+        price: packageData.price || '0',
+        duration: packageData.duration || '0',
+        appointmentCount: packageData.appointmentCount || '1',
+        category: packageData.category,
+        eventType: packageData.eventType,
+        meetingType: packageData.meetingType,
+        platform: packageData.platform,
+        location: packageData.location,
+        date: packageData.date,
+        time: packageData.time,
+        maxAttendees: packageData.maxAttendees || null,
+        icon: packageData.icon || '📦',
+        iconBg: packageData.iconColor || '#3B82F6',
+        status: packageData.status || 'active',
+        isOfflineEvent: packageData.isOfflineEvent,
+        selectedClients: packageData.selectedClients,
+        features: [] // You can add features if needed
+      };
+
+      // Make API call
+      const response = await axios.post(
+        `${SERVER_URL}/api/expert/${userId}/packages`,
+        packageDataToSend
+      );
+
+      // Success alert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Paket başarıyla oluşturuldu.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
+      // Navigate to services page (packages tab)
+      navigate('/dashboard/services?tab=paketler');
+
+    } catch (error) {
+      console.error('Package creation failed:', error);
+
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: `Paket oluşturulamadı: ${error.response?.data?.error || error.message}`,
+      });
+    }
+  };
+
+  const handleColorSelect = (color) => {
+    setPackageData(prev => ({
+      ...prev,
+      iconColor: color
+    }));
+  };
+
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -79,10 +176,10 @@ export const CreatePackage = () => {
       name: `${newClientData.name} ${newClientData.surname}`,
       email: newClientData.email
     };
-    
+
     // Add to available clients list
     availableClients.push(newClient);
-    
+
     // Auto-select the new client
     if (packageData.meetingType === '1-1') {
       setPackageData(prev => ({
@@ -95,7 +192,7 @@ export const CreatePackage = () => {
         selectedClients: [...prev.selectedClients, newClient]
       }));
     }
-    
+
     setShowAddClientModal(false);
   };
 
@@ -104,11 +201,7 @@ export const CreatePackage = () => {
   const showPlatform = packageData.eventType === 'online' || packageData.eventType === 'hybrid';
   const showDateTime = packageData.meetingType === 'grup';
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log('Paket oluşturuldu:', packageData);
-    // Here you would typically send the data to your backend
-  };
+
 
   return (
     <div className="space-y-6">
@@ -118,7 +211,7 @@ export const CreatePackage = () => {
           <h1 className="text-2xl font-bold text-gray-900">Yeni Paket Ekle</h1>
           <p className="text-gray-600 mt-1">Danışanlarınız için paket oluşturun</p>
         </div>
-        <Link 
+        <Link
           to="/dashboard/services"
           className="text-gray-600 hover:text-gray-800 transition-colors"
         >
@@ -145,7 +238,7 @@ export const CreatePackage = () => {
                 required
               />
             </div>
-            
+
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Açıklama *
@@ -159,6 +252,54 @@ export const CreatePackage = () => {
                 placeholder="Paket açıklaması"
                 required
               />
+            </div>
+            {/* Icon */}
+            <div className="md:col-span-2 flex flex-wrap gap-4 items-center">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Simge
+              </label>
+              <input
+                type="text"
+                name="icon"
+                maxLength={2}
+                minLength={2}
+                value={packageData.icon}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Paket simgesi (örn: 📦, 🎓, 💼)"
+              />
+              {/* Select color*/}
+              <div className="mt-2 flex  gap-4 space-y-2">
+
+
+                {/* Bubble preview with icon */}
+                <div className="mt-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Baloncuk Önizleme
+                  </label>
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ backgroundColor: packageData.iconColor }}
+                  >
+                    <span className="text-white text-lg">{packageData.icon}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col space-x-2">
+                  {/* Bubble preview info*/}
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Renk Seçin
+                  </label>
+
+                  <input
+                    type="color"
+                    name="iconColor"
+                    value={packageData.iconColor}
+                    onChange={(e) => handleColorSelect(e.target.value)}
+                  />
+                </div>
+              </div>
+
             </div>
 
             <div>
@@ -387,13 +528,13 @@ export const CreatePackage = () => {
         {packageData.isOfflineEvent && (
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Danışan Bilgileri</h3>
-            
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Danışan Seç *
                 </label>
-                
+
                 {/* Search Input */}
                 <div className="relative mb-3">
                   <input
@@ -439,11 +580,10 @@ export const CreatePackage = () => {
                           <div
                             key={client.id}
                             onClick={() => handleClientSelect(client.id)}
-                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${
-                              packageData.selectedClients.some(c => c.id === client.id)
-                                ? 'bg-primary-50 text-primary-700'
-                                : ''
-                            }`}
+                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${packageData.selectedClients.some(c => c.id === client.id)
+                              ? 'bg-primary-50 text-primary-700'
+                              : ''
+                              }`}
                           >
                             <div className="flex items-center">
                               <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
@@ -467,7 +607,7 @@ export const CreatePackage = () => {
                         Aradığınız kriterlere uygun danışan bulunamadı.
                       </div>
                     )}
-                    
+
                     {/* Add Client Option */}
                     <div
                       onClick={() => setShowAddClientModal(true)}
@@ -508,7 +648,7 @@ export const CreatePackage = () => {
 
       {/* Add Client Modal */}
       {showAddClientModal && (
-        <AddCustomerModal 
+        <AddCustomerModal
           onClose={() => setShowAddClientModal(false)}
           onAdd={handleAddNewClient}
         />
@@ -516,3 +656,5 @@ export const CreatePackage = () => {
     </div>
   );
 };
+
+
