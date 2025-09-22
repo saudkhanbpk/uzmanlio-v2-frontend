@@ -24,7 +24,7 @@ export default function Services() {
 
 
   const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
-  const SERVER_URL = process.env.REACT_APP_SERVER_URL || 'http://localhost:4000';
+  const SERVER_URL = process.env.SERVER_URL || 'http://localhost:4000';
 
   // Fetch services from API
   const fetchServices = async () => {

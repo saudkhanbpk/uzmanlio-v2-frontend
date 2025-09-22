@@ -1,10 +1,10 @@
 // API service for expert information
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:4000/api';
 
 class ExpertService {
   // Helper method for API calls
   async apiCall(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${SERVER_URL}${endpoint}`;
     const config = {
       headers: {
         'Content-Type': 'application/json',

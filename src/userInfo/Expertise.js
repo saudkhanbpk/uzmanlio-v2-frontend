@@ -11,6 +11,7 @@ import { SkillModal } from "./SkillModal";
 import { SkillEditModal } from "./SkillEditModal";
 
 import Swal from 'sweetalert2';
+const SERVER_URL = process.env.REACT_APP_BACKEND_URL || '';
 
 export const Expertise = () => {
   const {
@@ -618,7 +619,7 @@ export const Expertise = () => {
                     <button
                       onClick={() => {
                         if (file.filePath) {
-                          window.open(`http://localhost:4000/${file.filePath}`, '_blank');
+                          window.open(`${SERVER_URL}/${file.filePath}`, '_blank');
                         } else {
                           console.log('File path not available:', file.filename);
                         }

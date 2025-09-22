@@ -2,8 +2,12 @@ import { useCallback } from 'react';
 import { useExpert, EXPERT_ACTIONS } from '../contexts/ExpertContext';
 import expertService from '../services/expertService';
 
+
 // Custom hook for managing expert data operations
 export const useExpertData = () => {
+
+  const SERVER_URL = process.env.SERVER_URL;
+  console.log("Backend URL:", SERVER_URL); 
   const { state, dispatch } = useExpert();
   
   // Helper function to handle API calls with loading and error states
@@ -239,7 +243,7 @@ export const useExpertData = () => {
         const formData = new FormData();
         formData.append("file", fileData.file);
         formData.append("type", fileData.type);
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/expert/${userId}/gallery`, {
+        const response = await fetch(`${process.env.SERVER_URL}/api/expert/${userId}/gallery`, {
           method: "POST",
           body: formData,
         });
