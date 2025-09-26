@@ -33,6 +33,22 @@ export default function Customers(){
       phone: '+90 534 456 7890',
       lastAppointment: '2024-06-15',
       lastAppointmentTime: '10:00'
+    },
+    {
+      id: 4,
+      name: 'Tester',
+      email: '4testerhss@gmail.com',
+      phone: '+90 534 456 0000',
+      lastAppointment: '2024-06-15',
+      lastAppointmentTime: '10:00'
+    },
+    {
+      id: 5,
+      name: 'Khan',
+      email: 'saudkhanbpk@gmail.com',
+      phone: '+90 534 456 0001',
+      lastAppointment: '2024-06-15',
+      lastAppointmentTime: '10:00'
     }
   ];
 
