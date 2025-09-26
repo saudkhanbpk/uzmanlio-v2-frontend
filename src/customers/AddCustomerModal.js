@@ -20,7 +20,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     console.log('Yeni danışan eklendi:', formData);
-    
+
     // If onAdd callback is provided, call it (for use in CreateEvent/EditEvent)
     if (onAdd) {
       onAdd(formData);
@@ -38,7 +38,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
           <h3 className="text-lg font-semibold text-gray-900">Yeni Danışan Ekle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl">✕</button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Ad *</label>
@@ -52,7 +52,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Soyad *</label>
             <input
@@ -65,7 +65,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">E-posta *</label>
             <input
@@ -78,7 +78,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Telefon Numarası *</label>
             <input
@@ -91,7 +91,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               required
             />
           </div>
-          
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
