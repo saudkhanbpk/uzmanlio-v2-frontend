@@ -2,8 +2,8 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
-const SERVER_URL = process.env.SERVER_URL ;
 export const Profile = () => {
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const userId = "68c94094d011cdb0e5fa2caa";
   const [profile, setProfile] = useState({
     pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
@@ -80,59 +80,59 @@ export const Profile = () => {
     }
   };
 
-// Profile Picture Upload
-const handleProfileUpload = async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
+  // Profile Picture Upload
+  const handleProfileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
 
-  const formData = new FormData();
-  formData.append("profileImage", file);
+    const formData = new FormData();
+    formData.append("profileImage", file);
 
-  // Get existing filename for replacement if available
-  const existingFilename = profile.ppFile ? profile.ppFile.split("/").pop() : "";
-  
-  //  include /upload in the path
-  const uploadUrl = `${SERVER_URL}/api/expert/${userId}/upload${existingFilename ? `?imageId=${existingFilename}` : ""}`;
+    // Get existing filename for replacement if available
+    const existingFilename = profile.ppFile ? profile.ppFile.split("/").pop() : "";
 
-  try {
-    const response = await axios.post(
-      uploadUrl,
-      formData,
-      { headers: { "Content-Type": "multipart/form-data" } }
-    );
-    
-    // Add cache buster to force image reload
-    const imageUrlWithCacheBuster = `${response.data.pp}?t=${Date.now()}`;
-    
-    setProfile({
-      ...profile,
-      pp: imageUrlWithCacheBuster,
-      ppFile: response.data.expertInformation?.ppFile || ""
-    });
-    
-    console.log("Image data ", imageUrlWithCacheBuster, response.data.expertInformation?.ppFile);
-    
-    Swal.fire({
-      icon: "success",
-      title: "Başarılı!",
-      text: "Profil fotoğrafı başarıyla güncellendi.",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-  } catch (error) {
-    console.error("Upload failed:", {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      url: uploadUrl,
-    });
-    Swal.fire({
-      icon: "error",
-      title: "Hata!",
-      text: `Fotoğraf yüklenemedi: ${error.response?.data?.error || error.message}`,
-    });
-  }
-};
+    //  include /upload in the path
+    const uploadUrl = `${SERVER_URL}/api/expert/${userId}/upload${existingFilename ? `?imageId=${existingFilename}` : ""}`;
+
+    try {
+      const response = await axios.post(
+        uploadUrl,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      // Add cache buster to force image reload
+      const imageUrlWithCacheBuster = `${response.data.pp}?t=${Date.now()}`;
+
+      setProfile({
+        ...profile,
+        pp: imageUrlWithCacheBuster,
+        ppFile: response.data.expertInformation?.ppFile || ""
+      });
+
+      console.log("Image data ", imageUrlWithCacheBuster, response.data.expertInformation?.ppFile);
+
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: "Profil fotoğrafı başarıyla güncellendi.",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Upload failed:", {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        url: uploadUrl,
+      });
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: `Fotoğraf yüklenemedi: ${error.response?.data?.error || error.message}`,
+      });
+    }
+  };
   // Update Profile
   const updateProfile = async () => {
     try {

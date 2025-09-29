@@ -8,6 +8,7 @@ import PackageSection from "./PackageSection";
 
 
 export default function Services() {
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const [activeTab, setActiveTab] = useState('hizmetler');
   const [editServiceModal, setEditServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -24,7 +25,6 @@ export default function Services() {
 
 
   const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
-  const SERVER_URL = process.env.SERVER_URL;
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -59,117 +59,117 @@ export default function Services() {
     fetchPackages();
   }, []);
 
-const saveServiceChanges = async (updatedService) => {
-  try {
-    // Show loading
-    Swal.fire({
-      title: 'Güncelleniyor...',
-      text: 'Lütfen bekleyin',
-      allowOutsideClick: false,
-      showConfirmButton: false,
-      willOpen: () => Swal.showLoading()
-    });
+  const saveServiceChanges = async (updatedService) => {
+    try {
+      // Show loading
+      Swal.fire({
+        title: 'Güncelleniyor...',
+        text: 'Lütfen bekleyin',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => Swal.showLoading()
+      });
 
-    // Prepare update data with all fields
-    const updateData = {
-      title: updatedService.title || '',
-      description: updatedService.description || '',
-      price: parseFloat(updatedService.price) || 0,
-      duration: parseInt(updatedService.duration) || 0,
-      category: updatedService.category || '',
-      features: updatedService.features || [],
-      icon: updatedService.icon || '',
-      iconBg: updatedService.iconBg || '', 
-      eventType: updatedService.eventType || 'online',
-      meetingType: updatedService.meetingType || '',
-      platform: updatedService.platform || '',
-      location: updatedService.location || '',
-      maxAttendees: updatedService.maxAttendees ? parseInt(updatedService.maxAttendees) : null,
-      date: updatedService.date || null,
-      time: updatedService.time || null,
-      isOfflineEvent: updatedService.isOfflineEvent || false,
-      selectedClients: updatedService.selectedClients || [],
-      status: updatedService.status || 'active',
-      isActive: (updatedService.status || 'active') === 'active'
-    };
-
-    console.log('Sending update data:', updateData); 
-    console.log('IconBg being sent:', updateData.iconBg); 
-
-    // Make API call
-    const response = await axios.put(
-      `${SERVER_URL}/api/expert/${userId}/services/${updatedService.id}`,
-      updateData
-    );
-
-    console.log('Response from server:', response.data); 
-    // Handle different response formats from backend
-    let updatedServiceData;
-    
-    // If backend returns { success: true, service: {...} }
-    if (response.data && response.data.service) {
-      updatedServiceData = response.data.service;
-    } 
-    // If backend returns the service directly
-    else if (response.data && response.data.id) {
-      updatedServiceData = response.data;
-    } 
-    // Fallback: merge what we sent with original service
-    else {
-      updatedServiceData = { 
-        ...updatedService, 
-        ...updateData,
-        id: updatedService.id 
+      // Prepare update data with all fields
+      const updateData = {
+        title: updatedService.title || '',
+        description: updatedService.description || '',
+        price: parseFloat(updatedService.price) || 0,
+        duration: parseInt(updatedService.duration) || 0,
+        category: updatedService.category || '',
+        features: updatedService.features || [],
+        icon: updatedService.icon || '',
+        iconBg: updatedService.iconBg || '',
+        eventType: updatedService.eventType || 'online',
+        meetingType: updatedService.meetingType || '',
+        platform: updatedService.platform || '',
+        location: updatedService.location || '',
+        maxAttendees: updatedService.maxAttendees ? parseInt(updatedService.maxAttendees) : null,
+        date: updatedService.date || null,
+        time: updatedService.time || null,
+        isOfflineEvent: updatedService.isOfflineEvent || false,
+        selectedClients: updatedService.selectedClients || [],
+        status: updatedService.status || 'active',
+        isActive: (updatedService.status || 'active') === 'active'
       };
-    }
 
-    // ✅ Ensure iconBg is preserved if backend didn't return it
-    if (!updatedServiceData.iconBg && updateData.iconBg) {
-      updatedServiceData.iconBg = updateData.iconBg;
-    }
+      console.log('Sending update data:', updateData);
+      console.log('IconBg being sent:', updateData.iconBg);
 
-    console.log('Final service data to save:', updatedServiceData); 
-
-    // Update the services array in state
-    setServices(prevServices => {
-      if (!Array.isArray(prevServices)) {
-        console.error('Services is not an array:', prevServices);
-        return [];
-      }
-      
-      const newServices = prevServices.map(service =>
-        service.id === updatedService.id ? updatedServiceData : service
+      // Make API call
+      const response = await axios.put(
+        `${SERVER_URL}/api/expert/${userId}/services/${updatedService.id}`,
+        updateData
       );
-      
-      console.log('Updated services array:', newServices); // Debug updated array
-      return newServices;
-    });
 
-    // Close modal and clear selected service
-    setEditServiceModal(false);
-    setSelectedService(null);
+      console.log('Response from server:', response.data);
+      // Handle different response formats from backend
+      let updatedServiceData;
 
-    // Show success message
-    Swal.fire({
-      icon: 'success',
-      title: 'Başarılı!',
-      text: 'Hizmet başarıyla güncellendi.',
-      showConfirmButton: false,
-      timer: 1500
-    });
+      // If backend returns { success: true, service: {...} }
+      if (response.data && response.data.service) {
+        updatedServiceData = response.data.service;
+      }
+      // If backend returns the service directly
+      else if (response.data && response.data.id) {
+        updatedServiceData = response.data;
+      }
+      // Fallback: merge what we sent with original service
+      else {
+        updatedServiceData = {
+          ...updatedService,
+          ...updateData,
+          id: updatedService.id
+        };
+      }
 
-  } catch (error) {
-    console.error('Update error:', error);
-    console.error('Error response:', error.response?.data);
+      // ✅ Ensure iconBg is preserved if backend didn't return it
+      if (!updatedServiceData.iconBg && updateData.iconBg) {
+        updatedServiceData.iconBg = updateData.iconBg;
+      }
 
-    // Show error message
-    Swal.fire({
-      icon: 'error',
-      title: 'Hata!',
-      text: `Hizmet güncellenirken bir hata oluştu: ${error.response?.data?.error || error.message}`,
-    });
-  }
-};
+      console.log('Final service data to save:', updatedServiceData);
+
+      // Update the services array in state
+      setServices(prevServices => {
+        if (!Array.isArray(prevServices)) {
+          console.error('Services is not an array:', prevServices);
+          return [];
+        }
+
+        const newServices = prevServices.map(service =>
+          service.id === updatedService.id ? updatedServiceData : service
+        );
+
+        console.log('Updated services array:', newServices); // Debug updated array
+        return newServices;
+      });
+
+      // Close modal and clear selected service
+      setEditServiceModal(false);
+      setSelectedService(null);
+
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Hizmet başarıyla güncellendi.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
+    } catch (error) {
+      console.error('Update error:', error);
+      console.error('Error response:', error.response?.data);
+
+      // Show error message
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: `Hizmet güncellenirken bir hata oluştu: ${error.response?.data?.error || error.message}`,
+      });
+    }
+  };
 
   // Save package changes
   const savePackageChanges = async (updatedPackage) => {
@@ -309,13 +309,13 @@ const saveServiceChanges = async (updatedService) => {
     return categories[cat] || cat;
   };
 
-const handleColorSelect = (color) => {
-  if (selectedPackage) {
-    setSelectedPackage(prev => ({ ...prev, iconBg: color }));
-  } else {
-    setSelectedService(prev => ({ ...prev, iconBg: color })); 
-  }
-};
+  const handleColorSelect = (color) => {
+    if (selectedPackage) {
+      setSelectedPackage(prev => ({ ...prev, iconBg: color }));
+    } else {
+      setSelectedService(prev => ({ ...prev, iconBg: color }));
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -689,7 +689,7 @@ const handleColorSelect = (color) => {
                       <input
                         type="color"
                         name="iconColor"
-                        value={selectedService.iconBg|| '#ffffff'}
+                        value={selectedService.iconBg || '#ffffff'}
                         onChange={(e) => handleColorSelect(e.target.value)}
                       />
                     </div>

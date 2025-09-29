@@ -6,7 +6,7 @@ import expertService from '../services/expertService';
 // Custom hook for managing expert data operations
 export const useExpertData = () => {
 
-  const SERVER_URL = process.env.SERVER_URL;
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   console.log("Backend URL:", SERVER_URL); 
   const { state, dispatch } = useExpert();
   

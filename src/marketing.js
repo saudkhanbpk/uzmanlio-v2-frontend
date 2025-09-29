@@ -6,6 +6,7 @@ import { CreateEmailModal } from "./createEmailModal";
 
 // Marketing Component - Redesigned with Kupon Kodu and E-Posta Pazarlaması sections
 export const Marketing = () => {
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const [activeTab, setActiveTab] = useState('kupon');
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -40,10 +41,10 @@ export const Marketing = () => {
   ]);
 
   const [selectedEmail, setSelectedEmail] = useState(null);
-  const SERVER_URL = process.env.SERVER_URL;
+
   const userId = "68c94094d011cdb0e5fa2caa"; // adjust as needed
 
- 
+
 
   const tabs = [
     { id: 'kupon', label: 'Kupon Kodu' },
@@ -107,9 +108,9 @@ export const Marketing = () => {
   const handleSaveCoupon = async (payload) => {
     try {
       if (selectedCoupon) {
-  // update
-  const res = await axios.put(`${SERVER_URL}/api/expert/${userId}/coupons/${selectedCoupon._id}`, payload);
-  setCoupons((prev) => prev.map((c) => (c._id === res.data._id ? res.data : c)));
+        // update
+        const res = await axios.put(`${SERVER_URL}/api/expert/${userId}/coupons/${selectedCoupon._id}`, payload);
+        setCoupons((prev) => prev.map((c) => (c._id === res.data._id ? res.data : c)));
         Swal.fire({ icon: 'success', title: 'Güncellendi', text: 'Kupon başarıyla güncellendi.' });
       } else {
         // create
@@ -228,7 +229,7 @@ export const Marketing = () => {
         <h1 className="text-2xl font-bold text-gray-900">Pazarlama</h1>
         <div className="flex space-x-3">
           {activeTab === 'kupon' && (
-            <button 
+            <button
               onClick={openCreateModal}
               className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
             >
@@ -236,7 +237,7 @@ export const Marketing = () => {
             </button>
           )}
           {activeTab === 'email' && (
-            <button 
+            <button
               onClick={openCreateEmailModal}
               className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
             >
@@ -254,11 +255,10 @@ export const Marketing = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`py-4 px-6 border-b-2 font-medium text-sm ${
-                  activeTab === tab.id
+                className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === tab.id
                     ? 'border-primary-500 text-primary-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                  }`}
               >
                 {tab.label}
               </button>
@@ -267,7 +267,7 @@ export const Marketing = () => {
         </div>
 
         {/* Kupon Kodu Tab Content */}
-          {activeTab === 'kupon' && (
+        {activeTab === 'kupon' && (
           <div className="p-6">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -307,11 +307,10 @@ export const Marketing = () => {
                         <div className="text-sm font-medium text-gray-900">{coupon.code}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          coupon.type === 'percentage' 
-                            ? 'bg-blue-100 text-blue-800' 
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.type === 'percentage'
+                            ? 'bg-blue-100 text-blue-800'
                             : 'bg-green-100 text-green-800'
-                        }`}>
+                          }`}>
                           {coupon.type === 'percentage' ? 'Yüzde' : 'TL'}
                         </span>
                       </td>
@@ -325,11 +324,10 @@ export const Marketing = () => {
                         {coupon.expiryDate}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          coupon.status === 'active' 
-                            ? 'bg-green-100 text-green-800' 
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.status === 'active'
+                            ? 'bg-green-100 text-green-800'
                             : 'bg-red-100 text-red-800'
-                        }`}>
+                          }`}>
                           {coupon.status === 'active' ? 'Aktif' : 'Süresi Doldu'}
                         </span>
                       </td>
@@ -431,7 +429,7 @@ export const Marketing = () => {
 
       {/* Create Email Modal */}
       {showEmailModal && (
-        <CreateEmailModal 
+        <CreateEmailModal
           onClose={() => setShowEmailModal(false)}
           onSave={handleSaveEmail}
           initialData={selectedEmail}

@@ -7,7 +7,7 @@ import { AddCustomerModal } from "./customers/AddCustomerModal";
 
 // CreatePackage Component
 export const CreatePackage = () => {
-
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
@@ -20,13 +20,13 @@ export const CreatePackage = () => {
     { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com' }
   ];
 
+
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
-  const SERVER_URL = process.env.SERVER_URL;
 
   const [packageData, setPackageData] = useState({
     title: '',
