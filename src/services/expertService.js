@@ -1,5 +1,5 @@
 // API service for expert information
-const SERVER_URL = process.env.SERVER_URL || 'http://localhost:4000/api';
+const SERVER_URL = process.env.SERVER_URL ;
 
 class ExpertService {
   // Helper method for API calls

@@ -40,7 +40,7 @@ export const Marketing = () => {
   ]);
 
   const [selectedEmail, setSelectedEmail] = useState(null);
-  const SERVER_URL = process.env.SERVER_URL || "http://localhost:4000";
+  const SERVER_URL = process.env.SERVER_URL;
   const userId = "68c94094d011cdb0e5fa2caa"; // adjust as needed
 
  

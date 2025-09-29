@@ -2,8 +2,8 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
+const SERVER_URL = process.env.SERVER_URL ;
 export const Profile = () => {
-  const SERVER_URL = process.env.SERVER_URL || "http://localhost:4000";
   const userId = "68c94094d011cdb0e5fa2caa";
   const [profile, setProfile] = useState({
     pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
