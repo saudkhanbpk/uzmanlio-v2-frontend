@@ -19,8 +19,6 @@ export const Expertise = () => {
     experience,
     skills,
     titles,
-    services,
-    packages,
     galleryFiles,
     loading,
     errors,
@@ -49,8 +47,7 @@ export const Expertise = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedPackage, setSelectedPackage] = useState(null);
+ 
   const [selectedTitle, setSelectedTitle] = useState(null);
 
   useEffect(() => {

@@ -37,7 +37,7 @@ export const Profile = () => {
   // Fetch Profile
   const getProfile = async () => {
     try {
-      const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
+      const res = await axios.get(`${SERVER_URL}/api/expert-information/${userId}`);
       if (res.data) {
         setProfile((prevProfile) => ({
           ...prevProfile,

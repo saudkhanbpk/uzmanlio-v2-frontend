@@ -1,29 +1,94 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { mockBlogPosts } from "../utility/mockData";
+import { blogService } from "../services/blogService";
+import { SimpleRichTextEditor } from "../richTextEditor";
 
 // Blog Edit Component
 export const BlogEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
   const categories = ["Psikoloji", "Kişisel Gelişim", "Spor", "Beslenme", "Teknoloji", "Business", "Tasarım", "Lifestyle"];
-  
-  // Find the blog post by ID (in real app, this would be an API call)
-  const existingPost = mockBlogPosts.find(post => post.id === parseInt(id));
-  
+
+  const [existingPost, setExistingPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
   const [formData, setFormData] = useState({
-    title: existingPost?.title || '',
-    content: existingPost?.content || '',
-    category: existingPost?.category || '',
-    keywords: existingPost?.keywords?.join(', ') || '',
-    status: existingPost?.status || 'draft'
+    title: '',
+    content: '',
+    category: '',
+    keywords: '',
+    status: 'draft'
   });
 
-  if (!existingPost) {
+  // Load blog data on component mount
+  useEffect(() => {
+    loadBlog();
+  }, [id]);
+
+  const loadBlog = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const blog = await blogService.getBlog(userId, id);
+      setExistingPost(blog);
+      setFormData({
+        title: blog.title || '',
+        content: blog.content || '',
+        category: blog.category || '',
+        keywords: Array.isArray(blog.keywords) ? blog.keywords.join(', ') : blog.keywords || '',
+        status: blog.status || 'draft'
+      });
+    } catch (err) {
+      setError('Blog yazısı yüklenirken bir hata oluştu.');
+      console.error('Error loading blog:', err);
+      // Fallback to mock data
+      const mockPost = mockBlogPosts.find(post => post.id === parseInt(id));
+      if (mockPost) {
+        setExistingPost(mockPost);
+        setFormData({
+          title: mockPost.title || '',
+          content: mockPost.content || '',
+          category: mockPost.category || '',
+          keywords: mockPost.keywords?.join(', ') || '',
+          status: mockPost.status || 'draft'
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Loading state
+  if (loading) {
     return (
       <div className="space-y-6">
         <div className="flex items-center space-x-4">
-          <Link 
+          <Link
+            to="/dashboard/blog"
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ← Geri
+          </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Blog Yazısını Düzenle</h1>
+        </div>
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Blog yazısı yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Not found state
+  if (!existingPost && !loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Link
             to="/dashboard/blog"
             className="text-gray-500 hover:text-gray-700"
           >
@@ -53,23 +118,32 @@ export const BlogEdit = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.content || !formData.category) {
       alert('Lütfen zorunlu alanları doldurun.');
       return;
     }
 
-    console.log('Blog yazısı güncellendi:', {
-      ...existingPost,
-      ...formData,
-      keywords: formData.keywords.split(',').map(k => k.trim()).filter(k => k),
-      updatedAt: new Date().toISOString().split('T')[0]
-    });
-    
-    alert('Blog yazısı başarıyla güncellendi!');
-    navigate('/dashboard/blog');
+    try {
+      setSaving(true);
+      setError(null);
+
+      // Format data for API
+      const blogData = blogService.formatBlogData(formData);
+
+      // Update blog
+      await blogService.updateBlog(userId, id, blogData);
+
+      alert('Blog yazısı başarıyla güncellendi!');
+      navigate('/dashboard/blog');
+    } catch (err) {
+      setError(err.message || 'Blog yazısı güncellenirken bir hata oluştu.');
+      console.error('Error updating blog:', err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -84,6 +158,23 @@ export const BlogEdit = () => {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Blog Yazısını Düzenle</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -177,9 +268,13 @@ export const BlogEdit = () => {
           </Link>
           <button
             type="submit"
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={saving}
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 transition-colors"
           >
-            {formData.status === 'published' ? 'Güncelle ve Yayınla' : 'Taslak Olarak Kaydet'}
+            {saving
+              ? 'Güncelleniyor...'
+              : (formData.status === 'published' ? 'Güncelle ve Yayınla' : 'Taslak Olarak Kaydet')
+            }
           </button>
         </div>
       </form>

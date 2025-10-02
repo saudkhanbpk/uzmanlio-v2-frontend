@@ -1,4 +1,6 @@
 
+import React from 'react';
+
 // Simple Rich Text Editor Component
 export const SimpleRichTextEditor = ({ value, onChange, placeholder, className }) => {
   const textareaRef = React.useRef(null);

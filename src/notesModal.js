@@ -1,10 +1,62 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { customerService } from "./services/customerService";
 
 // NotesModal Component - Shows customer notes and allows platform user to add/update notes
-export default  function NotesModal ({ customer, onClose }) {
+export default function NotesModal({ customer, onClose }) {
+  const [notes, setNotes] = useState([]);
   const [newNote, setNewNote] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [addingNote, setAddingNote] = useState(false);
+
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+  // Load customer notes on component mount
+  useEffect(() => {
+    loadCustomerNotes();
+  }, [customer.id]);
+
+  const loadCustomerNotes = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const notesData = await customerService.getCustomerNotes(userId, customer.id);
+      setNotes(notesData.notes || []);
+    } catch (err) {
+      setError('Notlar yüklenirken bir hata oluştu.');
+      console.error('Error loading customer notes:', err);
+      // Fallback to mock data
+      setNotes([
+        {
+          id: 1,
+          content: 'Web sitesi tasarımı için inspirasyon siteleri listesi ekliyorum. Modern ve minimalist tasarım tercih ediyorum.',
+          author: 'customer',
+          authorName: customer.name || `${customer.name} ${customer.surname}`,
+          createdAt: '2024-07-28T14:30:00',
+          files: [
+            {
+              name: 'inspirasyon_siteler.pdf',
+              type: 'pdf',
+              size: '2.3 MB',
+              url: '#'
+            }
+          ]
+        },
+        {
+          id: 2,
+          content: 'Müşteri portföyündeki referans çalışmaları beğendim. Benzer stil ile devam edebiliriz.',
+          author: 'expert',
+          authorName: 'Platform Kullanıcısı',
+          createdAt: '2024-07-27T16:45:00',
+          files: []
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Mock customer notes and files data (sorted by newest first)
   const customerNotes = [

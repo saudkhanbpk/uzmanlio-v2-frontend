@@ -1,9 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { formService } from "../services/formService";
 // Form Create Component
 export const FormCreate = () => {
   const navigate = useNavigate();
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -11,6 +14,8 @@ export const FormCreate = () => {
   });
   const [fields, setFields] = useState([]);
   const [draggedItem, setDraggedItem] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const fieldTypes = [
     { type: 'text', label: 'Metin', icon: '📝', description: 'Kısa metin girişi' },
@@ -81,28 +86,32 @@ export const FormCreate = () => {
     updateField(fieldId, { options: newOptions });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title || fields.length === 0) {
       alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
       return;
     }
 
-    const newForm = {
-      id: Date.now(),
-      title: formData.title,
-      description: formData.description,
-      status: formData.status,
-      participantCount: 0,
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      fields: fields
-    };
+    try {
+      setLoading(true);
+      setError(null);
 
-    console.log('Yeni form oluşturuldu:', newForm);
-    alert('Form başarıyla oluşturuldu!');
-    navigate('/dashboard/forms');
+      // Format data for API
+      const formDataFormatted = formService.formatFormData(formData, fields);
+
+      // Create form
+      await formService.createForm(userId, formDataFormatted);
+
+      alert('Form başarıyla oluşturuldu!');
+      navigate('/dashboard/forms');
+    } catch (err) {
+      setError(err.message || 'Form oluşturulurken bir hata oluştu.');
+      console.error('Error creating form:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,6 +126,23 @@ export const FormCreate = () => {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Yeni Form Oluştur</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Field Types Palette */}
@@ -333,9 +359,24 @@ export const FormCreate = () => {
             </Link>
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              disabled={loading}
+              className={`px-6 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
+                loading
+                  ? 'bg-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 hover:bg-primary-700'
+              } text-white`}
             >
-              {formData.status === 'active' ? 'Oluştur ve Yayınla' : 'Taslak Olarak Kaydet'}
+              {loading && (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              )}
+              <span>
+                {loading
+                  ? 'Oluşturuluyor...'
+                  : formData.status === 'active'
+                    ? 'Oluştur ve Yayınla'
+                    : 'Taslak Olarak Kaydet'
+                }
+              </span>
             </button>
           </div>
         </div>

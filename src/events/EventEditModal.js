@@ -1,5 +1,7 @@
+import { useState } from "react";
+
 // Event Edit Modal Component
-const EventEditModal = ({ event, onClose, onDelete }) => {
+export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   const [formData, setFormData] = useState({
     title: event.title || '',
     description: event.description || '',
@@ -97,8 +99,12 @@ const EventEditModal = ({ event, onClose, onDelete }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Etkinlik güncellendi:', formData);
-    onClose();
+    if (onUpdate) {
+      onUpdate(formData);
+    } else {
+      console.log('Etkinlik güncellendi:', formData);
+      onClose();
+    }
   };
 
   const handleDeleteClick = () => {

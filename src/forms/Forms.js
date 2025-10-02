@@ -1,33 +1,82 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { mockForms } from "../utility/mockData";
+import { formService } from "../services/formService";
 
 // Forms Main Component
 export default function Forms(){
-  const [forms, setForms] = useState(mockForms);
+  const [forms, setForms] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+  // Load forms on component mount
+  useEffect(() => {
+    loadForms();
+  }, []);
+
+  const loadForms = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const formsData = await formService.getForms(userId);
+      setForms(formsData);
+    } catch (err) {
+      setError('Formlar yüklenirken bir hata oluştu.');
+      console.error('Error loading forms:', err);
+      // Fallback to mock data
+      setForms(mockForms);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredForms = filter === 'all' 
     ? forms 
     : forms.filter(form => form.status === filter);
 
-  const deleteForm = (id) => {
+  const deleteForm = async (id) => {
     if (window.confirm('Bu formu silmek istediğinizden emin misiniz?')) {
-      setForms(prevForms => prevForms.filter(form => form.id !== id));
+      try {
+        await formService.deleteForm(userId, id);
+        await loadForms(); // Reload forms to reflect changes
+      } catch (err) {
+        alert('Form silinirken bir hata oluştu.');
+        console.error('Error deleting form:', err);
+      }
     }
   };
 
-  const duplicateForm = (form) => {
-    const newForm = {
-      ...form,
-      id: Date.now(),
-      title: `${form.title} (Kopya)`,
-      participantCount: 0,
-      status: 'draft',
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0]
-    };
-    setForms(prevForms => [...prevForms, newForm]);
+  const duplicateForm = async (form) => {
+    try {
+      await formService.duplicateForm(userId, form.id);
+      await loadForms(); // Reload forms to reflect changes
+    } catch (err) {
+      alert('Form kopyalanırken bir hata oluştu.');
+      console.error('Error duplicating form:', err);
+    }
+  };
+
+  const updateFormStatus = async (formId, status) => {
+    try {
+      await formService.updateFormStatus(userId, formId, status);
+      await loadForms(); // Reload forms to reflect changes
+    } catch (err) {
+      alert('Form durumu güncellenirken bir hata oluştu.');
+      console.error('Error updating form status:', err);
+    }
+  };
+
+  const copyFormUrl = async (form) => {
+    try {
+      await formService.copyFormShareUrl(userId, form.id);
+      alert('Form URL\'si panoya kopyalandı!');
+    } catch (err) {
+      console.error('Error copying form URL:', err);
+      alert('URL kopyalanırken bir hata oluştu.');
+    }
   };
 
   return (
@@ -106,8 +155,42 @@ export default function Forms(){
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Formlar yükleniyor...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={loadForms}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filters */}
-      <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
+      {!loading && !error && (
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFilter('all')}
@@ -140,10 +223,12 @@ export default function Forms(){
             Taslak ({forms.filter(f => f.status === 'draft').length})
           </button>
         </div>
-      </div>
+        </div>
+      )}
 
       {/* Forms List */}
-      <div className="grid gap-6">
+      {!loading && !error && (
+        <div className="grid gap-6">
         {filteredForms.length === 0 ? (
           <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
             <div className="text-gray-400 text-6xl mb-4">📋</div>
@@ -239,7 +324,8 @@ export default function Forms(){
             </div>
           ))
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -1,43 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useExpertData } from "./hooks/useExpertData";
 
 // Calendar Component
 export const Calendar = () => {
+  const {
+    availability,
+    appointments,
+    loading,
+    errors,
+    loadExpertProfile,
+    updateAvailability
+  } = useExpertData();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState('month'); // 'week' or 'month'
   const [selectedSlots, setSelectedSlots] = useState(new Set());
   const [showTooltip, setShowTooltip] = useState(false);
   const [alwaysAvailable, setAlwaysAvailable] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [calendarProviders, setCalendarProviders] = useState([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarError, setCalendarError] = useState(null);
 
-  // Sample appointments data
-  const appointments = [
-    {
-      id: 1,
-      title: 'React Danışmanlığı - Ahmet K.',
-      date: '2024-06-25',
-      time: '14:00',
-      duration: 60,
-      type: '1-1',
-      status: 'confirmed'
-    },
-    {
-      id: 2,
-      title: 'Dijital Pazarlama Workshop',
-      date: '2024-06-27',
-      time: '19:00',
-      duration: 120,
-      type: 'group',
-      status: 'confirmed'
-    },
-    {
-      id: 3,
-      title: 'SEO Danışmanlığı - Fatma Y.',
-      date: '2024-06-28',
-      time: '16:00',
-      duration: 90,
-      type: '1-1',
-      status: 'pending'
+  // Load calendar data on component mount
+  useEffect(() => {
+    const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+    loadExpertProfile(userId).catch(console.error);
+    loadCalendarProviders();
+  }, [loadExpertProfile]);
+
+  // Sync local state with context data
+  useEffect(() => {
+    if (availability) {
+      setAlwaysAvailable(availability.alwaysAvailable || false);
+      setSelectedSlots(new Set(availability.selectedSlots || []));
     }
-  ];
+  }, [availability]);
 
   // Time slots for availability selection - Extended from 07:00 to 06:00 (next day)
   const timeSlots = [
@@ -106,7 +104,7 @@ export const Calendar = () => {
   };
 
   const getAppointmentsForDate = (date) => {
-    if (!date) return [];
+    if (!date || !appointments) return [];
     const dateStr = date.toISOString().split('T')[0];
     return appointments.filter(apt => apt.date === dateStr);
   };
@@ -136,6 +134,111 @@ export const Calendar = () => {
     setCurrentDate(newDate);
   };
 
+  const handleSaveAvailability = async () => {
+    try {
+      setIsSaving(true);
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+      const availabilityData = {
+        alwaysAvailable,
+        selectedSlots: Array.from(selectedSlots)
+      };
+
+      await updateAvailability(userId, availabilityData);
+
+      // Show success message (you can replace with a toast notification)
+      alert('Müsaitlik ayarları başarıyla kaydedildi!');
+    } catch (error) {
+      console.error('Failed to save availability:', error);
+      alert('Müsaitlik ayarları kaydedilirken bir hata oluştu.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleResetAvailability = async () => {
+    try {
+      setIsSaving(true);
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+      // Reset local state
+      setSelectedSlots(new Set());
+      setAlwaysAvailable(false);
+
+      // Save reset state to database
+      const availabilityData = {
+        alwaysAvailable: false,
+        selectedSlots: []
+      };
+
+      await updateAvailability(userId, availabilityData);
+
+      // Show success message
+      alert('Müsaitlik ayarları sıfırlandı!');
+    } catch (error) {
+      console.error('Failed to reset availability:', error);
+      alert('Müsaitlik ayarları sıfırlanırken bir hata oluştu.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Calendar Integration Functions
+  const connectCalendar = async (provider) => {
+    try {
+      setCalendarLoading(true);
+      setCalendarError(null);
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+      const response = await fetch(`http://localhost:4000/api/calendar/auth/${provider}/auth/${userId}`);
+      const data = await response.json();
+
+      if (response.ok && data.authUrl) {
+        // Open OAuth flow in new window
+        const authWindow = window.open(
+          data.authUrl,
+          'calendar-auth',
+          'width=600,height=700,scrollbars=yes,resizable=yes'
+        );
+
+        // Listen for auth completion
+        const checkClosed = setInterval(() => {
+          if (authWindow.closed) {
+            clearInterval(checkClosed);
+            // Reload providers after auth
+            setTimeout(() => {
+              loadCalendarProviders();
+            }, 1000);
+          }
+        }, 1000);
+      } else {
+        setCalendarError(data.error || 'Kimlik doğrulama başlatılamadı');
+      }
+    } catch (err) {
+      setCalendarError('Takvim bağlantısı başarısız');
+      console.error('Error connecting calendar:', err);
+    } finally {
+      setCalendarLoading(false);
+    }
+  };
+
+  const loadCalendarProviders = async () => {
+    try {
+      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      const response = await fetch(`http://localhost:4000/api/calendar/auth/${userId}/providers`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setCalendarProviders(data.providers || []);
+      } else {
+        setCalendarError(data.error || 'Takvim sağlayıcıları yüklenemedi');
+      }
+    } catch (err) {
+      setCalendarError('Takvim sağlayıcıları yüklenemedi');
+      console.error('Error loading providers:', err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -144,24 +247,39 @@ export const Calendar = () => {
         <div className="flex items-center space-x-4">
           {/* Calendar Connect Buttons */}
           <div className="flex items-center space-x-2">
-            <button className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors text-sm font-medium">
-              <img 
+            <button
+              onClick={() => connectCalendar('google')}
+              disabled={calendarLoading}
+              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyUzYuNDggMjIgMTIgMjJzMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJaTTEwIDZIMTRWOEgxMFY2Wk02IDEwSDE4VjE4SDZWMTBaTTggMTJWMTZIMTJWMTJIOFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
                 alt="Google Calendar"
                 className="w-4 h-4"
               />
-              <span>Google Calendar</span>
+              <span>{calendarLoading ? 'Bağlanıyor...' : 'Google Calendar'}</span>
             </button>
-            <button className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors text-sm font-medium">
-              <img 
+            <button
+              onClick={() => connectCalendar('microsoft')}
+              disabled={calendarLoading}
+              className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
+            >
+              <img
                 src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgNFYyMEgxOEw5IDEyTDE4IDRIM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
                 alt="Outlook Calendar"
                 className="w-4 h-4"
               />
-              <span>Outlook</span>
+              <span>{calendarLoading ? 'Bağlanıyor...' : 'Outlook'}</span>
             </button>
           </div>
-          
+
+          {/* Calendar Error Display */}
+          {calendarError && (
+            <div className="mt-2 p-2 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+              {calendarError}
+            </div>
+          )}
+
           {/* View Toggle */}
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
@@ -411,17 +529,19 @@ export const Calendar = () => {
           
           {/* Action Buttons */}
           <div className="flex space-x-3">
-            <button 
-              onClick={() => {
-                setSelectedSlots(new Set());
-                setAlwaysAvailable(false);
-              }}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+            <button
+              onClick={handleResetAvailability}
+              disabled={isSaving || loading.availability}
+              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Sıfırla
             </button>
-            <button className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors">
-              Kaydet
+            <button
+              onClick={handleSaveAvailability}
+              disabled={isSaving || loading.availability}
+              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSaving || loading.availability ? 'Kaydediliyor...' : 'Kaydet'}
             </button>
           </div>
         </div>
@@ -431,28 +551,45 @@ export const Calendar = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-gray-900 mb-4">Yaklaşan Randevular</h3>
         <div className="space-y-3">
-          {appointments.filter(apt => new Date(apt.date) >= new Date()).map((apt) => (
-            <div key={apt.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center space-x-4">
-                <div className={`p-2 rounded-lg ${
-                  apt.type === '1-1' ? 'bg-orange-100' : 'bg-blue-100'
-                }`}>
-                  <span className="text-lg">{apt.type === '1-1' ? '👤' : '👥'}</span>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{apt.title}</h4>
-                  <p className="text-sm text-gray-600">
-                    {apt.date} • {apt.time} • {apt.duration} dakika
-                  </p>
-                </div>
-              </div>
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-              }`}>
-                {apt.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}
-              </span>
+          {loading.appointments ? (
+            <div className="flex items-center justify-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-2 text-gray-600">Randevular yükleniyor...</span>
             </div>
-          ))}
+          ) : errors.appointments ? (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              Randevular yüklenirken hata oluştu: {errors.appointments}
+            </div>
+          ) : !appointments || appointments.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              <span className="text-4xl mb-2 block">📅</span>
+              <p>Henüz randevu bulunmuyor.</p>
+              <p className="text-sm">Yeni randevular eklendiğinde burada görünecektir.</p>
+            </div>
+          ) : (
+            appointments.filter(apt => new Date(apt.date) >= new Date()).map((apt) => (
+              <div key={apt.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className={`p-2 rounded-lg ${
+                    apt.type === '1-1' ? 'bg-orange-100' : 'bg-blue-100'
+                  }`}>
+                    <span className="text-lg">{apt.type === '1-1' ? '👤' : '👥'}</span>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-gray-900">{apt.title}</h4>
+                    <p className="text-sm text-gray-600">
+                      {apt.date} • {apt.time} • {apt.duration} dakika
+                    </p>
+                  </div>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                }`}>
+                  {apt.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}
+                </span>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
