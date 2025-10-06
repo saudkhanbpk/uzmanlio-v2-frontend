@@ -2,8 +2,12 @@ import { useCallback } from 'react';
 import { useExpert, EXPERT_ACTIONS } from '../contexts/ExpertContext';
 import expertService from '../services/expertService';
 
+
 // Custom hook for managing expert data operations
 export const useExpertData = () => {
+
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  console.log("Backend URL:", SERVER_URL); 
   const { state, dispatch } = useExpert();
   
   // Helper function to handle API calls with loading and error states
@@ -208,7 +212,7 @@ export const useExpertData = () => {
       dispatch({ type: EXPERT_ACTIONS.SET_CERTIFICATES, payload: profile.certificates || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_EXPERIENCE, payload: profile.experience || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SKILLS, payload: profile.skills || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.galleryFiles || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.gallery || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SERVICES, payload: profile.services || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_SERVICES, payload: profile.activeServices || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_PACKAGES, payload: profile.packages || [] });
@@ -241,7 +245,7 @@ export const useExpertData = () => {
         const formData = new FormData();
         formData.append("file", fileData.file);
         formData.append("type", fileData.type);
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api'}/expert/${userId}/gallery`, {
+        const response = await fetch(`${SERVER_URL}/api/expert/${userId}/gallery`, {
           method: "POST",
           body: formData,
         });

@@ -1,24 +1,53 @@
+import React, { useState, useEffect } from 'react';
+
 // CreateEmailModal Component
-export const CreateEmailModal = ({ onClose }) => {
+export const CreateEmailModal = ({ onClose, onSave, initialData }) => {
   const [emailData, setEmailData] = useState({
     title: '',
     text: '',
     recipientType: 'all', // all or selected
-    selectedCustomers: []
+    selectedCustomers: [],
+    scheduledAt: ''
   });
+
+  useEffect(() => {
+    if (initialData) {
+      // Convert UTC scheduledAt to local datetime-local format
+      let localScheduledAt = '';
+      if (initialData.scheduledAt) {
+        const date = new Date(initialData.scheduledAt);
+        // Format to YYYY-MM-DDTHH:MM, which is what datetime-local input expects
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        localScheduledAt = `${year}-${month}-${day}T${hours}:${minutes}`;
+      }
+
+      setEmailData({
+        ...initialData,
+        scheduledAt: localScheduledAt,
+        // Ensure other fields have defaults
+        title: initialData.title || '',
+        text: initialData.text || '',
+        recipientType: initialData.recipientType || 'all',
+        selectedCustomers: initialData.selectedCustomers || [],
+      });
+      setShowCustomerSelection(initialData.recipientType === 'selected');
+    }
+  }, [initialData]);
   const [showCustomerSelection, setShowCustomerSelection] = useState(false);
   const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [validationError, setValidationError] = useState('');
 
   // Mock customer data
   const availableCustomers = [
-    { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com' },
-    { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com' },
-    { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com' },
+    { id: 1, name: 'hane1', email: 'saudkhanbpk@gmail.com' },
+    { id: 2, name: 's2', email: 'muhammadharoonawaan@gmail.com' },
+    { id: 3, name: 's4', email: '4testerhss@gmail.com' },
     { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com' },
-    { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com' },
-    { id: 6, name: 'Okan Aksoy', email: 'okan.aksoy@email.com' },
-    { id: 7, name: 'Elif Nur', email: 'elif.nur@email.com' },
-    { id: 8, name: 'Can Yılmaz', email: 'can.yilmaz@email.com' }
+
   ];
 
   const filteredCustomers = availableCustomers.filter(customer =>
@@ -28,6 +57,8 @@ export const CreateEmailModal = ({ onClose }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Clear validation error when user edits
+    setValidationError('');
     setEmailData(prev => ({
       ...prev,
       [name]: value
@@ -61,9 +92,34 @@ export const CreateEmailModal = ({ onClose }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const isSendNow = () => {
+    if (!emailData.scheduledAt) return false;
+    const sched = new Date(emailData.scheduledAt);
+    const now = new Date();
+    // consider "now" if within 90 seconds
+    return Math.abs(now.getTime() - sched.getTime()) <= 90 * 1000;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('E-posta oluşturuldu:', emailData);
+    // Build payload matching backend: subject, body, recipientType, recipients[], scheduledAt
+    const payload = {
+      subject: emailData.title,
+      body: emailData.text,
+      recipientType: emailData.recipientType,
+      recipients: emailData.recipientType === 'selected' ? emailData.selectedCustomers.map(c => c.email) : [],
+      scheduledAt: emailData.scheduledAt ? new Date(emailData.scheduledAt).toISOString() : undefined
+    };
+    const sendNow = isSendNow();
+    if (onSave) {
+      // await parent save so modal only closes after action completes
+      try {
+        await onSave(payload, { sendNow });
+      } catch (err) {
+        // parent will show errors; keep modal open for user to retry
+        return;
+      }
+    }
     onClose();
   };
 
@@ -129,13 +185,50 @@ export const CreateEmailModal = ({ onClose }) => {
               </select>
             </div>
 
+            {/* Scheduled At */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Gönderim Tarihi ve Saati *</label>
+              <input
+                type="datetime-local"
+                name="scheduledAt"
+                value={emailData.scheduledAt}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  // validate immediately
+                  const val = e.target.value;
+                  if (val) {
+                    const selected = new Date(val);
+                    const now = new Date();
+                    if (selected.getTime() < now.getTime()) {
+                      setValidationError('Geçmiş bir tarih seçemezsiniz.');
+                    } else {
+                      setValidationError('');
+                    }
+                  }
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                required
+                // set min to now in local datetime-local format to prevent picker past selection
+                min={(() => {
+                  const n = new Date();
+                  const y = n.getFullYear();
+                  const m = String(n.getMonth() + 1).padStart(2, '0');
+                  const d = String(n.getDate()).padStart(2, '0');
+                  const hh = String(n.getHours()).padStart(2, '0');
+                  const mm = String(n.getMinutes()).padStart(2, '0');
+                  return `${y}-${m}-${d}T${hh}:${mm}`;
+                })()}
+              />
+              {validationError && <p className="text-red-500 text-sm mt-1">{validationError}</p>}
+            </div>
+
             {/* Customer Selection - Only visible when "selected" is chosen */}
             {showCustomerSelection && (
               <div className="space-y-3">
                 <label className="block text-sm font-medium text-gray-700">
                   Müşteri Seç
                 </label>
-                
+
                 {/* Search Input */}
                 <div className="relative">
                   <input
@@ -179,11 +272,10 @@ export const CreateEmailModal = ({ onClose }) => {
                       <div
                         key={customer.id}
                         onClick={() => handleCustomerSelect(customer.id)}
-                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${
-                          emailData.selectedCustomers.some(c => c.id === customer.id)
+                        className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${emailData.selectedCustomers.some(c => c.id === customer.id)
                             ? 'bg-primary-50 text-primary-700'
                             : ''
-                        }`}
+                          }`}
                       >
                         <div className="flex items-center justify-between">
                           <div>
@@ -222,7 +314,7 @@ export const CreateEmailModal = ({ onClose }) => {
                 type="submit"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                Gönder
+                {isSendNow() ? 'Gönder' : 'Zamanla'}
               </button>
             </div>
           </form>

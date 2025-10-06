@@ -1,5 +1,7 @@
+import React, { useState, useEffect } from 'react';
+
 // CreateCouponModal Component
-export const CreateCouponModal = ({ onClose }) => {
+export default function CreateCouponModal({ isOpen, onClose, onSave, initialData }) {
   const [couponData, setCouponData] = useState({
     code: '',
     type: 'percentage', // percentage or amount
@@ -7,6 +9,20 @@ export const CreateCouponModal = ({ onClose }) => {
     maxUsage: '',
     expiryDate: ''
   });
+
+  useEffect(() => {
+    if (initialData) {
+      setCouponData({
+        code: initialData.code || '',
+        type: initialData.type || 'percentage',
+        value: initialData.value ?? '',
+        maxUsage: initialData.maxUsage ?? '',
+        expiryDate: initialData.expiryDate ? new Date(initialData.expiryDate).toISOString().split('T')[0] : ''
+      });
+    } else {
+      setCouponData({ code: '', type: 'percentage', value: '', maxUsage: '', expiryDate: '' });
+    }
+  }, [initialData, isOpen]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -16,11 +32,32 @@ export const CreateCouponModal = ({ onClose }) => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Kupon oluşturuldu:', couponData);
-    onClose();
+    // basic validation
+    if (!couponData.code || couponData.code.trim() === '' || couponData.value === '' || isNaN(Number(couponData.value))) {
+      alert('Lütfen Kod ve Değer alanlarını doğru girin');
+      return;
+    }
+
+    const payload = {
+      code: couponData.code.trim(),
+      type: couponData.type,
+      value: Number(couponData.value),
+      maxUsage: couponData.maxUsage ? Number(couponData.maxUsage) : 0,
+      expiryDate: couponData.expiryDate || null
+    };
+
+    try {
+      if (onSave) await onSave(payload);
+    } catch (err) {
+      console.error('Save error in modal:', err);
+    } finally {
+      onClose();
+    }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -30,7 +67,7 @@ export const CreateCouponModal = ({ onClose }) => {
 
         <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium text-gray-900">Kupon Oluştur</h3>
+            <h3 className="text-lg font-medium text-gray-900">{initialData ? 'Kuponu Güncelle' : 'Kupon Oluştur'}</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
           </div>
 
@@ -80,11 +117,12 @@ export const CreateCouponModal = ({ onClose }) => {
                   value={couponData.value}
                   onChange={handleInputChange}
                   placeholder="20"
+                  min={0}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   required
                 />
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                  <span className="text-gray-500">
+                  <span className="text-gray-500 font-[600]">
                     {couponData.type === 'percentage' ? '%' : 'TL'}
                   </span>
                 </div>
@@ -94,23 +132,23 @@ export const CreateCouponModal = ({ onClose }) => {
             {/* Usage Count */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Kullanım Adedi *
+                Maksimum Kullanım (opsiyonel)
               </label>
               <input
                 type="number"
                 name="maxUsage"
+                 min={0}
                 value={couponData.maxUsage}
                 onChange={handleInputChange}
                 placeholder="100"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                required
               />
             </div>
 
             {/* Expiry Date */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Son Kullanma Tarihi *
+                Son Kullanma Tarihi (opsiyonel)
               </label>
               <input
                 type="date"
@@ -118,7 +156,6 @@ export const CreateCouponModal = ({ onClose }) => {
                 value={couponData.expiryDate}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                required
               />
             </div>
 
@@ -135,7 +172,7 @@ export const CreateCouponModal = ({ onClose }) => {
                 type="submit"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                Oluştur
+                {initialData ? 'Güncelle' : 'Oluştur'}
               </button>
             </div>
           </form>
@@ -143,4 +180,5 @@ export const CreateCouponModal = ({ onClose }) => {
       </div>
     </div>
   );
-};
+}
+

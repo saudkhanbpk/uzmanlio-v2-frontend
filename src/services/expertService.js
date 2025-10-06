@@ -1,10 +1,9 @@
 // API service for expert information
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-
+const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
 class ExpertService {
   // Helper method for API calls
   async apiCall(endpoint, options = {}) {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${SERVER_URL}${endpoint}`;
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -30,150 +29,150 @@ class ExpertService {
 
   // Titles operations
   async getTitles(userId) {
-    return this.apiCall(`/expert/${userId}/titles`);
+    return this.apiCall(`/api/expert/${userId}/titles`);
   }
 
   async addTitle(userId, titleData) {
-    return this.apiCall(`/expert/${userId}/titles`, {
+    return this.apiCall(`/api/expert/${userId}/titles`, {
       method: 'POST',
       body: JSON.stringify(titleData),
     });
   }
 
   async updateTitle(userId, titleId, titleData) {
-    return this.apiCall(`/expert/${userId}/titles/${titleId}`, {
+    return this.apiCall(`/api/expert/${userId}/titles/${titleId}`, {
       method: 'PUT', 
       body: JSON.stringify(titleData),
     });
   }
 
   async deleteTitle(userId, titleId) {
-    return this.apiCall(`/expert/${userId}/titles/${titleId}`, {
+    return this.apiCall(`/api/expert/${userId}/titles/${titleId}`, {
       method: 'DELETE',
     });
   }
 
   // Categories operations
   async getCategories(userId) {
-    return this.apiCall(`/expert/${userId}/categories`);
+    return this.apiCall(`/api/expert/${userId}/categories`);
   }
 
   async addCategory(userId, categoryData) {
-    return this.apiCall(`/expert/${userId}/categories`, {
+    return this.apiCall(`/api/expert/${userId}/categories`, {
       method: 'POST',
       body: JSON.stringify(categoryData),
     });
   }
 
   async removeCategory(userId, categoryId) {
-    return this.apiCall(`/expert/${userId}/categories/${categoryId}`, {
+    return this.apiCall(`/api/expert/${userId}/categories/${categoryId}`, {
       method: 'DELETE',
     });
   }
 
   // Education operations
   async getEducation(userId) {
-    return this.apiCall(`/expert/${userId}/education`);
+    return this.apiCall(`/api/expert/${userId}/education`);
   }
 
   async addEducation(userId, educationData) {
-    return this.apiCall(`/expert/${userId}/education`, {
+    return this.apiCall(`/api/expert/${userId}/education`, {
       method: 'POST',
       body: JSON.stringify(educationData),
     });
   }
 
   async updateEducation(userId, educationId, educationData) {
-    return this.apiCall(`/expert/${userId}/education/${educationId}`, {
+    return this.apiCall(`/api/expert/${userId}/education/${educationId}`, {
       method: 'PUT',
       body: JSON.stringify(educationData),
     });
   }
 
   async deleteEducation(userId, educationId) {
-    return this.apiCall(`/expert/${userId}/education/${educationId}`, {
+    return this.apiCall(`/api/expert/${userId}/education/${educationId}`, {
       method: 'DELETE',
     });
   }
 
   // Certificate operations
   async getCertificates(userId) {
-    return this.apiCall(`/expert/${userId}/certificates`);
+    return this.apiCall(`/api/expert/${userId}/certificates`);
   }
 
   async addCertificate(userId, certificateData) {
-    return this.apiCall(`/expert/${userId}/certificates`, {
+    return this.apiCall(`/api/expert/${userId}/certificates`, {
       method: 'POST',
       body: JSON.stringify(certificateData),
     });
   }
 
   async updateCertificate(userId, certificateId, certificateData) {
-    return this.apiCall(`/expert/${userId}/certificates/${certificateId}`, {
+    return this.apiCall(`/api/expert/${userId}/certificates/${certificateId}`, {
       method: 'PUT',
       body: JSON.stringify(certificateData),
     });
   }
 
   async deleteCertificate(userId, certificateId) {
-    return this.apiCall(`/expert/${userId}/certificates/${certificateId}`, {
+    return this.apiCall(`/api/expert/${userId}/certificates/${certificateId}`, {
       method: 'DELETE',
     });
   }
 
   // Experience operations
   async getExperience(userId) {
-    return this.apiCall(`/expert/${userId}/experience`);
+    return this.apiCall(`/api/expert/${userId}/experience`);
   }
 
   async addExperience(userId, experienceData) {    
-    return this.apiCall(`/expert/${userId}/experience`, {
+    return this.apiCall(`/api/expert/${userId}/experience`, {
       method: 'POST',
       body: JSON.stringify(experienceData),
     });
   }
 
   async updateExperience(userId, experienceId, experienceData) {
-    return this.apiCall(`/expert/${userId}/experience/${experienceId}`, {
+    return this.apiCall(`/api/expert/${userId}/experience/${experienceId}`, {
       method: 'PUT',
       body: JSON.stringify(experienceData),
     });
   }
 
   async deleteExperience(userId, experienceId) {
-    return this.apiCall(`/expert/${userId}/experience/${experienceId}`, {
+    return this.apiCall(`/api/expert/${userId}/experience/${experienceId}`, {
       method: 'DELETE',
     });
   }
 
   // Skills operations
   async getSkills(userId) {
-    return this.apiCall(`/expert/${userId}/skills`);
+    return this.apiCall(`/api/expert/${userId}/skills`);
   }
 
   async addSkill(userId, skillData) {
-    return this.apiCall(`/expert/${userId}/skills`, {
+    return this.apiCall(`/api/expert/${userId}/skills`, {
       method: 'POST',
       body: JSON.stringify(skillData),
     });
   }
 
   async updateSkill(userId, skillId, skillData) {
-    return this.apiCall(`/expert/${userId}/skills/${skillId}`, {
+    return this.apiCall(`/api/expert/${userId}/skills/${skillId}`, {
       method: 'PUT',
       body: JSON.stringify(skillData),
     });
   }
 
   async deleteSkill(userId, skillId) {
-    return this.apiCall(`/expert/${userId}/skills/${skillId}`, {
+    return this.apiCall(`/api/expert/${userId}/skills/${skillId}`, {
       method: 'DELETE',
     });
   }
 
   // Gallery files operations
   async getGalleryFiles(userId) {
-    return this.apiCall(`/expert/${userId}/gallery`);
+    return this.apiCall(`/api/expert/${userId}/gallery`);
   }
 
   async uploadGalleryFile(userId, fileData) {
@@ -182,7 +181,7 @@ class ExpertService {
     formData.append('description', fileData.description || '');
     formData.append('type', fileData.type || 'image');
 
-    return this.apiCall(`/expert/${userId}/gallery`, {
+    return this.apiCall(`/api/expert/${userId}/gallery`, {
       method: 'POST',
       headers: {}, // Remove Content-Type to let browser set it for FormData
       body: formData,
@@ -190,42 +189,42 @@ class ExpertService {
   }
 
   async deleteGalleryFile(userId, fileId) {
-    return this.apiCall(`/expert/${userId}/gallery/${fileId}`, {
+    return this.apiCall(`/api/expert/${userId}/gallery/${fileId}`, {
       method: 'DELETE',
     });
   }
 
   // Services operations
   async getServices(userId) {
-    return this.apiCall(`/expert/${userId}/services`);
+    return this.apiCall(`/api/expert/${userId}/services`);
   }
 
   async getActiveServices(userId) {
-    return this.apiCall(`/expert/${userId}/services/active`);
+    return this.apiCall(`/api/expert/${userId}/services/active`);
   }
 
   async addService(userId, serviceData) {
-    return this.apiCall(`/expert/${userId}/services`, {
+    return this.apiCall(`/api/expert/${userId}/services`, {
       method: 'POST',
       body: JSON.stringify(serviceData),
     });
   }
 
   async updateService(userId, serviceId, serviceData) {
-    return this.apiCall(`/expert/${userId}/services/${serviceId}`, {
+    return this.apiCall(`/api/expert/${userId}/services/${serviceId}`, {
       method: 'PUT',
       body: JSON.stringify(serviceData),
     });
   }
 
   async deleteService(userId, serviceId) {
-    return this.apiCall(`/expert/${userId}/services/${serviceId}`, {
+    return this.apiCall(`/api/expert/${userId}/services/${serviceId}`, {
       method: 'DELETE',
     });
   }
 
   async toggleServiceActive(userId, serviceId, isActive) {
-    return this.apiCall(`/expert/${userId}/services/${serviceId}/toggle-active`, {
+    return this.apiCall(`/api/expert/${userId}/services/${serviceId}/toggle-active`, {
       method: 'PATCH',
       body: JSON.stringify({ isActive }),
     });
@@ -233,39 +232,39 @@ class ExpertService {
 
   // Packages operations
   async getPackages(userId) {
-    return this.apiCall(`/expert/${userId}/packages`);
+    return this.apiCall(`/api/expert/${userId}/packages`);
   }
 
   async getActivePackages(userId) {
-    return this.apiCall(`/expert/${userId}/packages/active`);
+    return this.apiCall(`/api/expert/${userId}/packages/active`);
   }
 
   async getAvailablePackages(userId) {
-    return this.apiCall(`/expert/${userId}/packages/available`);
+    return this.apiCall(`/api/expert/${userId}/packages/available`);
   }
 
   async addPackage(userId, packageData) {
-    return this.apiCall(`/expert/${userId}/packages`, {
+    return this.apiCall(`/api/expert/${userId}/packages`, {
       method: 'POST',
       body: JSON.stringify(packageData),
     });
   }
 
   async updatePackage(userId, packageId, packageData) {
-    return this.apiCall(`/expert/${userId}/packages/${packageId}`, {
+    return this.apiCall(`/api/expert/${userId}/packages/${packageId}`, {
       method: 'PUT',
       body: JSON.stringify(packageData),
     });
   }
 
   async deletePackage(userId, packageId) {
-    return this.apiCall(`/expert/${userId}/packages/${packageId}`, {
+    return this.apiCall(`/api/expert/${userId}/packages/${packageId}`, {
       method: 'DELETE',
     });
   }
 
   async togglePackageAvailable(userId, packageId, isAvailable) {
-    return this.apiCall(`/expert/${userId}/packages/${packageId}/toggle-available`, {
+    return this.apiCall(`/api/expert/${userId}/packages/${packageId}/toggle-available`, {
       method: 'PATCH',
       body: JSON.stringify({ isAvailable }),
     });
@@ -273,12 +272,11 @@ class ExpertService {
 
   // Bulk operations
   async getExpertProfile(userId) {
-    const res = this.apiCall(`/expert/${userId}/profile`);
+    const res = this.apiCall(`/api/expert/${userId}/profile`);
     localStorage.removeItem("user")
     localStorage.setItem("user", JSON.stringify(res));
-
-    return res
-    
+    console.log("response:",res);
+    return res 
   }
 
   async updateExpertProfile(userId, profileData) {
@@ -288,7 +286,7 @@ class ExpertService {
     });
     localStorage.removeItem("user")
      localStorage.setItem("user", JSON.stringify(res));
-
+    console.log("response:",res);
     return res
   }
 

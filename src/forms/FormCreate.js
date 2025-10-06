@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { formService } from "../services/formService";
+import Swal from "sweetalert2"
 // Form Create Component
 export const FormCreate = () => {
   const navigate = useNavigate();
@@ -48,7 +49,7 @@ export const FormCreate = () => {
   };
 
   const updateField = (fieldId, updates) => {
-    setFields(prev => prev.map(field => 
+    setFields(prev => prev.map(field =>
       field.id === fieldId ? { ...field, ...updates } : field
     ));
   };
@@ -90,7 +91,11 @@ export const FormCreate = () => {
     e.preventDefault();
 
     if (!formData.title || fields.length === 0) {
-      alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
+      // alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
+      Swal.fire({
+        icon: "info",
+        title: "Lütfen form başlığını girin ve en az bir soru ekleyin."
+      })
       return;
     }
 
@@ -104,10 +109,25 @@ export const FormCreate = () => {
       // Create form
       await formService.createForm(userId, formDataFormatted);
 
-      alert('Form başarıyla oluşturuldu!');
+      // alert('Form başarıyla oluşturuldu!');
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: "Form başarıyla oluşturuldu!",
+        showConfirmButton: false,
+        timer: 1500
+      });
+
       navigate('/dashboard/forms');
     } catch (err) {
-      setError(err.message || 'Form oluşturulurken bir hata oluştu.');
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: "Form oluşturulurken bir hata oluştu.",
+        showConfirmButton: false,
+        timer: 2000
+      });
+      // setError(err.message || 'Form oluşturulurken bir hata oluştu.');
       console.error('Error creating form:', err);
     } finally {
       setLoading(false);
@@ -118,7 +138,7 @@ export const FormCreate = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/dashboard/forms"
           className="text-gray-500 hover:text-gray-700"
         >
@@ -189,7 +209,7 @@ export const FormCreate = () => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Açıklama
@@ -322,8 +342,8 @@ export const FormCreate = () => {
                         <input
                           type="text"
                           value={field.acceptedTypes?.join(', ') || 'pdf, doc, docx, jpg, png'}
-                          onChange={(e) => updateField(field.id, { 
-                            acceptedTypes: e.target.value.split(',').map(type => type.trim()) 
+                          onChange={(e) => updateField(field.id, {
+                            acceptedTypes: e.target.value.split(',').map(type => type.trim())
                           })}
                           placeholder="pdf, doc, docx, jpg, png"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -360,11 +380,10 @@ export const FormCreate = () => {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className={`px-6 py-2 rounded-lg transition-colors flex items-center space-x-2 ${
-                loading
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-primary-600 hover:bg-primary-700'
-              } text-white`}
+              className={`px-6 py-2 rounded-lg transition-colors flex items-center space-x-2 ${loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-primary-600 hover:bg-primary-700'
+                } text-white`}
             >
               {loading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

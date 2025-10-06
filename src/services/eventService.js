@@ -1,5 +1,5 @@
 // Event Service - API calls for events management
-const API_BASE_URL = 'http://localhost:4000/api/expert-information';
+const API_BASE_URL = 'http://localhost:4000/api/expert';
 
 export const eventService = {
   // Get all events for a user

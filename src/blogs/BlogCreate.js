@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { blogService } from "../services/blogService";
 import { SimpleRichTextEditor } from "../richTextEditor";
+import Swal from "sweetalert2";
 
 // Blog Create Component
 export const BlogCreate = () => {
@@ -54,9 +55,13 @@ export const BlogCreate = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.content || !formData.category) {
-      alert('Lütfen zorunlu alanları doldurun.');
-      return;
-    }
+  Swal.fire({
+    icon: "info",
+    title: "Lütfen tüm zorunlu alanları doldurun."
+  });
+  return;
+}
+
 
     try {
       setLoading(true);
@@ -68,12 +73,28 @@ export const BlogCreate = () => {
       // Create blog
       await blogService.createBlog(userId, blogData);
 
-      alert('Blog yazısı başarıyla oluşturuldu!');
+      // alert('Blog yazısı başarıyla oluşturuldu!');
       console.log("Blog Created")
-      // navigate('/dashboard/blog');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Blog başarıyla oluşturuldu.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
+      navigate('/dashboard/blog');
     } catch (err) {
-      setError(err.message || 'Blog yazısı oluşturulurken bir hata oluştu.');
+      // setError(err.message || 'Blog yazısı oluşturulurken bir hata oluştu.');
       console.error('Error creating blog:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Blog oluşturulurken bir hata oluştu.',
+        showConfirmButton: false,
+        timer: 2000
+      });
+
     } finally {
       setLoading(false);
     }
@@ -83,7 +104,7 @@ export const BlogCreate = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/dashboard/blog"
           className="text-gray-500 hover:text-gray-700"
         >

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { mockForms } from "../utility/mockData";
 import { formService } from "../services/formService";
+import Swal from "sweetalert2";
 
 // Forms Main Component
 export default function Forms(){
@@ -37,17 +38,41 @@ export default function Forms(){
     ? forms 
     : forms.filter(form => form.status === filter);
 
-  const deleteForm = async (id) => {
-    if (window.confirm('Bu formu silmek istediğinizden emin misiniz?')) {
-      try {
-        await formService.deleteForm(userId, id);
-        await loadForms(); // Reload forms to reflect changes
-      } catch (err) {
-        alert('Form silinirken bir hata oluştu.');
-        console.error('Error deleting form:', err);
-      }
+const deleteForm = async (id) => {
+  const result = await Swal.fire({
+    title: 'Emin misiniz?',
+    text: 'Bu formu silmek istediğinizden emin misiniz?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Evet, sil',
+    cancelButtonText: 'İptal'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await formService.deleteForm(userId, id);
+      await loadForms(); // Refresh the list
+
+      // ✅ Success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Silindi!',
+        text: 'Form başarıyla silindi.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      // ❌ Error message
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Form silinirken bir hata oluştu.'
+      });
+      console.error('Error deleting form:', err);
     }
-  };
+  }
+};
+
 
   const duplicateForm = async (form) => {
     try {

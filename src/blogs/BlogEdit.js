@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { mockBlogPosts } from "../utility/mockData";
 import { blogService } from "../services/blogService";
 import { SimpleRichTextEditor } from "../richTextEditor";
+import Swal from "sweetalert2";
 
 // Blog Edit Component
 export const BlogEdit = () => {
@@ -136,7 +137,15 @@ export const BlogEdit = () => {
       // Update blog
       await blogService.updateBlog(userId, id, blogData);
 
-      alert('Blog yazısı başarıyla güncellendi!');
+      // alert('Blog yazısı başarıyla güncellendi!');
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Blog başarıyla güncellendi.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
       navigate('/dashboard/blog');
     } catch (err) {
       setError(err.message || 'Blog yazısı güncellenirken bir hata oluştu.');
@@ -150,7 +159,7 @@ export const BlogEdit = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/dashboard/blog"
           className="text-gray-500 hover:text-gray-700"
         >

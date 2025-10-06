@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { mockBlogPosts } from "../utility/mockData";
 import { renderMarkdownToHtml } from "../utility/renderMarkdownToHtml";
 import { blogService } from "../services/blogService";
+import Swal from "sweetalert2";
 // Blog Main Component
 export const Blog = () => {
   const [blogPosts, setBlogPosts] = useState([]);
@@ -40,17 +41,41 @@ export const Blog = () => {
     ? blogPosts 
     : blogPosts.filter(post => post.category === filter);
 
-  const deleteBlogPost = async (id) => {
-    if (window.confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
-      try {
-        await blogService.deleteBlog(userId, id);
-        await loadBlogs(); // Reload blogs to reflect changes
-      } catch (err) {
-        alert('Blog yazısı silinirken bir hata oluştu.');
-        console.error('Error deleting blog:', err);
-      }
+const deleteBlogPost = async (id) => {
+  const result = await Swal.fire({
+    title: 'Emin misiniz?',
+    text: 'Bu blog yazısını silmek istediğinizden emin misiniz?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Evet, sil',
+    cancelButtonText: 'İptal'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await blogService.deleteBlog(userId, id);
+      await loadBlogs(); // Reload blogs to reflect changes
+
+      // ✅ Success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Silindi!',
+        text: 'Blog yazısı başarıyla silindi.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      // ❌ Error message
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Blog yazısı silinirken bir hata oluştu.'
+      });
+      console.error('Error deleting blog:', err);
     }
-  };
+  }
+};
+
 
 
 

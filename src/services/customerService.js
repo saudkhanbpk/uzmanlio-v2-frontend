@@ -1,5 +1,5 @@
 // Customer Service - API calls for customer management
-const API_BASE_URL = 'http://localhost:4000/api/expert-information';
+const API_BASE_URL = 'http://localhost:4000/api/expert';
 
 export const customerService = {
   // Get all customers for a user

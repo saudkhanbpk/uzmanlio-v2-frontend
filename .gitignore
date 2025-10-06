@@ -1,13 +1,10 @@
-
-
 # IDE and editors
 .idea/
 .vscode/
 
 # Dependencies
 node_modules/
-/node_modules
-/.pnp
+.pnp
 .pnp.js
 .yarn/install-state.gz
 .yarn/*
@@ -17,20 +14,21 @@ node_modules/
 !.yarn/versions
 
 # Testing
-/coverage
+coverage/
 
 # Next.js
-/.next/
-/out/
+.next/
+out/
 next-env.d.ts
 *.tsbuildinfo
 
 # Production builds
-/build
+build/
 dist/
-dist
 
-# Environment files (comprehensive coverage)
+# Environment files
+.env
+.env*
 
 *token.json*
 *credentials.json*
@@ -48,7 +46,7 @@ dump.rdb
 
 # Python
 __pycache__/
-*pyc*
+*.pyc
 venv/
 .venv/
 
@@ -77,4 +75,4 @@ agenthub/agents/youtube/db
 .cache/
 
 # Mobile development
-android-sdk/ 
+android-sdk/

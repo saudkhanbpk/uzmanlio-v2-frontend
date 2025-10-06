@@ -13,7 +13,8 @@ import { SkillEditModal } from "./SkillEditModal";
 import Swal from 'sweetalert2';
 
 export const Expertise = () => {
-  const {
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL; 
+   const {
     education,
     certificates,
     experience,
@@ -33,6 +34,7 @@ export const Expertise = () => {
     uploadGalleryFile,
     deleteGalleryFile
   } = useExpertData();
+  console.log("Gallery Files", galleryFiles)
 
   const [showCertModal, setCertModal] = useState(false);
   const [showExpModal, setExpModal] = useState(false);
@@ -281,7 +283,7 @@ export const Expertise = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Unvan</h3>
-          <button 
+          <button
             onClick={() => setTitleModal(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -335,7 +337,7 @@ export const Expertise = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Uzmanlık Alanlarım</h3>
-          <button 
+          <button
             onClick={() => setShowSkillModal(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -381,7 +383,7 @@ export const Expertise = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Eğitim</h3>
-          <button 
+          <button
             onClick={() => setEduModal(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -430,7 +432,7 @@ export const Expertise = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Sertifikalar</h3>
-          <button 
+          <button
             onClick={() => setCertModal(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -479,7 +481,7 @@ export const Expertise = () => {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Deneyim</h3>
-          <button 
+          <button
             onClick={() => setExpModal(true)}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -523,7 +525,7 @@ export const Expertise = () => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Dosyalar</h3>
         </div>
-        
+
         {/* Information Box */}
         <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-start space-x-3">
@@ -542,11 +544,10 @@ export const Expertise = () => {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-              isDragging
+            className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging
                 ? 'border-primary-500 bg-primary-50'
                 : 'border-gray-300 hover:border-gray-400'
-            }`}
+              }`}
           >
             <div className="flex flex-col items-center space-y-4">
               <div className="p-3 bg-gray-100 rounded-full">
@@ -615,7 +616,7 @@ export const Expertise = () => {
                     <button
                       onClick={() => {
                         if (file.filePath) {
-                          window.open(`http://localhost:4000/${file.filePath}`, '_blank');
+                          window.open(`${SERVER_URL}/${file.filePath}`, '_blank');
                         } else {
                           console.log('File path not available:', file.filename);
                         }
@@ -688,7 +689,7 @@ export const Expertise = () => {
           skill={selectedSkill}
         />
       )}
-     
+
     </div>
   );
 };

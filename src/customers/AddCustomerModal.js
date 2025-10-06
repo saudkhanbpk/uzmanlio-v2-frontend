@@ -1,5 +1,7 @@
 import React from "react";
 import { useState } from "react";
+// import { descriptors } from "../../node_modules/chart.js/dist/core/core.defaults";
+import Swal from "sweetalert2"
 
 // Add Customer Modal Component
 export const AddCustomerModal = ({ onClose, onAdd }) => {
@@ -68,7 +70,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
       if (onAdd) {
         await onAdd(formData);
       }
-
+     
       // Close modal on success
       onClose();
     } catch (err) {
@@ -303,7 +305,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               </label>
             </div>
           </div>
-          
+
           <div className="flex space-x-3 pt-6">
             <button
               type="button"
@@ -316,11 +318,10 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
             <button
               type="submit"
               disabled={loading || !formData.consentGiven.dataProcessing}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${
-                loading || !formData.consentGiven.dataProcessing
+              className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${loading || !formData.consentGiven.dataProcessing
                   ? 'bg-gray-400 cursor-not-allowed'
                   : 'bg-primary-600 hover:bg-primary-700'
-              } text-white`}
+                } text-white`}
             >
               {loading && (
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>

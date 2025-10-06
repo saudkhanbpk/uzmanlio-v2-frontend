@@ -1,5 +1,5 @@
 // Blog Service - API calls for blog management
-const API_BASE_URL = 'http://localhost:4000/api/expert-information';
+const API_BASE_URL = 'http://localhost:4000/api/expert';
 
 export const blogService = {
   // Get all blogs for a user

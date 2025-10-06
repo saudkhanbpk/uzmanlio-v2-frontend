@@ -77,31 +77,31 @@ export const EXPERT_ACTIONS = {
   // Loading actions
   SET_LOADING: 'SET_LOADING',
   SET_ERROR: 'SET_ERROR',
-  
+
   // Title actions
   SET_TITLE: 'SET_TITLE',
   SET_TITLES: 'SET_TITLES',
   UPDATE_TITLE: 'UPDATE_TITLE',
   ADD_TITLE: 'ADD_TITLE',
   DELETE_TITLE: 'DELETE_TITLE',
-  
+
   // Categories actions
   SET_CATEGORIES: 'SET_CATEGORIES',
   ADD_CATEGORY: 'ADD_CATEGORY',
   REMOVE_CATEGORY: 'REMOVE_CATEGORY',
-  
+
   // Education actions
   SET_EDUCATION: 'SET_EDUCATION',
   ADD_EDUCATION: 'ADD_EDUCATION',
   UPDATE_EDUCATION: 'UPDATE_EDUCATION',
   DELETE_EDUCATION: 'DELETE_EDUCATION',
-  
+
   // Certificate actions
   SET_CERTIFICATES: 'SET_CERTIFICATES',
   ADD_CERTIFICATE: 'ADD_CERTIFICATE',
   UPDATE_CERTIFICATE: 'UPDATE_CERTIFICATE',
   DELETE_CERTIFICATE: 'DELETE_CERTIFICATE',
-  
+
   // Experience actions
   SET_EXPERIENCE: 'SET_EXPERIENCE',
   ADD_EXPERIENCE: 'ADD_EXPERIENCE',
@@ -118,7 +118,7 @@ export const EXPERT_ACTIONS = {
   SET_GALLERY_FILES: 'SET_GALLERY_FILES',
   ADD_GALLERY_FILE: 'ADD_GALLERY_FILE',
   DELETE_GALLERY_FILE: 'DELETE_GALLERY_FILE',
-  
+
   // Services actions
   SET_SERVICES: 'SET_SERVICES',
   SET_ACTIVE_SERVICES: 'SET_ACTIVE_SERVICES',
@@ -126,7 +126,7 @@ export const EXPERT_ACTIONS = {
   UPDATE_SERVICE: 'UPDATE_SERVICE',
   DELETE_SERVICE: 'DELETE_SERVICE',
   TOGGLE_SERVICE_ACTIVE: 'TOGGLE_SERVICE_ACTIVE',
-  
+
   // Packages actions
   SET_PACKAGES: 'SET_PACKAGES',
   SET_ACTIVE_PACKAGES: 'SET_ACTIVE_PACKAGES',
@@ -156,7 +156,7 @@ const expertReducer = (state, action) => {
           [action.payload.field]: action.payload.value
         }
       };
-      
+
     case EXPERT_ACTIONS.SET_ERROR:
       return {
         ...state,
@@ -165,7 +165,7 @@ const expertReducer = (state, action) => {
           [action.payload.field]: action.payload.error
         }
       };
-      
+
     // Title actions
     case EXPERT_ACTIONS.SET_TITLE:
       return {
@@ -199,101 +199,101 @@ const expertReducer = (state, action) => {
         ...state,
         titles: state.titles.filter(title => title.id !== action.payload)
       };
-      
+
     // Categories actions
     case EXPERT_ACTIONS.SET_CATEGORIES:
       return {
         ...state,
         expertCategories: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_CATEGORY:
       return {
         ...state,
         expertCategories: [...state.expertCategories, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.REMOVE_CATEGORY:
       return {
         ...state,
         expertCategories: state.expertCategories.filter(cat => cat.id !== action.payload)
       };
-      
+
     // Education actions
     case EXPERT_ACTIONS.SET_EDUCATION:
       return {
         ...state,
         education: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_EDUCATION:
       return {
         ...state,
         education: [...state.education, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.UPDATE_EDUCATION:
       return {
         ...state,
-        education: state.education.map(edu => 
+        education: state.education.map(edu =>
           edu.id === action.payload.id ? action.payload : edu
         )
       };
-      
+
     case EXPERT_ACTIONS.DELETE_EDUCATION:
       return {
         ...state,
         education: state.education.filter(edu => edu.id !== action.payload)
       };
-      
+
     // Certificate actions
     case EXPERT_ACTIONS.SET_CERTIFICATES:
       return {
         ...state,
         certificates: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_CERTIFICATE:
       return {
         ...state,
         certificates: [...state.certificates, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.UPDATE_CERTIFICATE:
       return {
         ...state,
-        certificates: state.certificates.map(cert => 
+        certificates: state.certificates.map(cert =>
           cert.id === action.payload.id ? action.payload : cert
         )
       };
-      
+
     case EXPERT_ACTIONS.DELETE_CERTIFICATE:
       return {
         ...state,
         certificates: state.certificates.filter(cert => cert.id !== action.payload)
       };
-      
+
     // Experience actions
     case EXPERT_ACTIONS.SET_EXPERIENCE:
       return {
         ...state,
         experience: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_EXPERIENCE:
       return {
         ...state,
         experience: [...state.experience, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.UPDATE_EXPERIENCE:
       return {
         ...state,
-        experience: state.experience.map(exp => 
+        experience: state.experience.map(exp =>
           exp.id === action.payload.id ? action.payload : exp
         )
       };
-      
+
     case EXPERT_ACTIONS.DELETE_EXPERIENCE:
       return {
         ...state,
@@ -333,98 +333,98 @@ const expertReducer = (state, action) => {
         ...state,
         galleryFiles: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_GALLERY_FILE:
       return {
         ...state,
         galleryFiles: [...state.galleryFiles, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.DELETE_GALLERY_FILE:
       return {
         ...state,
         galleryFiles: state.galleryFiles.filter(file => file.id !== action.payload)
       };
-      
+
     // Services actions
     case EXPERT_ACTIONS.SET_SERVICES:
       return {
         ...state,
         services: action.payload
       };
-      
+
     case EXPERT_ACTIONS.SET_ACTIVE_SERVICES:
       return {
         ...state,
         activeServices: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_SERVICE:
       return {
         ...state,
         services: [...state.services, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.UPDATE_SERVICE:
       return {
         ...state,
-        services: state.services.map(service => 
+        services: state.services.map(service =>
           service.id === action.payload.id ? action.payload : service
         )
       };
-      
+
     case EXPERT_ACTIONS.DELETE_SERVICE:
       return {
         ...state,
         services: state.services.filter(service => service.id !== action.payload),
         activeServices: state.activeServices.filter(service => service.id !== action.payload)
       };
-      
+
     case EXPERT_ACTIONS.TOGGLE_SERVICE_ACTIVE:
       const service = state.services.find(s => s.id === action.payload);
       if (!service) return state;
-      
+
       const isActive = state.activeServices.some(s => s.id === action.payload);
       return {
         ...state,
-        activeServices: isActive 
+        activeServices: isActive
           ? state.activeServices.filter(s => s.id !== action.payload)
           : [...state.activeServices, service]
       };
-      
+
     // Packages actions
     case EXPERT_ACTIONS.SET_PACKAGES:
       return {
         ...state,
         packages: action.payload
       };
-      
+
     case EXPERT_ACTIONS.SET_ACTIVE_PACKAGES:
       return {
         ...state,
         activePackages: action.payload
       };
-      
+
     case EXPERT_ACTIONS.SET_AVAILABLE_PACKAGES:
       return {
         ...state,
         availablePackages: action.payload
       };
-      
+
     case EXPERT_ACTIONS.ADD_PACKAGE:
       return {
         ...state,
         packages: [...state.packages, action.payload]
       };
-      
+
     case EXPERT_ACTIONS.UPDATE_PACKAGE:
       return {
         ...state,
-        packages: state.packages.map(pkg => 
+        packages: state.packages.map(pkg =>
           pkg.id === action.payload.id ? action.payload : pkg
         )
       };
-      
+
     case EXPERT_ACTIONS.DELETE_PACKAGE:
       return {
         ...state,
@@ -432,11 +432,11 @@ const expertReducer = (state, action) => {
         activePackages: state.activePackages.filter(pkg => pkg.id !== action.payload),
         availablePackages: state.availablePackages.filter(pkg => pkg.id !== action.payload)
       };
-      
+
     case EXPERT_ACTIONS.TOGGLE_PACKAGE_AVAILABLE:
       const packageItem = state.packages.find(p => p.id === action.payload);
       if (!packageItem) return state;
-      
+
       const isAvailable = state.availablePackages.some(p => p.id === action.payload);
       return {
         ...state,
@@ -499,13 +499,13 @@ const ExpertContext = createContext();
 // Provider component
 export const ExpertProvider = ({ children }) => {
   const [state, dispatch] = useReducer(expertReducer, initialState);
-  
+
   // Memoized context value to prevent unnecessary re-renders
   const contextValue = useMemo(() => ({
     state,
     dispatch
   }), [state]);
-  
+
   return (
     <ExpertContext.Provider value={contextValue}>
       {children}
