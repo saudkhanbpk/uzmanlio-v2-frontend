@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 
 export const Profile = () => {
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const userId = "68c94094d011cdb0e5fa2caa";
   const [profile, setProfile] = useState({
     pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
@@ -101,16 +101,27 @@ export const Profile = () => {
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
-      // Add cache buster to force image reload
-      const imageUrlWithCacheBuster = `${response.data.pp}?t=${Date.now()}`;
+      // Server returns the uploaded file URL under response.data.data.pp
+      // and may also include expertInformation at top-level. Use fallbacks
+      // and a cache-buster to force the browser to load the new file.
+      const returnedFileUrl = response.data?.data?.pp || response.data?.pp || response.data?.expertInformation?.pp || "";
+      const returnedFilePath = response.data?.data?.ppFile || response.data?.ppFile || response.data?.expertInformation?.ppFile || "";
 
-      setProfile({
-        ...profile,
+      if (!returnedFileUrl) {
+        console.warn("Upload succeeded but server didn't return a file URL", response.data);
+      }
+
+      const imageUrlWithCacheBuster = returnedFileUrl
+        ? `${returnedFileUrl}${returnedFileUrl.includes("?") ? "&" : "?"}t=${Date.now()}`
+        : profile.pp;
+
+      setProfile(prev => ({
+        ...prev,
         pp: imageUrlWithCacheBuster,
-        ppFile: response.data.expertInformation?.ppFile || ""
-      });
+        ppFile: returnedFilePath || prev.ppFile
+      }));
 
-      console.log("Image data ", imageUrlWithCacheBuster, response.data.expertInformation?.ppFile);
+      console.log("Image data", imageUrlWithCacheBuster, returnedFilePath);
 
       Swal.fire({
         icon: "success",
