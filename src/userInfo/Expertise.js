@@ -20,8 +20,6 @@ export const Expertise = () => {
     experience,
     skills,
     titles,
-    services,
-    packages,
     galleryFiles,
     loading,
     errors,
@@ -36,6 +34,7 @@ export const Expertise = () => {
     uploadGalleryFile,
     deleteGalleryFile
   } = useExpertData();
+  console.log("Gallery Files", galleryFiles)
 
   const [showCertModal, setCertModal] = useState(false);
   const [showExpModal, setExpModal] = useState(false);
@@ -50,8 +49,7 @@ export const Expertise = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(null);
-  const [selectedService, setSelectedService] = useState(null);
-  const [selectedPackage, setSelectedPackage] = useState(null);
+ 
   const [selectedTitle, setSelectedTitle] = useState(null);
 
   useEffect(() => {

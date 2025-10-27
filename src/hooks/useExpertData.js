@@ -212,12 +212,14 @@ export const useExpertData = () => {
       dispatch({ type: EXPERT_ACTIONS.SET_CERTIFICATES, payload: profile.certificates || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_EXPERIENCE, payload: profile.experience || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SKILLS, payload: profile.skills || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.galleryFiles || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.gallery || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SERVICES, payload: profile.services || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_SERVICES, payload: profile.activeServices || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_PACKAGES, payload: profile.packages || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_PACKAGES, payload: profile.activePackages || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_AVAILABLE_PACKAGES, payload: profile.availablePackages || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_AVAILABILITY, payload: profile.availability || { alwaysAvailable: false, selectedSlots: [], lastUpdated: null } });
+      dispatch({ type: EXPERT_ACTIONS.SET_APPOINTMENTS, payload: profile.appointments || [] });
 
       return profile;
     } catch (error) {
@@ -243,7 +245,7 @@ export const useExpertData = () => {
         const formData = new FormData();
         formData.append("file", fileData.file);
         formData.append("type", fileData.type);
-        const response = await fetch(`${process.env.SERVER_URL}/api/expert/${userId}/gallery`, {
+        const response = await fetch(`${SERVER_URL}/api/expert/${userId}/gallery`, {
           method: "POST",
           body: formData,
         });
@@ -267,6 +269,49 @@ export const useExpertData = () => {
       () => expertService.deleteGalleryFile(userId, fileId)
     );
     dispatch({ type: EXPERT_ACTIONS.DELETE_GALLERY_FILE, payload: fileId });
+  }, [handleApiCall, dispatch]);
+
+  // Calendar and availability operations
+  const loadAvailability = useCallback(async (userId) => {
+    return handleApiCall('availability',
+      () => expertService.getAvailability(userId),
+      (result) => ({ type: EXPERT_ACTIONS.SET_AVAILABILITY, payload: result.availability })
+    );
+  }, [handleApiCall]);
+
+  const updateAvailability = useCallback(async (userId, availabilityData) => {
+    return handleApiCall('availability',
+      () => expertService.updateAvailability(userId, availabilityData),
+      (result) => ({ type: EXPERT_ACTIONS.UPDATE_AVAILABILITY, payload: result.availability })
+    );
+  }, [handleApiCall]);
+
+  const loadAppointments = useCallback(async (userId) => {
+    return handleApiCall('appointments',
+      () => expertService.getAppointments(userId),
+      (result) => ({ type: EXPERT_ACTIONS.SET_APPOINTMENTS, payload: result.appointments })
+    );
+  }, [handleApiCall]);
+
+  const addAppointment = useCallback(async (userId, appointmentData) => {
+    return handleApiCall('appointments',
+      () => expertService.addAppointment(userId, appointmentData),
+      (result) => ({ type: EXPERT_ACTIONS.ADD_APPOINTMENT, payload: result.appointment })
+    );
+  }, [handleApiCall]);
+
+  const updateAppointment = useCallback(async (userId, appointmentId, appointmentData) => {
+    return handleApiCall('appointments',
+      () => expertService.updateAppointment(userId, appointmentId, appointmentData),
+      (result) => ({ type: EXPERT_ACTIONS.UPDATE_APPOINTMENT, payload: result.appointment })
+    );
+  }, [handleApiCall]);
+
+  const deleteAppointment = useCallback(async (userId, appointmentId) => {
+    await handleApiCall('appointments',
+      () => expertService.deleteAppointment(userId, appointmentId)
+    );
+    dispatch({ type: EXPERT_ACTIONS.DELETE_APPOINTMENT, payload: appointmentId });
   }, [handleApiCall, dispatch]);
 
   // Services operations
@@ -422,7 +467,15 @@ export const useExpertData = () => {
     updatePackage,
     deletePackage,
     togglePackageAvailable,
-    
+
+    // Calendar and availability operations
+    loadAvailability,
+    updateAvailability,
+    loadAppointments,
+    addAppointment,
+    updateAppointment,
+    deleteAppointment,
+
     // Bulk operations
     loadExpertProfile
   };

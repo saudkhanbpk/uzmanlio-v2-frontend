@@ -31,6 +31,14 @@ const initialState = {
   activePackages: [], // Packages purchased by consultees
   availablePackages: [], // Packages available for purchase
 
+  // Calendar and availability
+  availability: {
+    alwaysAvailable: false,
+    selectedSlots: [],
+    lastUpdated: null
+  },
+  appointments: [],
+
   // Loading states
   loading: {
     education: false,
@@ -42,7 +50,9 @@ const initialState = {
     galleryFiles: false,
     title: false,
     titles: false,
-    categories: false
+    categories: false,
+    availability: false,
+    appointments: false
   },
 
   // Error states
@@ -56,7 +66,9 @@ const initialState = {
     galleryFiles: null,
     title: null,
     titles: null,
-    categories: null
+    categories: null,
+    availability: null,
+    appointments: null
   }
 };
 
@@ -122,7 +134,15 @@ export const EXPERT_ACTIONS = {
   ADD_PACKAGE: 'ADD_PACKAGE',
   UPDATE_PACKAGE: 'UPDATE_PACKAGE',
   DELETE_PACKAGE: 'DELETE_PACKAGE',
-  TOGGLE_PACKAGE_AVAILABLE: 'TOGGLE_PACKAGE_AVAILABLE'
+  TOGGLE_PACKAGE_AVAILABLE: 'TOGGLE_PACKAGE_AVAILABLE',
+
+  // Calendar and availability actions
+  SET_AVAILABILITY: 'SET_AVAILABILITY',
+  UPDATE_AVAILABILITY: 'UPDATE_AVAILABILITY',
+  SET_APPOINTMENTS: 'SET_APPOINTMENTS',
+  ADD_APPOINTMENT: 'ADD_APPOINTMENT',
+  UPDATE_APPOINTMENT: 'UPDATE_APPOINTMENT',
+  DELETE_APPOINTMENT: 'DELETE_APPOINTMENT'
 };
 
 // Reducer function
@@ -423,6 +443,49 @@ const expertReducer = (state, action) => {
         availablePackages: isAvailable
           ? state.availablePackages.filter(p => p.id !== action.payload)
           : [...state.availablePackages, packageItem]
+      };
+
+    // Calendar and availability actions
+    case EXPERT_ACTIONS.SET_AVAILABILITY:
+      return {
+        ...state,
+        availability: action.payload
+      };
+
+    case EXPERT_ACTIONS.UPDATE_AVAILABILITY:
+      return {
+        ...state,
+        availability: {
+          ...state.availability,
+          ...action.payload,
+          lastUpdated: new Date()
+        }
+      };
+
+    case EXPERT_ACTIONS.SET_APPOINTMENTS:
+      return {
+        ...state,
+        appointments: action.payload
+      };
+
+    case EXPERT_ACTIONS.ADD_APPOINTMENT:
+      return {
+        ...state,
+        appointments: [...state.appointments, action.payload]
+      };
+
+    case EXPERT_ACTIONS.UPDATE_APPOINTMENT:
+      return {
+        ...state,
+        appointments: state.appointments.map(apt =>
+          apt.id === action.payload.id ? action.payload : apt
+        )
+      };
+
+    case EXPERT_ACTIONS.DELETE_APPOINTMENT:
+      return {
+        ...state,
+        appointments: state.appointments.filter(apt => apt.id !== action.payload)
       };
 
     default:

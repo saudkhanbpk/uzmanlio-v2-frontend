@@ -1,11 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { mockBlogPosts } from "../utility/mockData";
 import { renderMarkdownToHtml } from "../utility/renderMarkdownToHtml";
+import { blogService } from "../services/blogService";
+import Swal from "sweetalert2";
 // Blog Main Component
 export const Blog = () => {
-  const [blogPosts, setBlogPosts] = useState(mockBlogPosts);
+  const [blogPosts, setBlogPosts] = useState([]);
   const [filter, setFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+  // Load blogs on component mount
+  useEffect(() => {
+    loadBlogs();
+  }, []);
+
+
+  const loadBlogs = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const blogsData = await blogService.getBlogs(userId);
+      setBlogPosts(blogsData);
+    } catch (err) {
+      setError('Blog yazıları yüklenirken bir hata oluştu.');
+      console.error('Error loading blogs:', err);
+      // Fallback to mock data
+      setBlogPosts(mockBlogPosts);
+    } finally {
+      setLoading(false);
+    }
+  };
 // Categories
   const categories = ["Psikoloji", "Kişisel Gelişim", "Spor", "Beslenme", "Teknoloji", "Business", "Tasarım", "Lifestyle"];
 
@@ -13,22 +41,54 @@ export const Blog = () => {
     ? blogPosts 
     : blogPosts.filter(post => post.category === filter);
 
-  const deleteBlogPost = (id) => {
-    if (window.confirm('Bu blog yazısını silmek istediğinizden emin misiniz?')) {
-      setBlogPosts(posts => posts.filter(post => post.id !== id));
+const deleteBlogPost = async (id) => {
+  const result = await Swal.fire({
+    title: 'Emin misiniz?',
+    text: 'Bu blog yazısını silmek istediğinizden emin misiniz?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Evet, sil',
+    cancelButtonText: 'İptal'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      await blogService.deleteBlog(userId, id);
+      await loadBlogs(); // Reload blogs to reflect changes
+
+      // ✅ Success message
+      await Swal.fire({
+        icon: 'success',
+        title: 'Silindi!',
+        text: 'Blog yazısı başarıyla silindi.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    } catch (err) {
+      // ❌ Error message
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Blog yazısı silinirken bir hata oluştu.'
+      });
+      console.error('Error deleting blog:', err);
+    }
+  }
+};
+
+
+
+
+  const copyShareUrl = async (post) => {
+    try {
+      await blogService.copyShareUrl(post);
+      alert('URL panoya kopyalandı!');
+    } catch (err) {
+      console.error('Error copying URL:', err);
+      alert('URL kopyalanırken bir hata oluştu.');
     }
   };
-
-  const getShareUrl = (post) => {
-    return `${window.location.origin}/blog/${post.slug}`;
-  };
-
-  const copyShareUrl = (post) => {
-    const url = getShareUrl(post);
-    navigator.clipboard.writeText(url);
-    alert('URL panoya kopyalandı!');
-  };
-
+ 
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -78,8 +138,42 @@ export const Blog = () => {
         </div>
       </div>
 
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Blog yazıları yükleniyor...</p>
+        </div>
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={loadBlogs}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Blog Posts List */}
-      <div className="grid gap-6">
+      {!loading && !error && (
+        <div className="grid gap-6">
         {filteredPosts.length === 0 ? (
           <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
             <div className="text-gray-400 text-6xl mb-4">📝</div>
@@ -157,7 +251,8 @@ export const Blog = () => {
             </div>
           ))
         )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };

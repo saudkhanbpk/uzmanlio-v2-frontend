@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { mockForms } from "../utility/mockData";
+import Swal from "sweetalert2";
 // Form Edit Component
 export const FormEdit = () => {
   const { id } = useParams();
@@ -101,7 +102,11 @@ export const FormEdit = () => {
     e.preventDefault();
     
     if (!formData.title || fields.length === 0) {
-      alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
+      // alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
+       Swal.fire({
+        icon:"info",
+        title:"Lütfen form başlığını girin ve en az bir soru ekleyin."
+      })
       return;
     }
 

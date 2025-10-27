@@ -1,11 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { blogService } from "../services/blogService";
+import { SimpleRichTextEditor } from "../richTextEditor";
+import Swal from "sweetalert2";
 
 // Blog Create Component
 export const BlogCreate = () => {
   const navigate = useNavigate();
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
   const categories = ["Psikoloji", "Kişisel Gelişim", "Spor", "Beslenme", "Teknoloji", "Business", "Tasarım", "Lifestyle"];
-  
+
   const [formData, setFormData] = useState({
     title: '',
     content: '',
@@ -13,6 +17,9 @@ export const BlogCreate = () => {
     keywords: '',
     status: 'draft'
   });
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,37 +51,60 @@ export const BlogCreate = () => {
       .trim('-');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title || !formData.content || !formData.category) {
-      alert('Lütfen zorunlu alanları doldurun.');
-      return;
+  Swal.fire({
+    icon: "info",
+    title: "Lütfen tüm zorunlu alanları doldurun."
+  });
+  return;
+}
+
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Format data for API
+      const blogData = blogService.formatBlogData(formData);
+
+      // Create blog
+      await blogService.createBlog(userId, blogData);
+
+      // alert('Blog yazısı başarıyla oluşturuldu!');
+      console.log("Blog Created")
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Blog başarıyla oluşturuldu.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+
+      navigate('/dashboard/blog');
+    } catch (err) {
+      // setError(err.message || 'Blog yazısı oluşturulurken bir hata oluştu.');
+      console.error('Error creating blog:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Blog oluşturulurken bir hata oluştu.',
+        showConfirmButton: false,
+        timer: 2000
+      });
+
+    } finally {
+      setLoading(false);
     }
-
-    const newPost = {
-      id: Date.now(),
-      title: formData.title,
-      content: formData.content,
-      category: formData.category,
-      keywords: formData.keywords.split(',').map(k => k.trim()).filter(k => k),
-      status: formData.status,
-      slug: generateSlug(formData.title),
-      createdAt: new Date().toISOString().split('T')[0],
-      updatedAt: new Date().toISOString().split('T')[0],
-      author: "Ahmet Yılmaz"
-    };
-
-    console.log('Yeni blog yazısı oluşturuldu:', newPost);
-    alert('Blog yazısı başarıyla oluşturuldu!');
-    navigate('/dashboard/blog');
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/dashboard/blog"
           className="text-gray-500 hover:text-gray-700"
         >
@@ -82,6 +112,23 @@ export const BlogCreate = () => {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Yeni Blog Yazısı</h1>
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
@@ -175,9 +222,13 @@ export const BlogCreate = () => {
           </Link>
           <button
             type="submit"
-            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={loading}
+            className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-primary-400 transition-colors"
           >
-            {formData.status === 'published' ? 'Yayınla' : 'Taslak Olarak Kaydet'}
+            {loading
+              ? 'Kaydediliyor...'
+              : (formData.status === 'published' ? 'Yayınla' : 'Taslak Olarak Kaydet')
+            }
           </button>
         </div>
       </form>

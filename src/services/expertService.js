@@ -14,12 +14,12 @@ class ExpertService {
 
     try {
       const response = await fetch(url, config);
-
+      
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-
+      
       return await response.json();
     } catch (error) {
       console.error(`API call failed for ${endpoint}:`, error);
@@ -41,7 +41,7 @@ class ExpertService {
 
   async updateTitle(userId, titleId, titleData) {
     return this.apiCall(`/api/expert/${userId}/titles/${titleId}`, {
-      method: 'PUT',
+      method: 'PUT', 
       body: JSON.stringify(titleData),
     });
   }
@@ -125,7 +125,7 @@ class ExpertService {
     return this.apiCall(`/api/expert/${userId}/experience`);
   }
 
-  async addExperience(userId, experienceData) {
+  async addExperience(userId, experienceData) {    
     return this.apiCall(`/api/expert/${userId}/experience`, {
       method: 'POST',
       body: JSON.stringify(experienceData),
@@ -272,13 +272,57 @@ class ExpertService {
 
   // Bulk operations
   async getExpertProfile(userId) {
-    return this.apiCall(`/api/expert/${userId}/profile`);
+    const res = this.apiCall(`/api/expert/${userId}/profile`);
+    localStorage.removeItem("user")
+    localStorage.setItem("user", JSON.stringify(res));
+    console.log("response:",res);
+    return res 
   }
 
   async updateExpertProfile(userId, profileData) {
-    return this.apiCall(`/api/expert/${userId}/profile`, {
+     const res = this.apiCall(`/expert/${userId}/profile`, {
       method: 'PUT',
       body: JSON.stringify(profileData),
+    });
+    localStorage.removeItem("user")
+     localStorage.setItem("user", JSON.stringify(res));
+    console.log("response:",res);
+    return res
+  }
+
+  // Calendar and availability operations
+  async getAvailability(userId) {
+    return this.apiCall(`/expert/${userId}/availability`);
+  }
+
+  async updateAvailability(userId, availabilityData) {
+    return this.apiCall(`/expert/${userId}/availability`, {
+      method: 'PUT',
+      body: JSON.stringify(availabilityData),
+    });
+  }
+
+  async getAppointments(userId) {
+    return this.apiCall(`/expert/${userId}/appointments`);
+  }
+
+  async addAppointment(userId, appointmentData) {
+    return this.apiCall(`/expert/${userId}/appointments`, {
+      method: 'POST',
+      body: JSON.stringify(appointmentData),
+    });
+  }
+
+  async updateAppointment(userId, appointmentId, appointmentData) {
+    return this.apiCall(`/expert/${userId}/appointments/${appointmentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(appointmentData),
+    });
+  }
+
+  async deleteAppointment(userId, appointmentId) {
+    return this.apiCall(`/expert/${userId}/appointments/${appointmentId}`, {
+      method: 'DELETE',
     });
   }
 }

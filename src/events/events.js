@@ -1,12 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { eventService } from "../services/eventService";
+import { EventEditModal } from "./EventEditModal";
 // Events Component
 export const Events = () => {
   const [activeTab, setActiveTab] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  
-  const events = [
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+
+  // Load events on component mount
+  useEffect(() => {
+    loadEvents();
+  }, []);
+
+  const loadEvents = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const eventsData = await eventService.getEvents(userId);
+      setEvents(eventsData);
+    } catch (err) {
+      setError('Etkinlikler yüklenirken bir hata oluştu.');
+      console.error('Error loading events:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Mock events for fallback (keeping original structure)
+  const mockEvents = [
     {
       id: 1,
       title: 'WordPress ile Web Tasarım Masterclass',
@@ -85,15 +112,18 @@ export const Events = () => {
     }
   ];
 
+  // Use real events if available, otherwise use mock events
+  const displayEvents = events.length > 0 ? events : mockEvents;
+
   const tabs = [
-    { id: 'all', name: 'Tümü', count: events.length },
-    { id: 'pending', name: 'Onay Bekliyor', count: events.filter(e => e.status === 'pending').length },
-    { id: 'approved', name: 'Yaklaşan', count: events.filter(e => e.status === 'approved').length },
-    { id: 'completed', name: 'Tamamlandı', count: events.filter(e => e.status === 'completed').length },
-    { id: 'cancelled', name: 'İptal Edildi', count: events.filter(e => e.status === 'cancelled').length },
+    { id: 'all', name: 'Tümü', count: displayEvents.length },
+    { id: 'pending', name: 'Onay Bekliyor', count: displayEvents.filter(e => e.status === 'pending').length },
+    { id: 'approved', name: 'Yaklaşan', count: displayEvents.filter(e => e.status === 'approved').length },
+    { id: 'completed', name: 'Tamamlandı', count: displayEvents.filter(e => e.status === 'completed').length },
+    { id: 'cancelled', name: 'İptal Edildi', count: displayEvents.filter(e => e.status === 'cancelled').length },
   ];
 
-  const filteredEvents = activeTab === 'all' ? events : events.filter(e => e.status === activeTab);
+  const filteredEvents = activeTab === 'all' ? displayEvents : displayEvents.filter(e => e.status === activeTab);
 
   const getStatusBadge = (status) => {
     const statusConfig = {
@@ -111,19 +141,29 @@ export const Events = () => {
     );
   };
 
-  const handleApprove = (eventId) => {
-    console.log('Etkinlik onaylandı:', eventId);
-    // Here you would update the event status in your backend
+  const handleApprove = async (eventId) => {
+    try {
+      await eventService.updateEventStatus(userId, eventId, 'approved');
+      await loadEvents(); // Reload events to reflect changes
+    } catch (err) {
+      alert('Etkinlik onaylanırken bir hata oluştu.');
+      console.error('Error approving event:', err);
+    }
   };
 
-  const handleReject = (eventId) => {
-    console.log('Etkinlik reddedildi:', eventId);
-    // Here you would update the event status in your backend
+  const handleReject = async (eventId) => {
+    try {
+      await eventService.updateEventStatus(userId, eventId, 'cancelled');
+      await loadEvents(); // Reload events to reflect changes
+    } catch (err) {
+      alert('Etkinlik reddedilirken bir hata oluştu.');
+      console.error('Error rejecting event:', err);
+    }
   };
 
   const handleJoin = (eventId) => {
     console.log('Etkinliğe katıl:', eventId);
-    // Here you would handle joining the event
+    // Here you would handle joining the event (redirect to meeting platform)
   };
 
   const handleEdit = (event) => {
@@ -131,13 +171,29 @@ export const Events = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = (eventId) => {
+  const handleDelete = async (eventId) => {
     if (window.confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
-      console.log('Etkinlik silindi:', eventId);
-      // Here you would delete the event from your backend
+      try {
+        await eventService.deleteEvent(userId, eventId);
+        await loadEvents(); // Reload events to reflect changes
+      } catch (err) {
+        alert('Etkinlik silinirken bir hata oluştu.');
+        console.error('Error deleting event:', err);
+      }
     }
   };
 
+  const handleEventUpdate = async (updatedEvent) => {
+    try {
+      await eventService.updateEvent(userId, updatedEvent.id, updatedEvent);
+      await loadEvents(); // Reload events to reflect changes
+      setShowEditModal(false);
+    } catch (err) {
+      alert('Etkinlik güncellenirken bir hata oluştu.');
+      console.error('Error updating event:', err);
+    }
+  };
+ 
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -170,12 +226,46 @@ export const Events = () => {
         </nav>
       </div>
 
-      {/* Events List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Etkinlik Listesi</h3>
+      {/* Loading State */}
+      {loading && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Etkinlikler yükleniyor...</p>
         </div>
-        <div className="divide-y divide-gray-200">
+      )}
+
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <span className="text-red-400">⚠️</span>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">Hata</h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+              </div>
+              <div className="mt-4">
+                <button
+                  onClick={loadEvents}
+                  className="bg-red-100 px-3 py-2 rounded-md text-sm font-medium text-red-800 hover:bg-red-200"
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Events List */}
+      {!loading && !error && (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900">Etkinlik Listesi</h3>
+          </div>
+          <div className="divide-y divide-gray-200">
           {filteredEvents.map((event) => (
             <div key={event.id} className="px-6 py-4 hover:bg-gray-50">
               <div className="flex items-center justify-between">
@@ -264,15 +354,17 @@ export const Events = () => {
               </div>
             </div>
           ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Edit Event Modal */}
       {showEditModal && selectedEvent && (
-        <EventEditModal 
-          event={selectedEvent} 
+        <EventEditModal
+          event={selectedEvent}
           onClose={() => setShowEditModal(false)}
           onDelete={handleDelete}
+          onUpdate={handleEventUpdate}
         />
       )}
     </div>
