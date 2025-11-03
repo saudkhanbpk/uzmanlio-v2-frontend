@@ -36,45 +36,72 @@ export const CreateEvent = () => {
   const [error, setError] = useState(null);
 
   // Load services and packages on component mount
-  useEffect(() => {
+  // useEffect(() => {
+    const ShowServices  = async () => {
+      
     const storedUser = localStorage.getItem("user");
 
-    if (storedUser && Object.keys(storedUser).length > 0) {
-      const user = JSON.parse(storedUser);
+    try {
+      // Check if storedUser exists and can be parsed
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // Check if parsedUser has services or packages
+        if (parsedUser && (parsedUser.services?.length || parsedUser.packages?.length)) {
+          console.log("Using stored user data:", parsedUser);
+          
+          const services = Array.isArray(parsedUser.services) ? parsedUser.services : [];
+          const packages = Array.isArray(parsedUser.packages) ? parsedUser.packages : [];
 
-      console.log("Packages:", user);
-
-      const services = Array.isArray(user.services) ? user.services : [];
-      const packages = Array.isArray(user.packages) ? user.packages : [];
-
-      const combined = [
-        ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
-        ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
-      ];
+          const combined = [
+            ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
+            ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
+          ];
 
 
-      setAvailableServices(combined);
-    } else {
+          setAvailableServices(combined);
+        } else {
+          console.log("No services/packages in stored user, fetching from DB");
+          loadServicesAndPackages();
+        }
+      } else {
+        console.log("No user in localStorage, fetching from DB");
+        loadServicesAndPackages();
+      }
+    } catch (error) {
+      console.error("Error parsing stored user:", error);
       loadServicesAndPackages();
     }
-  }, []);
+  };
 
+     useEffect(() => {
+      ShowServices()
+     }, []);
 
   const loadServicesAndPackages = async () => {
     console.log("Loading services and packages from DB");
-
     try {
       const user = await eventService.getServicesAndPackages(userId);
-      const combined = [
-        ...user.services.map(s => ({ id: s.id, title: s.title, type: "service" })),
-        ...user.packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
-      ];
-      setAvailableServices(combined);
-      console.log("Fetched Services", services)
+      
+      if (!user) {
+        console.error("No user data received");
+        return;
+      }
+      ShowServices();
+
+      // const services = Array.isArray(user.services) ? user.services : [];
+      // const packages = Array.isArray(user.packages) ? user.packages : [];
+
+      // const combined = [
+      //   ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
+      //   ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
+      // ];
+      
+      // setAvailableServices(combined);
+      // console.log("Fetched services and packages:", combined);
     } catch (err) {
       console.error('Error loading services:', err);
-      // Fallback to mock data
-      // setAvailableServices(mockServices);
+      setAvailableServices([]); // Set empty array on error
     }
   };
 

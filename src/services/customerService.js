@@ -1,5 +1,7 @@
 // Customer Service - API calls for customer management
-const API_BASE_URL = 'http://localhost:4000/api/expert';
+const backendUrl = process.env.REACT_APP_BACKEND_URL
+const API_BASE_URL = `${backendUrl}/api/expert`;
+//const API_BASE_URL = '/api/expert`;
 
 export const customerService = {
   // Get all customers for a user

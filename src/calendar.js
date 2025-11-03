@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { useExpertData } from "./hooks/useExpertData";
+import Swal from "sweetalert2";
+import { useSearchParams } from "react-router-dom";
+
 
 // Calendar Component
 export const Calendar = () => {
@@ -22,7 +25,32 @@ export const Calendar = () => {
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState(null);
 
+    // const [params] = useSearchParams();
+
+  // useEffect(() => {
+  //   const status = params.get("status");
+  //   const error = params.get("error");
+  //   const provider = params.get("provider");
+
+  //   if (status === "success") {
+  //     Swal.fire({
+  //       icon: "success",
+  //       title: "Calendar Connected!",
+  //       text: `${provider === "google" ? "Google" : "Outlook"} Calendar connected successfully.`,
+  //       timer: 3000,
+  //       showConfirmButton: false,
+  //     });
+  //   } else if (error) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Connection Failed",
+  //       text: decodeURIComponent(error),
+  //     });
+  //   }
+  // }, [params]);
+
   // Load calendar data on component mount
+  
   useEffect(() => {
     const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
     loadExpertProfile(userId).catch(console.error);
@@ -182,6 +210,7 @@ export const Calendar = () => {
       setIsSaving(false);
     }
   };
+  const backendUrl = process.env.REACT_APP_BACKEND_URL
 
   // Calendar Integration Functions
   const connectCalendar = async (provider) => {
@@ -189,31 +218,38 @@ export const Calendar = () => {
       setCalendarLoading(true);
       setCalendarError(null);
       const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
-
-      const response = await fetch(`http://localhost:4000/api/calendar/auth/${provider}/auth/${userId}`);
+      
+      const response = await fetch(`https://uzmanlio-backend-kpwz.onrender.com/api/calendar/auth/${provider}/auth/${userId}`);
+      console.log("Response From Goolge calendar", response)
       const data = await response.json();
-
       if (response.ok && data.authUrl) {
-        // Open OAuth flow in new window
-        const authWindow = window.open(
-          data.authUrl,
-          'calendar-auth',
-          'width=600,height=700,scrollbars=yes,resizable=yes'
-        );
+  // Redirect the current page to Google OAuth URL
+  window.location.href = data.authUrl;
+}
 
-        // Listen for auth completion
-        const checkClosed = setInterval(() => {
-          if (authWindow.closed) {
-            clearInterval(checkClosed);
-            // Reload providers after auth
-            setTimeout(() => {
-              loadCalendarProviders();
-            }, 1000);
-          }
-        }, 1000);
-      } else {
-        setCalendarError(data.error || 'Kimlik doğrulama başlatılamadı');
-      }
+
+      // if (response.ok && data.authUrl) {
+      //   // Open OAuth flow in new window
+      //   const authWindow = window.open(
+      //     data.authUrl,
+      //     'calendar-auth',
+      //     'width=600,height=700,scrollbars=yes,resizable=yes'
+      //   );
+
+      //   // Listen for auth completion
+      //   const checkClosed = setInterval(() => {
+          
+      //     if (authWindow.closed) {
+      //       clearInterval(checkClosed);
+      //       // Reload providers after auth
+      //       setTimeout(() => {
+      //         loadCalendarProviders();
+      //       }, 1000);
+      //     }
+      //   }, 1000);
+      // } else {
+      //   setCalendarError(data.error || 'Kimlik doğrulama başlatılamadı');
+      // }
     } catch (err) {
       setCalendarError('Takvim bağlantısı başarısız');
       console.error('Error connecting calendar:', err);
@@ -225,7 +261,7 @@ export const Calendar = () => {
   const loadCalendarProviders = async () => {
     try {
       const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
-      const response = await fetch(`http://localhost:4000/api/calendar/auth/${userId}/providers`);
+      const response = await fetch(`${backendUrl}/api/calendar/auth/${userId}/providers`);
       const data = await response.json();
 
       if (response.ok) {
@@ -235,7 +271,7 @@ export const Calendar = () => {
       }
     } catch (err) {
       setCalendarError('Takvim sağlayıcıları yüklenemedi');
-      console.error('Error loading providers:', err);
+      // console.error('Error loading providers:', err);
     }
   };
 

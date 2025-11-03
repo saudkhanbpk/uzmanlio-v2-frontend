@@ -1,5 +1,6 @@
 // Event Service - API calls for events management
-const API_BASE_URL = 'http://localhost:4000/api/expert';
+const backendUrl = process.env.REACT_APP_BACKEND_URL
+const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const eventService = {
   // Get all events for a user
@@ -141,6 +142,7 @@ export const eventService = {
   // Get services and packages for event creation
 async getServicesAndPackages(userId) {
   try {
+    console.log("Fetching services and packages for user:", userId)
     const response = await fetch(`${API_BASE_URL}/${userId}/profile`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

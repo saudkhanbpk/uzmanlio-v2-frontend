@@ -1,55 +1,164 @@
-import { useState } from "react";
+// Settings.js
+import { useEffect, useState } from "react";
+import SubscriptionPaymentForm from "./SubscriptionPaymentForm";
+import Swal from "sweetalert2";
+import axios from "../node_modules/axios/index";
 
 // Settings Component
 export const Settings = () => {
-  const [billingPeriod, setBillingPeriod] = useState('monthly');
+  // UI state
+  const [billingPeriod, setBillingPeriod] = useState('monthly'); // user's selected view (monthly/yearly)
   const [selectedSeats, setSelectedSeats] = useState(1);
-  const [currentPlan, setCurrentPlan] = useState('bireysel'); // Current active plan
+  const [currentPlan, setCurrentPlan] = useState(''); // backend active plan (plantype) lowercase
+  const [backendDuration, setBackendDuration] = useState(''); // backend active duration (duration) lowercase
+  const [newSubscriptionModel, setNewsubscriptionModel] = useState(false)
+  const [subscriptionType, setSubscriptionType] = useState("")
+  const [price, setPrice] = useState(0);
 
+  // IMPORTANT: keep this the same user id or replace dynamically
+  const userId = "68c94094d011cdb0e5fa2caa";
+
+  // Pricing (lowercase keys)
   const monthlyPrices = {
-    bireysel: 500,
-    kurumsal: 750,
+    individual: 500,
+    institutional: 750,
     seatPrice: 100
   };
 
   const yearlyPrices = {
-    bireysel: 5500, // Monthly equivalent
-    birey_yearly: 66000, // Total yearly
-    bireysel_discount: 10,
-    kurumsal: 6250, // Monthly equivalent  
-    kurumsal_yearly: 75000, // Total yearly
-    kurumsal_discount: 20,
-    seatPrice: 1000 // Yearly seat price
+    individual: 5000,
+    institutional: 7500,
+    seatPrice: 100
   };
 
+  // Helper: returns price for a plan based on the *view* billingPeriod
   const getCurrentPrice = (plan) => {
+    if (!plan) return 0;
+    const key = String(plan).toLowerCase();
     if (billingPeriod === 'monthly') {
-      return monthlyPrices[plan];
+      return monthlyPrices[key];
     } else {
-      return yearlyPrices[plan];
+      return yearlyPrices[key];
     }
   };
 
+  // Institutional total according to the *view* billingPeriod and selectedSeats
   const getTotalKurumsalPrice = () => {
-    const basePrice = getCurrentPrice('kurumsal');
-    const seatPrice = billingPeriod === 'monthly' ? monthlyPrices.seatPrice : monthlyPrices.seatPrice; // Use monthly seat price for both
-    const additionalSeats = selectedSeats - 1; // First seat included
-    return basePrice + (additionalSeats * seatPrice);
+    const basePrice = billingPeriod === 'monthly' ? monthlyPrices.institutional : yearlyPrices.institutional;
+    const seatPrice = billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice;
+    const additionalSeats = Math.max(0, selectedSeats - 1); // first seat included
+    return basePrice + additionalSeats * seatPrice;
   };
 
+  // Yearly breakdown helper (kept for backward compatibility)
   const getKurumsalYearlyTotal = () => {
-    const baseYearly = yearlyPrices.kurumsal_yearly;
-    const additionalSeats = selectedSeats - 1;
+    const baseYearly = yearlyPrices.institutional;
+    const additionalSeats = Math.max(0, selectedSeats - 1);
     const additionalYearlySeats = additionalSeats * monthlyPrices.seatPrice * 12;
     return baseYearly + additionalYearlySeats;
   };
 
-  const handlePlanClick = (planType) => {
-    if (planType !== currentPlan) {
-      // Redirect to uzmanlio.com for non-selected plans
-      window.open('https://uzmanlio.com', '_blank');
+  // Fetch user profile and subscription from backend (uses lowercase keys)
+  useEffect(() => {
+    async function fetchUserProfile() {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BACKEND_URL}/api/expert/${userId}/profile`
+        );
+
+        console.log("Response:", response);
+
+        const user = response.data;
+        // Accept subscription under either 'subscription' or 'Subscription' (some backends differ)
+        const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
+
+        if (currentSubscription && currentSubscription.endDate) {
+          // Only treat as active if endDate is in future
+          const endTs = new Date(currentSubscription.endDate).getTime();
+          if (!Number.isNaN(endTs) && endTs > Date.now()) {
+            // Expect backend now sends lowercase: plantype, duration
+            const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? '';
+            const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? '';
+
+            const planFromBackend = String(planFromBackendRaw).toLowerCase();
+            const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
+
+            // Set backend-active values (these drive the highlighting)
+            setCurrentPlan(planFromBackend);      // 'individual' or 'institutional'
+            setBackendDuration(durationFromBackend); // 'monthly' or 'yearly'
+
+            // Also set the UI billingPeriod to backend duration so displayed prices match backend on load
+            setBillingPeriod(durationFromBackend);
+
+            // If backend provides seat count, use it (otherwise keep 1)
+            if (currentSubscription.seats) {
+              setSelectedSeats(Number(currentSubscription.seats));
+            }
+
+            // compute and set price for modal / display (based on backend plan & duration)
+            let computedPrice = 0;
+            if (planFromBackend === 'individual') {
+              computedPrice = durationFromBackend === 'monthly' ? monthlyPrices.individual : yearlyPrices.individual;
+            } else if (planFromBackend === 'institutional') {
+              // compute institutional price including seats
+              const base = durationFromBackend === 'monthly' ? monthlyPrices.institutional : yearlyPrices.institutional;
+              const seatP = durationFromBackend === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice;
+              computedPrice = base + Math.max(0, selectedSeats - 1) * seatP;
+            }
+            setPrice(computedPrice);
+
+            console.log("Active subscription found:", { planFromBackend, durationFromBackend, computedPrice });
+          } else {
+            // subscription expired or invalid -> clear
+            setCurrentPlan('');
+            setBackendDuration('');
+            console.log("No Active Plan For the Current User");
+          }
+        } else {
+          // no subscription
+          setCurrentPlan('');
+          setBackendDuration('');
+          console.log("No subscription data found");
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
     }
+
+    fetchUserProfile();
+    // run once on mount
+  }, []);
+
+
+  // When user clicks on Plan button -> open subscription modal
+  // Do NOT change currentPlan/backendDuration here — they represent what's stored in backend
+  const handlePlanClick = (planType) => {
+    // planType passed in from UI might be 'Individual' or 'institutional' etc — normalize
+    const normalized = String(planType).toLowerCase();
+    // compute what price would be if user proceeds with current billingPeriod & seats
+    let computedPrice = 0;
+    if (normalized === 'individual') {
+      computedPrice = billingPeriod === 'monthly' ? monthlyPrices.individual : yearlyPrices.individual;
+    } else if (normalized === 'institutional') {
+      const base = billingPeriod === 'monthly' ? monthlyPrices.institutional : yearlyPrices.institutional;
+      const seatP = billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice;
+      computedPrice = base + Math.max(0, selectedSeats - 1) * seatP;
+    }
+
+    setSubscriptionType(normalized);
+    setPrice(computedPrice);
+    // open modal for payment / confirmation
+    setNewsubscriptionModel(true);
+    console.log("Plan clicked (will open modal):", { normalized, billingPeriod, selectedSeats, computedPrice });
   };
+
+
+  // Helper used in classNames: highlight only when backend says this plan+duration is active
+  const isActivePlan = (plan) => {
+    // both currentPlan and backendDuration must match
+    return currentPlan === plan && backendDuration === billingPeriod;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -59,27 +168,25 @@ export const Settings = () => {
       {/* Subscription Plans */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Aboneliklerim</h3>
-        
+
         {/* Billing Period Toggle */}
         <div className="flex justify-center mb-8">
           <div className="bg-gray-100 p-1 rounded-lg flex">
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                billingPeriod === 'monthly'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'monthly'
+                ? 'bg-white text-primary-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               Aylık
             </button>
             <button
               onClick={() => setBillingPeriod('yearly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
-                billingPeriod === 'yearly'
-                  ? 'bg-white text-primary-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'yearly'
+                ? 'bg-white text-primary-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900'
+                }`}
             >
               Yıllık
             </button>
@@ -89,47 +196,40 @@ export const Settings = () => {
         {/* Plans */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Bireysel Plan */}
-          <div className={`border rounded-xl p-6 relative flex flex-col ${
-            currentPlan === 'bireysel' 
-              ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50' 
-              : 'border-gray-200 cursor-pointer hover:border-gray-300'
-          }`}>
-            {currentPlan === 'bireysel' && (
+          <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('individual')
+            ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
+            : 'border-gray-200 cursor-pointer hover:border-gray-300'
+            }`}>
+            {isActivePlan('individual') && (
               <div className="absolute top-4 right-4">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
                   Mevcut Plan
                 </span>
               </div>
             )}
-            
+
             <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">Bireysel</h4>
+              <h4 className="text-xl font-semibold text-gray-900">individual</h4>
               <div className="mt-2 flex items-baseline">
-                {billingPeriod === 'monthly' ? (
-                  <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('bireysel')}</span>
-                ) : (
-                  <>
-                    <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('bireysel')}</span>
-                    <span className="text-sm text-gray-600 ml-1">/ay</span>
-                  </>
-                )}
+                <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('individual')}</span>
                 <span className="text-sm text-gray-600 ml-1">
                   {billingPeriod === 'monthly' ? '/ay' : ''}
                 </span>
               </div>
-              
+
               {billingPeriod === 'yearly' && (
                 <div className="mt-2">
                   <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                    {yearlyPrices.bireysel_discount}% indirim
+                    {/* kept original yearly discount label keys — change backend if you want them dynamic */}
+                    {yearlyPrices.individual_discount ?? ''}% indirim
                   </span>
                   <div className="text-sm text-gray-500 mt-1">
-                    Yıllık ₺{yearlyPrices.birey_yearly.toLocaleString()}
+                    Yıllık ₺{(yearlyPrices.individual ?? yearlyPrices.individual).toLocaleString()}
                   </div>
                 </div>
               )}
             </div>
-            
+
             <ul className="space-y-3 mb-6 flex-grow">
               <li className="flex items-center">
                 <span className="text-primary-600 mr-2">✓</span>
@@ -152,54 +252,51 @@ export const Settings = () => {
                 <span className="text-sm text-gray-700">1 Ana Kullanıcı</span>
               </li>
             </ul>
-            
-            <button 
-              onClick={() => handlePlanClick('bireysel')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${
-                currentPlan === 'bireysel'
-                  ? 'bg-primary-600 text-white cursor-default'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              disabled={currentPlan === 'bireysel'}
+
+            <button
+              onClick={() => {
+                // keep original UI flow: set view to monthly when user clicks purchase for individual (you had this)
+                setBillingPeriod('monthly')
+                handlePlanClick('individual');
+                setSubscriptionType("individual")
+                setPrice(getCurrentPrice('individual'))
+              }}
+              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('individual')
+                ? 'bg-primary-600 text-white cursor-default'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              disabled={isActivePlan('individual')}
             >
-              {currentPlan === 'bireysel' ? 'Mevcut Plan' : 'Planı Seç'}
+              {isActivePlan('individual') ? 'Mevcut Plan' : 'Planı Seç'}
             </button>
           </div>
 
-          {/* Kurumsal Plan */}
-          <div className={`border rounded-xl p-6 relative flex flex-col ${
-            currentPlan === 'kurumsal' 
-              ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50' 
-              : 'border-gray-200 cursor-pointer hover:border-gray-300'
-          }`}>
-            {currentPlan === 'kurumsal' && (
+          {/* Institutional Plan */}
+          <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('institutional')
+            ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
+            : 'border-gray-200 cursor-pointer hover:border-gray-300'
+            }`}>
+            {isActivePlan('institutional') && (
               <div className="absolute top-4 right-4">
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
                   Mevcut Plan
                 </span>
               </div>
             )}
-            
+
             <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">Kurumsal</h4>
+              <h4 className="text-xl font-semibold text-gray-900">institutional</h4>
               <div className="mt-2 flex items-baseline">
-                {billingPeriod === 'monthly' ? (
-                  <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice()}</span>
-                ) : (
-                  <>
-                    <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice()}</span>
-                    <span className="text-sm text-gray-600 ml-1">/ay</span>
-                  </>
-                )}
+                <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice()}</span>
                 <span className="text-sm text-gray-600 ml-1">
                   {billingPeriod === 'monthly' ? '/ay' : ''}
                 </span>
               </div>
-              
+
               {billingPeriod === 'yearly' && (
                 <div className="mt-2">
                   <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                    {yearlyPrices.kurumsal_discount}% indirim
+                    {yearlyPrices.institutional_discount ?? ''}% indirim
                   </span>
                   <div className="text-sm text-gray-500 mt-1">
                     Yıllık ₺{getKurumsalYearlyTotal().toLocaleString()}
@@ -207,32 +304,17 @@ export const Settings = () => {
                 </div>
               )}
             </div>
-            
+
             <ul className="space-y-3 mb-6 flex-grow">
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Sınırsız Danışan</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Online Randevu</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Randevu Hatırlatıcı</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Kurumsal İsim ve Çoklu Kullanıcı</span>
-              </li>
+              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Sınırsız Danışan</span></li>
+              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Online Randevu</span></li>
+              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Randevu Hatırlatıcı</span></li>
+              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span></li>
+              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Institutional İsim ve Çoklu Kullanıcı</span></li>
             </ul>
-            
-            {/* Seat Selection - Only show for Kurumsal plan */}
-            {currentPlan === 'kurumsal' && (
+
+            {/* Seat Selection - Only show for Institutional plan (based on backend active plan) */}
+            {/* {currentPlan === 'institutional' && backendDuration === billingPeriod && (
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Kullanıcı Sayısı Seç
@@ -243,41 +325,39 @@ export const Settings = () => {
                       type="button"
                       onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
                       disabled={selectedSeats <= 1}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        selectedSeats <= 1 
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                          : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-primary-600 text-white hover:bg-primary-700'
+                        }`}
                     >
                       −
                     </button>
-                    
+
                     <div className="text-center min-w-[120px]">
                       <div className="text-2xl font-bold text-gray-900">{selectedSeats}</div>
                       <div className="text-sm text-gray-500">
                         {selectedSeats === 1 ? 'Kullanıcı' : 'Kullanıcı'}
                       </div>
                     </div>
-                    
+
                     <button
                       type="button"
                       onClick={() => setSelectedSeats(Math.min(20, selectedSeats + 1))}
                       disabled={selectedSeats >= 20}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                        selectedSeats >= 20 
-                          ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
-                          : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats >= 20
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-primary-600 text-white hover:bg-primary-700'
+                        }`}
                     >
                       +
                     </button>
                   </div>
-                  
+
                   <div className="text-right">
                     <div className="text-sm text-gray-600">Ek Maliyet</div>
                     <div className="font-semibold text-gray-900">
                       {selectedSeats > 1 ? (
-                        `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : monthlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/ay'}`
+                        `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/ay'}`
                       ) : (
                         'Dahil'
                       )}
@@ -285,22 +365,27 @@ export const Settings = () => {
                   </div>
                 </div>
               </div>
-            )}
-            
-            <button 
-              onClick={() => handlePlanClick('kurumsal')}
-              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${
-                currentPlan === 'kurumsal'
-                  ? 'bg-primary-600 text-white cursor-default'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
-              disabled={currentPlan === 'kurumsal'}
+            )} */}
+
+            <button
+              onClick={() => {
+                // preserve original behavior: switch view to yearly when clicking the institutional button (your original code did this)
+                setBillingPeriod('yearly')
+                handlePlanClick('institutional')
+                setSubscriptionType("institutional")
+                setPrice(getCurrentPrice('institutional'))
+              }}
+              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('institutional')
+                ? 'bg-primary-600 text-white cursor-default'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              disabled={isActivePlan('institutional')}
             >
-              {currentPlan === 'kurumsal' ? 'Mevcut Plan' : 'Planı Seç'}
+              {isActivePlan('institutional') ? 'Mevcut Plan' : 'Planı Seç'}
             </button>
           </div>
         </div>
-        
+
         {/* Footnote */}
         <div className="mt-6 text-left">
           <p className="text-xs text-gray-500">KDV hariç fiyatlar gösterilmektedir</p>
@@ -310,7 +395,7 @@ export const Settings = () => {
       {/* Credit Card Information */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Kredi Kartı Bilgileri</h3>
-        
+
         {/* Current Credit Card Display */}
         <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
           <div className="flex items-center justify-between">
@@ -364,6 +449,26 @@ export const Settings = () => {
           </div>
         </div>
       </div>
+
+      {/* Subscription Status */}
+      {newSubscriptionModel && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <SubscriptionPaymentForm
+              setNewsubscriptionModel={setNewsubscriptionModel}
+              setCurrentPlan={setCurrentPlan}
+              currentPlan={currentPlan}
+              billingPeriod={billingPeriod}
+              price={price}
+              subscriptionType={subscriptionType}
+              setSelectedSeats={setSelectedSeats}
+              setBillingPeriod={setBillingPeriod}
+              setBackendDuration={setBackendDuration}
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

@@ -18,7 +18,7 @@ export const Events = () => {
     loadEvents();
   }, []);
 
-  const loadEvents = async () => {
+  const loadEvents = async (userId) => {
     try {
       setLoading(true);
       setError(null);
@@ -144,7 +144,7 @@ export const Events = () => {
   const handleApprove = async (eventId) => {
     try {
       await eventService.updateEventStatus(userId, eventId, 'approved');
-      await loadEvents(); // Reload events to reflect changes
+      await loadEvents(userId); // Reload events to reflect changes
     } catch (err) {
       alert('Etkinlik onaylanırken bir hata oluştu.');
       console.error('Error approving event:', err);
@@ -174,6 +174,7 @@ export const Events = () => {
   const handleDelete = async (eventId) => {
     if (window.confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
       try {
+        userId = localStorage.getItem(user._id)
         await eventService.deleteEvent(userId, eventId);
         await loadEvents(); // Reload events to reflect changes
       } catch (err) {

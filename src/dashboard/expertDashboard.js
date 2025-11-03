@@ -20,7 +20,7 @@ import Customers from "../customers/Customers";
 import Payments from "../payments";
 import { Marketing } from "../marketing";
 import Reports from "../reports";
-import { Settings } from "../settings";
+import  {Settings}  from "../settings";
 
 // Dashboard Component
 export default function Dashboard ({ onLogout }) {
