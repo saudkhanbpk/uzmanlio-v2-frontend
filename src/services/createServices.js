@@ -30,22 +30,10 @@ export const CreateService = () => {
     status: 'active' // active, inactive, beklemede
   });
 
-  const [showAddClientModal, setShowAddClientModal] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
 
-  // Mock clients data (in real app, this would come from your backend)
-  const availableClients = [
-    { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com' },
-    { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com' },
-    { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com' },
-    { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com' },
-    { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com' }
-  ];
 
-  const filteredClients = availableClients.filter(client =>
-    client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
-  );
+
+
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -55,31 +43,8 @@ export const CreateService = () => {
     }));
   };
 
-  const handleClientSelect = (clientId) => {
-    const client = availableClients.find(c => c.id === clientId);
-    if (serviceData.meetingType === '1-1') {
-      // Single selection for 1-1 events
-      setServiceData(prev => ({
-        ...prev,
-        selectedClients: [client]
-      }));
-    } else {
-      // Multiple selection for group events
-      setServiceData(prev => ({
-        ...prev,
-        selectedClients: prev.selectedClients.some(c => c.id === clientId)
-          ? prev.selectedClients.filter(c => c.id !== clientId)
-          : [...prev.selectedClients, client]
-      }));
-    }
-  };
 
-  const handleRemoveClient = (clientId) => {
-    setServiceData(prev => ({
-      ...prev,
-      selectedClients: prev.selectedClients.filter(c => c.id !== clientId)
-    }));
-  };
+
 
   const handleAddNewClient = (newClientData) => {
     // Simulate adding new client
@@ -479,126 +444,23 @@ export const CreateService = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
-          </div>
-
-          {/* Offline Event Section */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="flex items-center mb-4">
-              <input
-                type="checkbox"
-                id="isOfflineEvent"
-                name="isOfflineEvent"
-                checked={serviceData.isOfflineEvent}
-                onChange={handleInputChange}
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-              />
-              <label htmlFor="isOfflineEvent" className="ml-2 block text-sm text-gray-700">
-                Bu hizmet online sistem dışında gerçekleşti
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                İndirim (%)
               </label>
+              <input
+                type="number"
+                name="discount"
+                value={serviceData.discount}
+                onChange={handleInputChange}
+                placeholder="20"
+                min={0}
+                max={100}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
             </div>
-
-            {/* Client Information - Only visible when isOfflineEvent is true */}
-            {serviceData.isOfflineEvent && (
-              <div key="offline-event-section" className="space-y-4">
-                <h4 className="text-md font-medium text-gray-900">Danışan Bilgileri</h4>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Danışan Seç *
-                  </label>
-
-                  {/* Search Input */}
-                  <div className="relative mb-3">
-                    <input
-                      type="text"
-                      placeholder="Danışan adı veya e-posta ile ara..."
-                      value={clientSearchTerm}
-                      onChange={(e) => setClientSearchTerm(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent pl-10"
-                    />
-                    <span className="absolute left-3 top-2.5 text-gray-400">🔍</span>
-                  </div>
-
-                  {/* Selected Clients Display */}
-                  {serviceData.selectedClients.length > 0 && (
-                    <div key="selected-clients-display" className="mb-3">
-                      <p className="text-sm text-gray-600 mb-2">Seçili Danışanlar:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {serviceData.selectedClients.map((client) => (
-                          <span
-                            key={`selected-client-${client.id}`}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
-                          >
-                            {client.name}
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveClient(client.id)}
-                              className="ml-1 text-primary-600 hover:text-primary-800"
-                            >
-                              ✕
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Dropdown */}
-                  {(clientSearchTerm || serviceData.selectedClients.length === 0) && (
-                    <div key="client-dropdown" className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
-                      {filteredClients.length > 0 ? (
-                        <>
-                          {filteredClients.map((client) => (
-                            <div
-                              key={`client-option-${client.id}`}
-                              onClick={() => handleClientSelect(client.id)}
-                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${serviceData.selectedClients.some(c => c.id === client.id)
-                                ? 'bg-primary-50 text-primary-700'
-                                : ''
-                                }`}
-                            >
-                              <div className="flex items-center">
-                                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                                  <span className="text-primary-600 text-sm font-medium">
-                                    {client.name.split(' ').map(n => n[0]).join('')}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{client.name}</p>
-                                  <p className="text-xs text-gray-500">{client.email}</p>
-                                </div>
-                                {serviceData.selectedClients.some(c => c.id === client.id) && (
-                                  <span className="ml-auto text-primary-600">✓</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </>
-                      ) : (
-                        <div className="px-4 py-3 text-gray-500 text-sm">
-                          Aradığınız kriterlere uygun danışan bulunamadı.
-                        </div>
-                      )}
-
-                      {/* Add Client Option */}
-                      <div
-                        onClick={() => setShowAddClientModal(true)}
-                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-200 bg-gray-25"
-                      >
-                        <div className="flex items-center text-primary-600">
-                          <span className="mr-2">+</span>
-                          <span className="text-sm font-medium">Danışan Ekle</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {serviceData.isOfflineEvent && serviceData.selectedClients.length === 0 && (
-                    <p className="text-red-500 text-sm mt-1">En az bir danışan seçmelisiniz.</p>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
+
 
           {/* Event Status */}
           <div className="mt-6 pt-6 border-t border-gray-200">
@@ -637,14 +499,6 @@ export const CreateService = () => {
         </div>
       </form>
 
-      {/* Add Client Modal */}
-      {showAddClientModal && (
-        <AddCustomerModal
-          key="add-customer-modal"
-          onClose={() => setShowAddClientModal(false)}
-          onAdd={handleAddNewClient}
-        />
-      )}
     </div>
   );
 }
