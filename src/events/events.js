@@ -11,11 +11,11 @@ export const Events = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  var userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
 
   // Load events on component mount
   useEffect(() => {
-    loadEvents();
+    loadEvents(userId);
   }, []);
 
   const loadEvents = async (userId) => {
@@ -32,88 +32,10 @@ export const Events = () => {
     }
   };
 
-  // Mock events for fallback (keeping original structure)
-  const mockEvents = [
-    {
-      id: 1,
-      title: 'WordPress ile Web Tasarım Masterclass',
-      date: '2024-06-25',
-      time: '19:00',
-      duration: 180,
-      attendees: 45,
-      maxAttendees: 50,
-      price: 299,
-      status: 'completed', // tamamlandı
-      eventType: 'online',
-      meetingType: 'grup',
-      platform: 'zoom',
-      consultee: null
-    },
-    {
-      id: 2,
-      title: 'Dijital Pazarlama Stratejileri',
-      date: '2024-06-28',
-      time: '20:00',
-      duration: 120,
-      attendees: 32,
-      maxAttendees: 60,
-      price: 199,
-      status: 'approved', // onaylandı (yaklaşan)
-      eventType: 'online',
-      meetingType: 'grup',
-      platform: 'google-meet',
-      consultee: null
-    },
-    {
-      id: 3,
-      title: 'React Geliştirme Bootcamp',
-      date: '2024-07-02',
-      time: '18:30',
-      duration: 240,
-      attendees: 78,
-      maxAttendees: 100,
-      price: 599,
-      status: 'pending', // onay bekliyor
-      eventType: 'hybrid',
-      meetingType: 'grup',
-      platform: 'microsoft-teams',
-      location: 'İstanbul Teknik Park',
-      consultee: null
-    },
-    {
-      id: 4,
-      title: 'Birebir SEO Danışmanlığı',
-      date: '2024-06-30',
-      time: '14:00',
-      duration: 60,
-      attendees: 1,
-      maxAttendees: 1,
-      price: 500,
-      status: 'approved', // onaylandı (yaklaşan)
-      eventType: 'online',
-      meetingType: '1-1',
-      platform: 'zoom',
-      consultee: { name: 'Ayşe Demir' }
-    },
-    {
-      id: 5,
-      title: 'E-ticaret Workshop',
-      date: '2024-06-20',
-      time: '16:00',
-      duration: 150,
-      attendees: 25,
-      maxAttendees: 30,
-      price: 350,
-      status: 'cancelled', // iptal edildi
-      eventType: 'offline',
-      meetingType: 'grup',
-      location: 'Beşiktaş Konferans Salonu',
-      consultee: null
-    }
-  ];
+
 
   // Use real events if available, otherwise use mock events
-  const displayEvents = events.length > 0 ? events : mockEvents;
+  const displayEvents = events.length > 0 ? events : [];
 
   const tabs = [
     { id: 'all', name: 'Tümü', count: displayEvents.length },
@@ -154,7 +76,7 @@ export const Events = () => {
   const handleReject = async (eventId) => {
     try {
       await eventService.updateEventStatus(userId, eventId, 'cancelled');
-      await loadEvents(); // Reload events to reflect changes
+      await loadEvents(userId); // Reload events to reflect changes
     } catch (err) {
       alert('Etkinlik reddedilirken bir hata oluştu.');
       console.error('Error rejecting event:', err);
@@ -176,7 +98,7 @@ export const Events = () => {
       try {
         userId = localStorage.getItem(user._id)
         await eventService.deleteEvent(userId, eventId);
-        await loadEvents(); // Reload events to reflect changes
+        await loadEvents(userId); // Reload events to reflect changes
       } catch (err) {
         alert('Etkinlik silinirken bir hata oluştu.');
         console.error('Error deleting event:', err);
@@ -187,7 +109,7 @@ export const Events = () => {
   const handleEventUpdate = async (updatedEvent) => {
     try {
       await eventService.updateEvent(userId, updatedEvent.id, updatedEvent);
-      await loadEvents(); // Reload events to reflect changes
+      await loadEvents(userId); // Reload events to reflect changes
       setShowEditModal(false);
     } catch (err) {
       alert('Etkinlik güncellenirken bir hata oluştu.');

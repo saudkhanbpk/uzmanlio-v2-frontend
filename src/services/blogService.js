@@ -1,5 +1,5 @@
 // Blog Service - API calls for blog management
-const backendUrl = process.env.BASE_URL
+const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const blogService = {
