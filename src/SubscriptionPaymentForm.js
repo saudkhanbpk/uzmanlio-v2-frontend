@@ -57,7 +57,8 @@ const SubscriptionPaymentForm = ({
       );
 
       if (response.status === 200) {
-        const user = response.data;
+        const user = response.data.user;
+        console.log("User after subscription:",response.data.user)
         const currentSubscription =
           user.subscription ?? user.Subscription ?? undefined;
 

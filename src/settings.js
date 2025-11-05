@@ -54,7 +54,8 @@ export const Settings = () => {
   const getKurumsalYearlyTotal = () => {
     const baseYearly = yearlyPrices.institutional;
     const additionalSeats = Math.max(0, selectedSeats - 1);
-    const additionalYearlySeats = additionalSeats * monthlyPrices.seatPrice * 12;
+    // For yearly, use yearly seat price directly (not monthly * 12)
+    const additionalYearlySeats = additionalSeats * yearlyPrices.seatPrice;
     return baseYearly + additionalYearlySeats;
   };
 
@@ -209,22 +210,18 @@ export const Settings = () => {
             )}
 
             <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">individual</h4>
+              <h4 className="text-xl font-semibold text-gray-900">Bireysel</h4>
               <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('individual')}</span>
+                <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('individual').toLocaleString()}</span>
                 <span className="text-sm text-gray-600 ml-1">
-                  {billingPeriod === 'monthly' ? '/ay' : ''}
+                  {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
                 </span>
               </div>
 
               {billingPeriod === 'yearly' && (
                 <div className="mt-2">
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                    {/* kept original yearly discount label keys — change backend if you want them dynamic */}
-                    {yearlyPrices.individual_discount ?? ''}% indirim
-                  </span>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Yıllık ₺{(yearlyPrices.individual ?? yearlyPrices.individual).toLocaleString()}
+                  <div className="text-sm text-gray-500">
+                    Yıllık Toplam: ₺{(yearlyPrices.individual ?? yearlyPrices.individual).toLocaleString()}
                   </div>
                 </div>
               )}
@@ -255,8 +252,7 @@ export const Settings = () => {
 
             <button
               onClick={() => {
-                // keep original UI flow: set view to monthly when user clicks purchase for individual (you had this)
-                setBillingPeriod('monthly')
+                // Keep current billingPeriod (monthly or yearly) - don't force monthly
                 handlePlanClick('individual');
                 setSubscriptionType("individual")
                 setPrice(getCurrentPrice('individual'))
@@ -285,21 +281,18 @@ export const Settings = () => {
             )}
 
             <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">institutional</h4>
+              <h4 className="text-xl font-semibold text-gray-900">Kurumsal</h4>
               <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice()}</span>
+                <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice().toLocaleString()}</span>
                 <span className="text-sm text-gray-600 ml-1">
-                  {billingPeriod === 'monthly' ? '/ay' : ''}
+                  {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
                 </span>
               </div>
 
               {billingPeriod === 'yearly' && (
                 <div className="mt-2">
-                  <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-green-100 text-green-800">
-                    {yearlyPrices.institutional_discount ?? ''}% indirim
-                  </span>
-                  <div className="text-sm text-gray-500 mt-1">
-                    Yıllık ₺{getKurumsalYearlyTotal().toLocaleString()}
+                  <div className="text-sm text-gray-500">
+                    Yıllık Toplam: ₺{getKurumsalYearlyTotal().toLocaleString()}
                   </div>
                 </div>
               )}
@@ -313,67 +306,64 @@ export const Settings = () => {
               <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Institutional İsim ve Çoklu Kullanıcı</span></li>
             </ul>
 
-            {/* Seat Selection - Only show for Institutional plan (based on backend active plan) */}
-            {/* {currentPlan === 'institutional' && backendDuration === billingPeriod && (
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Kullanıcı Sayısı Seç
-                </label>
-                <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg bg-gray-50">
-                  <div className="flex items-center space-x-4">
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
-                      disabled={selectedSeats <= 1}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-primary-600 text-white hover:bg-primary-700'
-                        }`}
-                    >
-                      −
-                    </button>
+            {/* Seat Selection - Show for Institutional plan */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Kullanıcı Sayısı Seç
+              </label>
+              <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg bg-gray-50">
+                <div className="flex items-center space-x-4">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
+                    disabled={selectedSeats <= 1}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
+                      }`}
+                  >
+                    −
+                  </button>
 
-                    <div className="text-center min-w-[120px]">
-                      <div className="text-2xl font-bold text-gray-900">{selectedSeats}</div>
-                      <div className="text-sm text-gray-500">
-                        {selectedSeats === 1 ? 'Kullanıcı' : 'Kullanıcı'}
-                      </div>
+                  <div className="text-center min-w-[120px]">
+                    <div className="text-2xl font-bold text-gray-900">{selectedSeats}</div>
+                    <div className="text-sm text-gray-500">
+                      {selectedSeats === 1 ? 'Kullanıcı' : 'Kullanıcı'}
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSeats(Math.min(20, selectedSeats + 1))}
-                      disabled={selectedSeats >= 20}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats >= 20
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-primary-600 text-white hover:bg-primary-700'
-                        }`}
-                    >
-                      +
-                    </button>
                   </div>
 
-                  <div className="text-right">
-                    <div className="text-sm text-gray-600">Ek Maliyet</div>
-                    <div className="font-semibold text-gray-900">
-                      {selectedSeats > 1 ? (
-                        `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/ay'}`
-                      ) : (
-                        'Dahil'
-                      )}
-                    </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSeats(Math.min(20, selectedSeats + 1))}
+                    disabled={selectedSeats >= 20}
+                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats >= 20
+                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                      : 'bg-primary-600 text-white hover:bg-primary-700'
+                      }`}
+                  >
+                    +
+                  </button>
+                </div>
+
+                <div className="text-right">
+                  <div className="text-sm text-gray-600">Ek Maliyet</div>
+                  <div className="font-semibold text-gray-900">
+                    {selectedSeats > 1 ? (
+                      `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/yıl'}`
+                    ) : (
+                      'Dahil'
+                    )}
                   </div>
                 </div>
               </div>
-            )} */}
+            </div>
 
             <button
               onClick={() => {
-                // preserve original behavior: switch view to yearly when clicking the institutional button (your original code did this)
-                setBillingPeriod('yearly')
+                // Keep current billingPeriod (monthly or yearly) - don't force yearly
                 handlePlanClick('institutional')
                 setSubscriptionType("institutional")
-                setPrice(getCurrentPrice('institutional'))
+                setPrice(getTotalKurumsalPrice())
               }}
               className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('institutional')
                 ? 'bg-primary-600 text-white cursor-default'
