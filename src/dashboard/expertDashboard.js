@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { DashboardHome } from "./dashboardHome";
 import { Profile } from "../userInfo/Profile";
@@ -21,15 +21,44 @@ import Payments from "../payments";
 import { Marketing } from "../marketing";
 import Reports from "../reports";
 import  {Settings}  from "../settings";
+import {Adminactions} from "../Adminactions";
+import { profileService } from "../services/ProfileServices";
+import { useUser } from "../context/UserContext";
 
 // Dashboard Component
 export default function Dashboard ({ onLogout }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  //Using user context API
+  const { setUser, setLoading, setError } = useUser();
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+      try {
+        const user = await profileService.getProfile(userId);
+        console.log("User:", user);
+        setUser(user);
+        setLoading(false);
+        setError(null);
+        setIsAdmin(user.subscription.plantype === "institutional" && user.subscription.isAdmin === true?true:false)
+        console.log("Is Admin:", isAdmin);
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      }
+    };
+
+    checkAdmin();
+  }, []);
+
+
+
 
   const navigation = [
     { name: 'Anasayfa', href: '/dashboard', icon: '🏠' },
     { name: 'Profil Bilgileri', href: '/dashboard/profile', icon: '👤' },
+    { name: 'Administrator Actions', href: '/dashboard/Administrator', icon: '👮' , disabled : !isAdmin,},
     { name: 'Uzmanlık Bilgileri', href: '/dashboard/expertise', icon: '🎓' },
     { name: 'Hizmetlerim', href: '/dashboard/services', icon: '🛠️' },
     { name: 'Takvim', href: '/dashboard/calendar', icon: '📅' },
@@ -70,7 +99,7 @@ export default function Dashboard ({ onLogout }) {
         </div>
         
         <nav className="mt-8 px-4 pb-20">
-          {navigation.map((item) => (
+          {navigation.filter(item => !item.disabled).map(item => (
             <Link
               key={item.name}
               to={item.href}
@@ -173,6 +202,7 @@ export default function Dashboard ({ onLogout }) {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto bg-gray-50">
           <Routes>
             <Route path="/" element={<DashboardHome />} />
+            <Route path="/Administrator" element={<Adminactions />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/expertise" element={<Expertise />} />
             <Route path="/services" element={<Services />} />

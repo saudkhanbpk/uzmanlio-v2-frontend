@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useExpertData } from "./hooks/useExpertData";
 import Swal from "sweetalert2";
 import { useSearchParams } from "react-router-dom";
+import { profileService } from "./services/ProfileServices";
 
 
 // Calendar Component
@@ -15,6 +16,8 @@ export const Calendar = () => {
     updateAvailability
   } = useExpertData();
 
+  // const { getProfile } = profileService();
+
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState('month'); // 'week' or 'month'
   const [selectedSlots, setSelectedSlots] = useState(new Set());
@@ -25,7 +28,10 @@ export const Calendar = () => {
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarError, setCalendarError] = useState(null);
 
-    // const [params] = useSearchParams();
+  // <<< ADDED: minimal state to hold events fetched from profileService (DOES NOT affect availability) >>>
+  const [fetchedEvents, setFetchedEvents] = useState([]);
+
+  // const [params] = useSearchParams();
 
   // useEffect(() => {
   //   const status = params.get("status");
@@ -50,10 +56,29 @@ export const Calendar = () => {
   // }, [params]);
 
   // Load calendar data on component mount
-  
+
   useEffect(() => {
     const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
     loadExpertProfile(userId).catch(console.error);
+    // keep your original debug call
+    profileService.getProfile(userId)
+      .then(data => {
+        // keep original console.debug line (you had it)
+        if (data && data.events && Array.isArray(data.events)) {
+          console.log('Fetched profile:', data.events[0]);
+          // Map events minimally into format used for display (id,title,date,time,status,type)
+          const mapped = data.events.map(evt => ({
+            id: evt.id || evt._id,
+            title: evt.title,
+            date: evt.date,       // expecting 'YYYY-MM-DD'
+            time: evt.time || '', // expecting e.g. '16:45'
+            status: evt.status === 'approved' ? 'confirmed' : (evt.status || 'pending'),
+            type: evt.meetingType || evt.meetingType || '1-1',
+          }));
+          setFetchedEvents(mapped);
+        }
+      })
+      .catch(console.error);
     loadCalendarProviders();
   }, [loadExpertProfile]);
 
@@ -87,66 +112,141 @@ export const Calendar = () => {
     const lastDay = new Date(year, month + 1, 0);
     const daysInMonth = lastDay.getDate();
     const startingDayOfWeek = firstDay.getDay();
-    
+
     const days = [];
-    
+
     // Add empty cells for days before month starts
     for (let i = 0; i < (startingDayOfWeek === 0 ? 6 : startingDayOfWeek - 1); i++) {
       days.push(null);
     }
-    
+
     // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(year, month, day));
     }
-    
+
     return days;
   };
 
   // Get week days
   const getWeekDays = (date) => {
-    const week = [];
-    const startOfWeek = new Date(date);
-    const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
-    startOfWeek.setDate(diff);
+  const week = [];
+  const startOfWeek = new Date(date);
+  const day = startOfWeek.getDay();  // 0=Sun
+  const diff = startOfWeek.getDate() - (day === 0 ? 6 : day - 1);  // Shift to Monday=0
+  startOfWeek.setDate(diff);
 
-    for (let i = 0; i < 7; i++) {
-      const weekDay = new Date(startOfWeek);
-      weekDay.setDate(startOfWeek.getDate() + i);
-      week.push(weekDay);
-    }
-    return week;
-  };
+  for (let i = 0; i < 7; i++) {
+    const weekDay = new Date(startOfWeek);
+    weekDay.setDate(startOfWeek.getDate() + i);
+    week.push(weekDay);
+  }
+  return week;
+};
 
   const formatDate = (date, format = 'full') => {
     if (!date) return '';
-    
+
     if (format === 'short') {
       return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit' });
     }
-    return date.toLocaleDateString('tr-TR', { 
-      year: 'numeric', 
-      month: 'long' 
+    return date.toLocaleDateString('tr-TR', {
+      year: 'numeric',
+      month: 'long'
     });
   };
 
-  const getAppointmentsForDate = (date) => {
-    if (!date || !appointments) return [];
-    const dateStr = date.toISOString().split('T')[0];
-    return appointments.filter(apt => apt.date === dateStr);
+const getAppointmentsForDate = (date) => {
+  if (!date) return [];
+
+  // ✅ ROBUST: Normalize ALL dates to local YYYY-MM-DD (handles ISO/UTC)
+  const normalizeDate = (d) => {
+    if (!d) return '';
+    const parsed = new Date(d);
+    if (isNaN(parsed.getTime())) return '';
+    return parsed.toLocaleDateString('en-CA', { timeZone: 'UTC' });  // Treat as UTC, convert to local day
   };
+
+  const dateStr = normalizeDate(date);
+
+  const fromContext = Array.isArray(appointments)
+    ? appointments.filter(apt => normalizeDate(apt.date) === dateStr)
+    : [];
+
+  const fromProfile = Array.isArray(fetchedEvents)
+    ? fetchedEvents.filter(evt => normalizeDate(evt.date) === dateStr)
+    : [];
+
+  const mergedMap = new Map();
+
+  fromProfile.forEach(evt => {
+    mergedMap.set(evt.id || `${evt.title}-${evt.time}`, evt);
+  });
+
+  fromContext.forEach(apt => {
+    const key = apt.id || apt._id || `${apt.title}-${apt.time}`;
+    mergedMap.set(key, {
+      id: apt.id || apt._id || key,
+      title: apt.title || apt.serviceName || apt.name || '',
+      date: dateStr,  // Normalized
+      time: apt.time || apt.startTime || '',
+      status: apt.status || 'pending',
+      type: apt.type || apt.meetingType || '1-1',
+    });
+  });
+
+  return Array.from(mergedMap.values()).sort((a, b) =>
+    (a.time || '').localeCompare(b.time || '')
+  );
+};
+  // const getAppointmentsForDate = (date) => {
+  //   if (!date) return [];
+
+  //   // ✅ Use local date instead of UTC
+  //   const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
+
+  //   const fromContext = Array.isArray(appointments)
+  //     ? appointments.filter(apt => apt.date === dateStr)
+  //     : [];
+
+  //   const fromProfile = Array.isArray(fetchedEvents)
+  //     ? fetchedEvents.filter(evt => evt.date === dateStr)
+  //     : [];
+
+  //   const mergedMap = new Map();
+
+  //   fromProfile.forEach(evt => {
+  //     mergedMap.set(evt.id || `${evt.title}-${evt.time}`, evt);
+  //   });
+
+  //   fromContext.forEach(apt => {
+  //     const key = apt.id || apt._id || `${apt.title}-${apt.time}`;
+  //     mergedMap.set(key, {
+  //       id: apt.id || apt._id || key,
+  //       title: apt.title || apt.serviceName || apt.name || '',
+  //       date: apt.date,
+  //       time: apt.time || apt.startTime || '',
+  //       status: apt.status || 'pending',
+  //       type: apt.type || apt.meetingType || '1-1',
+  //     });
+  //   });
+
+  //   return Array.from(mergedMap.values()).sort((a, b) =>
+  //     (a.time || '').localeCompare(b.time || '')
+  //   );
+  // };
+
 
   const toggleTimeSlot = (day, time) => {
     const slotKey = `${day}-${time}`;
     const newSelected = new Set(selectedSlots);
-    
+
     if (newSelected.has(slotKey)) {
       newSelected.delete(slotKey);
     } else {
       newSelected.add(slotKey);
     }
-    
+
     setSelectedSlots(newSelected);
   };
 
@@ -218,14 +318,14 @@ export const Calendar = () => {
       setCalendarLoading(true);
       setCalendarError(null);
       const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
-      
+
       const response = await fetch(`https://uzmanlio-backend-kpwz.onrender.com/api/calendar/auth/${provider}/auth/${userId}`);
       console.log("Response From Goolge calendar", response)
       const data = await response.json();
       if (response.ok && data.authUrl) {
-  // Redirect the current page to Google OAuth URL
-  window.location.href = data.authUrl;
-}
+        // Redirect the current page to Google OAuth URL
+        window.location.href = data.authUrl;
+      }
 
 
       // if (response.ok && data.authUrl) {
@@ -238,7 +338,7 @@ export const Calendar = () => {
 
       //   // Listen for auth completion
       //   const checkClosed = setInterval(() => {
-          
+
       //     if (authWindow.closed) {
       //       clearInterval(checkClosed);
       //       // Reload providers after auth
@@ -274,6 +374,26 @@ export const Calendar = () => {
       // console.error('Error loading providers:', err);
     }
   };
+
+  // 🔧 FIX: Combine and sort upcoming appointments (from both sources)
+  const combinedAppointments = [
+    ...(Array.isArray(appointments) ? appointments : []),
+    ...(Array.isArray(fetchedEvents) ? fetchedEvents : [])
+  ];
+
+  const upcomingAppointments = combinedAppointments
+    .filter(apt => {
+      if (!apt.date || !apt.time) return false;
+      // const dateTime = new Date(`${apt.date}T${(apt.time || '').slice(0, 5)}`);
+      const dateTime = new Date(`${apt.date}T${(apt.time || '').slice(0, 5)}`);
+
+      return dateTime >= new Date();
+    })
+    .sort((a, b) => {
+      const aDate = new Date(`${a.date}T${(a.time || '').slice(0, 5)}`);
+      const bDate = new Date(`${b.date}T${(b.time || '').slice(0, 5)}`);
+      return aDate - bDate;
+    });
 
   return (
     <div className="space-y-6">
@@ -320,17 +440,15 @@ export const Calendar = () => {
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setView('week')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                view === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
-              }`}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${view === 'week' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                }`}
             >
               Haftalık
             </button>
             <button
               onClick={() => setView('month')}
-              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                view === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
-              }`}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${view === 'month' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                }`}
             >
               Aylık
             </button>
@@ -350,8 +468,8 @@ export const Calendar = () => {
               ←
             </button>
             <h2 className="text-xl font-semibold text-gray-900">
-              {view === 'month' ? formatDate(currentDate) : 
-               `${formatDate(getWeekDays(currentDate)[0], 'short')} - ${formatDate(getWeekDays(currentDate)[6], 'short')} ${formatDate(currentDate).split(' ')[1]}`}
+              {view === 'month' ? formatDate(currentDate) :
+                `${formatDate(getWeekDays(currentDate)[0], 'short')} - ${formatDate(getWeekDays(currentDate)[6], 'short')} ${formatDate(currentDate).split(' ')[1]}`}
             </h2>
             <button
               onClick={() => view === 'month' ? navigateMonth(1) : navigateWeek(1)}
@@ -379,36 +497,33 @@ export const Calendar = () => {
                 </div>
               ))}
             </div>
-            
+
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {getDaysInMonth(currentDate).map((day, index) => {
                 const dayAppointments = getAppointmentsForDate(day);
                 const isToday = day && day.toDateString() === new Date().toDateString();
-                
+
                 return (
                   <div
                     key={index}
-                    className={`min-h-[100px] p-2 border border-gray-100 rounded-lg ${
-                      day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
-                    } ${isToday ? 'bg-primary-50 border-primary-200' : ''}`}
+                    className={`min-h-[100px] p-2 border border-gray-100 rounded-lg ${day ? 'bg-white hover:bg-gray-50' : 'bg-gray-50'
+                      } ${isToday ? 'bg-primary-50 border-primary-200' : ''}`}
                   >
                     {day && (
                       <>
-                        <div className={`text-sm font-medium mb-1 ${
-                          isToday ? 'text-primary-600' : 'text-gray-900'
-                        }`}>
+                        <div className={`text-sm font-medium mb-1 ${isToday ? 'text-primary-600' : 'text-gray-900'
+                          }`}>
                           {day.getDate()}
                         </div>
                         <div className="space-y-1">
                           {dayAppointments.map((apt) => (
                             <div
                               key={apt.id}
-                              className={`text-xs p-1 rounded text-white ${
-                                apt.status === 'confirmed' ? 'bg-green-500' : 'bg-yellow-500'
-                              }`}
+                              className={`text-xs p-1 rounded text-white ${apt.status === 'confirmed' ? 'bg-green-500' : 'bg-yellow-500'
+                                }`}
                             >
-                              {apt.time} {apt.type === '1-1' ? '👤' : '👥'}
+                              {apt.time} {apt.title ? `• ${apt.title}` : (apt.type === '1-1' ? '👤' : '👥')}
                             </div>
                           ))}
                         </div>
@@ -422,62 +537,115 @@ export const Calendar = () => {
         )}
 
         {/* Week View */}
-        {view === 'week' && (
-          <div>
-            <div className="grid grid-cols-8 gap-2">
-              {/* Time Column */}
-              <div className="space-y-12">
-                <div className="h-12"></div> {/* Header space */}
-                {timeSlots.filter((_, i) => i % 2 === 0).map((time) => (
-                  <div key={time} className="text-xs text-gray-500 text-right pr-2">
-                    {time}
-                  </div>
-                ))}
-              </div>
-              
-              {/* Week Days */}
-              {getWeekDays(currentDate).map((day, dayIndex) => {
-                const dayAppointments = getAppointmentsForDate(day);
-                const isToday = day.toDateString() === new Date().toDateString();
-                
+        {/* Week View */}
+      {view === 'week' && (
+  <div>
+    <div className="grid grid-cols-8 gap-2">
+      {/* Time Column */}
+      <div className="space-y-12">
+        <div className="h-12"></div> {/* Header space */}
+        {timeSlots.filter((_, i) => i % 2 === 0).map((time) => (
+          <div key={time} className="text-xs text-gray-500 text-right pr-2">
+            {time}
+          </div>
+        ))}
+      </div>
+
+      {/* Week Days */}
+      {getWeekDays(currentDate).map((day, dayIndex) => {
+        const dayAppointments = getAppointmentsForDate(day);
+        console.log("Day Appointments:", dayAppointments);  // Keep for debug
+        const isToday = day.toDateString() === new Date().toDateString();
+
+        // 🧠 ROBUST TIME PARSER (replaces buggy normalizeTime)
+        const parseTimeToMinutes = (t) => {
+          if (!t) return null;
+          const clean = t.toString().trim().replace(/\./g, ':').replace(/[^0-9:]/g, '');
+          const match = clean.match(/^(\d{1,2}):?(\d{2})?$/);
+          if (!match) return null;
+          const [, hStr, mStr] = match;
+          const h = parseInt(hStr, 10);
+          const m = mStr ? parseInt(mStr, 10) : 0;
+          if (isNaN(h) || h > 23 || m > 59) return null;
+          return h * 60 + m;
+        };
+
+        // 🧠 Pre-compute slot minutes
+        const slotMinutes = timeSlots.map(slot => {
+          const [h, m] = slot.split(':').map(Number);
+          return h * 60 + m;
+        });
+
+        // 🧠 Map appointments to closest slot (prefer later if tie)
+        const slotMap = new Map(timeSlots.map(t => [t, []]));
+        dayAppointments.forEach(apt => {
+          const aptMinutes = parseTimeToMinutes(apt.time || apt.startTime);
+          if (aptMinutes === null) return;
+
+          let closestSlot = timeSlots[0];
+          let minDiff = Infinity;
+          slotMinutes.forEach((slotMin, i) => {
+            const diff = Math.abs(slotMin - aptMinutes);
+            if (diff < minDiff || (diff === minDiff && slotMin > parseTimeToMinutes(closestSlot))) {  // Prefer later slot on tie
+              minDiff = diff;
+              closestSlot = timeSlots[i];
+            }
+          });
+          slotMap.get(closestSlot).push(apt);
+        });
+
+        return (
+          <div key={dayIndex} className="space-y-1">
+            {/* Day Header */}
+            <div
+              className={`text-center p-2 rounded-lg ${isToday ? 'bg-primary-100 text-primary-700' : 'bg-gray-50'
+                }`}
+            >
+              <div className="text-xs text-gray-600">{weekDays[dayIndex]}</div>
+              <div className="font-medium">{day.getDate()}</div>
+            </div>
+
+            {/* Time Slots */}
+            <div className="space-y-1">
+              {timeSlots.map((time) => {
+                const appointments = slotMap.get(time) || [];
+                if (appointments.length === 0) {
+                  return (
+                    <div
+                      key={time}
+                      className="h-6 rounded border border-gray-100 bg-gray-50 hover:bg-gray-100"
+                    />
+                  );
+                }
+                const firstApt = appointments[0];
                 return (
-                  <div key={dayIndex} className="space-y-1">
-                    {/* Day Header */}
-                    <div className={`text-center p-2 rounded-lg ${
-                      isToday ? 'bg-primary-100 text-primary-700' : 'bg-gray-50'
-                    }`}>
-                      <div className="text-xs text-gray-600">{weekDays[dayIndex]}</div>
-                      <div className="font-medium">{day.getDate()}</div>
-                    </div>
-                    
-                    {/* Time Slots */}
-                    <div className="space-y-1">
-                      {timeSlots.map((time) => {
-                        const appointment = dayAppointments.find(apt => apt.time === time);
-                        return (
-                          <div
-                            key={time}
-                            className={`h-6 rounded border border-gray-100 ${
-                              appointment 
-                                ? `bg-${appointment.status === 'confirmed' ? 'green' : 'yellow'}-100 border-${appointment.status === 'confirmed' ? 'green' : 'yellow'}-300`
-                                : 'bg-gray-50 hover:bg-gray-100'
-                            }`}
-                          >
-                            {appointment && (
-                              <div className="text-xs p-1 text-gray-700 truncate">
-                                {appointment.type === '1-1' ? '👤' : '👥'} {appointment.title.split(' ')[0]}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                  <div
+                    key={time}
+                    className={`h-6 rounded border border-gray-100 ${firstApt.status === 'confirmed'
+                        ? 'bg-green-100 border-green-300'
+                        : 'bg-yellow-100 border-yellow-300'
+                      }`}
+                  >
+                    <div className="text-xs p-1 text-gray-700 truncate">
+                      {appointments.map((apt, i) => (
+                        <span key={apt.id || i}>
+                          {apt.type === '1-1' ? '👤' : '👥'}{' '}
+                          {apt.title ? `• ${apt.title}` : apt.time}
+                          {i < appointments.length - 1 && ', '}
+                        </span>
+                      ))}
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        )}
+        );
+      })}
+    </div>
+  </div>
+)}
+
       </div>
 
       {/* Availability Settings */}
@@ -500,7 +668,7 @@ export const Calendar = () => {
             )}
           </div>
         </div>
-        
+
         <p className="text-sm text-gray-600 mb-6">
           Danışanların randevu oluştururken görüntüleyeceği müsait zamanlarınızı seçin
         </p>
@@ -513,19 +681,18 @@ export const Calendar = () => {
                 {timeSlots.map((time) => {
                   const slotKey = `${dayIndex}-${time}`;
                   const isSelected = selectedSlots.has(slotKey);
-                  
+
                   return (
                     <button
                       key={time}
                       onClick={() => !alwaysAvailable && toggleTimeSlot(dayIndex, time)}
                       disabled={alwaysAvailable}
-                      className={`w-full text-xs py-1 px-2 rounded text-center transition-colors ${
-                        alwaysAvailable
-                          ? 'bg-primary-200 text-primary-800 cursor-not-allowed'
-                          : isSelected 
-                            ? 'bg-primary-600 text-white' 
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                      className={`w-full text-xs py-1 px-2 rounded text-center transition-colors ${alwaysAvailable
+                        ? 'bg-primary-200 text-primary-800 cursor-not-allowed'
+                        : isSelected
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
                     >
                       {time}
                     </button>
@@ -562,7 +729,7 @@ export const Calendar = () => {
               Her Zaman Müsaitim
             </label>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex space-x-3">
             <button
@@ -596,19 +763,19 @@ export const Calendar = () => {
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
               Randevular yüklenirken hata oluştu: {errors.appointments}
             </div>
-          ) : !appointments || appointments.length === 0 ? (
+          ) : (!combinedAppointments || combinedAppointments.length === 0) ? (
             <div className="text-center py-8 text-gray-500">
               <span className="text-4xl mb-2 block">📅</span>
               <p>Henüz randevu bulunmuyor.</p>
               <p className="text-sm">Yeni randevular eklendiğinde burada görünecektir.</p>
             </div>
           ) : (
-            appointments.filter(apt => new Date(apt.date) >= new Date()).map((apt) => (
+            // Use upcomingAppointments (combined and sorted ascending)
+            upcomingAppointments.map((apt) => (
               <div key={apt.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div className="flex items-center space-x-4">
-                  <div className={`p-2 rounded-lg ${
-                    apt.type === '1-1' ? 'bg-orange-100' : 'bg-blue-100'
-                  }`}>
+                  <div className={`p-2 rounded-lg ${apt.type === '1-1' ? 'bg-orange-100' : 'bg-blue-100'
+                    }`}>
                     <span className="text-lg">{apt.type === '1-1' ? '👤' : '👥'}</span>
                   </div>
                   <div>
@@ -618,9 +785,8 @@ export const Calendar = () => {
                     </p>
                   </div>
                 </div>
-                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                }`}>
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${apt.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                  }`}>
                   {apt.status === 'confirmed' ? 'Onaylandı' : 'Beklemede'}
                 </span>
               </div>

@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import  Dashboard  from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
 import { ExpertProvider } from './contexts/ExpertContext';
-
+import { UserProvider } from './context/UserContext';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated (in a real app, you'd check localStorage/sessionStorage or a cookie)
@@ -23,6 +23,7 @@ function App() {
 
   return (
     <div className="App">
+      <UserProvider>
       <ExpertProvider>
         <BrowserRouter>
           <Routes>
@@ -47,6 +48,7 @@ function App() {
           </Routes>
         </BrowserRouter>
       </ExpertProvider>
+      </UserProvider>
     </div>
   );
 }

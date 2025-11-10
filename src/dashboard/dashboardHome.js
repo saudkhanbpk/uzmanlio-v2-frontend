@@ -1,28 +1,61 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
+import { profileService } from "../services/ProfileServices";
 
 // Dashboard Home Component
 export const DashboardHome = () => {
+  const [fetchedEvents, setFetchedEvents] = useState([]);
+  const [upcomingAppointments, setUpcomingAppointments] = useState([]);
+  const [recentEvents, setRecentEvents] = useState([]);
+
+  useEffect(() => {
+    const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+    profileService.getProfile(userId)
+      .then(data => {
+        if (data && data.events && Array.isArray(data.events)) {
+          console.log('Fetched profile:', data);
+
+          // Sort events by date
+          const sortedEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+          // Upcoming appointments: events in future (max 7)
+          const upcoming = sortedEvents
+            .filter(evt => new Date(evt.date) >= new Date())
+            .slice(0, 7)
+            .map(evt => ({
+              id: evt.id || evt._id,
+              customerName: evt.selectedClients?.[0]?.name || "Belirtilmemiş",
+              date: evt.date,
+              time: evt.time || "",
+              service: evt.serviceName || "Hizmet",
+            }));
+          setUpcomingAppointments(upcoming);
+
+          // Recent events: last 3 past events
+          const recent = sortedEvents
+            .filter(evt => new Date(evt.date) < new Date())
+            .slice(-3)
+            .map(evt => ({
+              name: evt.title,
+              date: new Date(evt.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+              attendees: evt.selectedClients?.length || 0,
+              status: evt.status === 'approved' ? 'Tamamlandı' : 'Yaklaşan',
+            }));
+          setRecentEvents(recent);
+
+          // Save all fetched events if needed
+          setFetchedEvents(sortedEvents);
+        }
+      })
+      .catch(console.error);
+  }, []);
+
   const stats = [
     { name: 'Toplam Gelir', value: '₺42,890', change: '+12.5%', trend: 'up' },
     { name: 'Aktif Müşteriler', value: '1,247', change: '+8.2%', trend: 'up' },
     { name: 'Bu Ay Satış', value: '156', change: '+23.1%', trend: 'up' },
     { name: 'Tamamlanan Etkinlikler', value: '23', change: '+5.4%', trend: 'up' },
-  ];
-
-  const recentEvents = [
-    { name: 'WordPress ile Web Tasarım', date: '25 Haziran', attendees: 45, status: 'Tamamlandı' },
-    { name: 'Dijital Pazarlama Stratejileri', date: '28 Haziran', attendees: 32, status: 'Yaklaşan' },
-    { name: 'React Geliştirme Bootcamp', date: '2 Temmuz', attendees: 78, status: 'Yaklaşan' },
-  ];
-
-  // Upcoming appointments data
-  const upcomingAppointments = [
-    { id: 1, customerName: 'Ayşe Demir', date: '2024-06-30', time: '14:00', service: 'SEO Danışmanlığı' },
-    { id: 2, customerName: 'Mehmet Kaya', date: '2024-07-01', time: '10:30', service: 'Web Tasarım Konsültasyonu' },
-    { id: 3, customerName: 'Fatma Özkan', date: '2024-07-02', time: '16:00', service: 'Dijital Pazarlama' },
-    { id: 4, customerName: 'Ali Yılmaz', date: '2024-07-03', time: '09:00', service: 'React Geliştirme' },
-    { id: 5, customerName: 'Zeynep Şahin', date: '2024-07-03', time: '13:30', service: 'E-ticaret Danışmanlığı' }
   ];
 
   const [showVacationModal, setShowVacationModal] = useState(false);
@@ -59,7 +92,7 @@ export const DashboardHome = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Yaklaşan Randevular</h3>
           <div className="space-y-4">
-            {upcomingAppointments.slice(0, 5).map((appointment) => (
+            {upcomingAppointments.map((appointment) => (
               <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                 <div>
                   <p className="font-medium text-gray-900">{appointment.customerName}</p>

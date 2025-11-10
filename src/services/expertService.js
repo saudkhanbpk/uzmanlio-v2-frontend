@@ -280,7 +280,7 @@ class ExpertService {
   }
 
   async updateExpertProfile(userId, profileData) {
-     const res = this.apiCall(`/expert/${userId}/profile`, {
+     const res = this.apiCall(`/api/expert/${userId}/profile`, {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
@@ -292,36 +292,36 @@ class ExpertService {
 
   // Calendar and availability operations
   async getAvailability(userId) {
-    return this.apiCall(`/expert/${userId}/availability`);
+    return this.apiCall(`/api/expert/${userId}/availability`);
   }
 
   async updateAvailability(userId, availabilityData) {
-    return this.apiCall(`/expert/${userId}/availability`, {
+    return this.apiCall(`/api/expert/${userId}/availability`, {
       method: 'PUT',
       body: JSON.stringify(availabilityData),
     });
   }
 
   async getAppointments(userId) {
-    return this.apiCall(`/expert/${userId}/appointments`);
+    return this.apiCall(`/api/expert/${userId}/appointments`);
   }
 
   async addAppointment(userId, appointmentData) {
-    return this.apiCall(`/expert/${userId}/appointments`, {
+    return this.apiCall(`/api/expert/${userId}/appointments`, {
       method: 'POST',
       body: JSON.stringify(appointmentData),
     });
   }
 
   async updateAppointment(userId, appointmentId, appointmentData) {
-    return this.apiCall(`/expert/${userId}/appointments/${appointmentId}`, {
+    return this.apiCall(`/api/expert/${userId}/appointments/${appointmentId}`, {
       method: 'PUT',
       body: JSON.stringify(appointmentData),
     });
   }
 
   async deleteAppointment(userId, appointmentId) {
-    return this.apiCall(`/expert/${userId}/appointments/${appointmentId}`, {
+    return this.apiCall(`/api/expert/${userId}/appointments/${appointmentId}`, {
       method: 'DELETE',
     });
   }

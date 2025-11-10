@@ -8,12 +8,14 @@ import axios from "../node_modules/axios/index";
 export const Settings = () => {
   // UI state
   const [billingPeriod, setBillingPeriod] = useState('monthly'); // user's selected view (monthly/yearly)
-  const [selectedSeats, setSelectedSeats] = useState(1);
+  const [selectedSeats, setSelectedSeats] = useState(2);
   const [currentPlan, setCurrentPlan] = useState(''); // backend active plan (plantype) lowercase
   const [backendDuration, setBackendDuration] = useState(''); // backend active duration (duration) lowercase
   const [newSubscriptionModel, setNewsubscriptionModel] = useState(false)
   const [subscriptionType, setSubscriptionType] = useState("")
   const [price, setPrice] = useState(0);
+  const [isAdmin, setIsAdmin] = useState()
+
 
   // IMPORTANT: keep this the same user id or replace dynamically
   const userId = "68c94094d011cdb0e5fa2caa";
@@ -21,13 +23,13 @@ export const Settings = () => {
   // Pricing (lowercase keys)
   const monthlyPrices = {
     individual: 500,
-    institutional: 750,
+    institutional: 650,
     seatPrice: 100
   };
 
   const yearlyPrices = {
     individual: 5000,
-    institutional: 7500,
+    institutional: 7400,
     seatPrice: 100
   };
 
@@ -67,11 +69,12 @@ export const Settings = () => {
           `${process.env.REACT_APP_BACKEND_URL}/api/expert/${userId}/profile`
         );
 
-        console.log("Response:", response);
+        console.log("Response profile:", response);
 
         const user = response.data;
         // Accept subscription under either 'subscription' or 'Subscription' (some backends differ)
-        const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
+        const currentSubscription = user.subscription
+        setIsAdmin(user.subscription.isAdmin === true?true:false)
 
         if (currentSubscription && currentSubscription.endDate) {
           // Only treat as active if endDate is in future
@@ -165,7 +168,7 @@ export const Settings = () => {
     <div className="space-y-6">
       {/* Header */}
       <h1 className="text-2xl font-bold text-gray-900">Hesap Ayarları</h1>
-
+      <div className={`${isAdmin?"block":"hidden"}`}>
       {/* Subscription Plans */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Aboneliklerim</h3>
@@ -316,7 +319,7 @@ export const Settings = () => {
                   <button
                     type="button"
                     onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
-                    disabled={selectedSeats <= 1}
+                    disabled={selectedSeats <= 2}
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
                       ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
                       : 'bg-primary-600 text-white hover:bg-primary-700'
@@ -410,6 +413,7 @@ export const Settings = () => {
             Ödeme Yöntemini Değiştir
           </button>
         </div>
+      </div>
       </div>
 
       {/* Notification Settings - Moved to end */}

@@ -13,6 +13,7 @@ const SubscriptionPaymentForm = ({
   setSelectedSeats,
   setBillingPeriod,
   setBackendDuration,
+  selectedSeats,
 }) => {
   const {
     register,
@@ -46,6 +47,7 @@ const SubscriptionPaymentForm = ({
       plantype: normalizedPlan, // match backend model
       duration: normalizedDuration, // match backend model
       price: price ?? 0,
+      selectedSeats,
     };
 
     console.log("Final Payload Sent to Backend:", data);
@@ -59,8 +61,7 @@ const SubscriptionPaymentForm = ({
       if (response.status === 200) {
         const user = response.data.user;
         console.log("User after subscription:",response.data.user)
-        const currentSubscription =
-          user.subscription ?? user.Subscription ?? undefined;
+        const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
 
         if (currentSubscription && currentSubscription.endDate) {
           const endTs = new Date(currentSubscription.endDate).getTime();
