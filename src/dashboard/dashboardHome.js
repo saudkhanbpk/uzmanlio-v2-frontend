@@ -2,54 +2,93 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { profileService } from "../services/ProfileServices";
+import { useUser } from "../context/UserContext";
 
 // Dashboard Home Component
 export const DashboardHome = () => {
   const [fetchedEvents, setFetchedEvents] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
+  const { user, loading, error } = useUser(); // Get user from Context
+
+  // useEffect(() => {
+  //   const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  //   profileService.getProfile(userId)
+  //     .then(data => {
+  //       if (data && data.events && Array.isArray(data.events)) {
+  //         console.log('Fetched profile:', data);
+
+  //         // Sort events by date
+  //         const sortedEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  //         // Upcoming appointments: events in future (max 7)
+  //         const upcoming = sortedEvents
+  //           .filter(evt => new Date(evt.date) >= new Date())
+  //           .slice(0, 6)
+  //           .map(evt => ({
+  //             id: evt.id || evt._id,
+  //             customerName: evt.selectedClients?.[0]?.name || "Belirtilmemiş",
+  //             date: evt.date,
+  //             time: evt.time || "",
+  //             service: evt.serviceName || "Hizmet",
+  //           }));
+  //         setUpcomingAppointments(upcoming);
+
+  //         // Recent events: last 3 past events
+  //         const recent = sortedEvents
+  //           .filter(evt => new Date(evt.date) < new Date())
+  //           .slice(-3)
+  //           .map(evt => ({
+  //             name: evt.title,
+  //             date: new Date(evt.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+  //             attendees: evt.selectedClients?.length || 0,
+  //             status: evt.status === 'approved' ? 'Tamamlandı' : 'Yaklaşan',
+  //           }));
+  //         setRecentEvents(recent);
+
+  //         // Save all fetched events if needed
+  //         setFetchedEvents(sortedEvents);
+  //       }
+  //     })
+  //     .catch(console.error);
+  // }, []);
 
   useEffect(() => {
-    const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
-    profileService.getProfile(userId)
-      .then(data => {
-        if (data && data.events && Array.isArray(data.events)) {
-          console.log('Fetched profile:', data);
+    // Wait for user to load from context
+    if (!user || !user.events || !Array.isArray(user.events)) return;
+    console.log("User:",user)
 
-          // Sort events by date
-          const sortedEvents = data.events.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sortedEvents = [...user.events].sort(
+      (a, b) => new Date(a.date) - new Date(b.date)
+    );
 
-          // Upcoming appointments: events in future (max 7)
-          const upcoming = sortedEvents
-            .filter(evt => new Date(evt.date) >= new Date())
-            .slice(0, 7)
-            .map(evt => ({
-              id: evt.id || evt._id,
-              customerName: evt.selectedClients?.[0]?.name || "Belirtilmemiş",
-              date: evt.date,
-              time: evt.time || "",
-              service: evt.serviceName || "Hizmet",
-            }));
-          setUpcomingAppointments(upcoming);
+    // Upcoming appointments (next 7)
+    const upcoming = sortedEvents
+      .filter(evt => new Date(evt.date) >= new Date())
+      .slice(0, 7)
+      .map(evt => ({
+        id: evt.id || evt._id,
+        customerName: evt.selectedClients?.[0]?.name || "Belirtilmemiş",
+        date: evt.date,
+        time: evt.time || "",
+        service: evt.serviceName || "Hizmet",
+      }));
+      console.log("Upcomming Appointments:", upcoming);
+    setUpcomingAppointments(upcoming);
 
-          // Recent events: last 3 past events
-          const recent = sortedEvents
-            .filter(evt => new Date(evt.date) < new Date())
-            .slice(-3)
-            .map(evt => ({
-              name: evt.title,
-              date: new Date(evt.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
-              attendees: evt.selectedClients?.length || 0,
-              status: evt.status === 'approved' ? 'Tamamlandı' : 'Yaklaşan',
-            }));
-          setRecentEvents(recent);
+    // Recent events (last 3)
+    const recent = sortedEvents
+      .filter(evt => new Date(evt.date) < new Date())
+      .slice(-3)
+      .map(evt => ({
+        name: evt.title,
+        date: new Date(evt.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' }),
+        attendees: evt.selectedClients?.length || 0,
+        status: evt.status === 'approved' ? 'Tamamlandı' : 'Yaklaşan',
+      }));
+    setRecentEvents(recent);
 
-          // Save all fetched events if needed
-          setFetchedEvents(sortedEvents);
-        }
-      })
-      .catch(console.error);
-  }, []);
+  }, [user]); // Re-run when user changes
 
   const stats = [
     { name: 'Toplam Gelir', value: '₺42,890', change: '+12.5%', trend: 'up' },

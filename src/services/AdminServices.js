@@ -31,6 +31,7 @@ export const adminService = {
 
             if (!response.ok) {
                 const errorData = await response.json();
+                console.log("Error response data:", errorData);
                 throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
             }
 

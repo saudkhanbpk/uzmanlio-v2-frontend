@@ -130,19 +130,19 @@ export const Calendar = () => {
 
   // Get week days
   const getWeekDays = (date) => {
-  const week = [];
-  const startOfWeek = new Date(date);
-  const day = startOfWeek.getDay();  // 0=Sun
-  const diff = startOfWeek.getDate() - (day === 0 ? 6 : day - 1);  // Shift to Monday=0
-  startOfWeek.setDate(diff);
+    const week = [];
+    const startOfWeek = new Date(date);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
 
-  for (let i = 0; i < 7; i++) {
-    const weekDay = new Date(startOfWeek);
-    weekDay.setDate(startOfWeek.getDate() + i);
-    week.push(weekDay);
-  }
-  return week;
-};
+    for (let i = 0; i < 7; i++) {
+      const weekDay = new Date(startOfWeek);
+      weekDay.setDate(startOfWeek.getDate() + i);
+      week.push(weekDay);
+    }
+    return week;
+  };
 
   const formatDate = (date, format = 'full') => {
     if (!date) return '';
@@ -156,85 +156,43 @@ export const Calendar = () => {
     });
   };
 
-const getAppointmentsForDate = (date) => {
-  if (!date) return [];
 
-  // ✅ ROBUST: Normalize ALL dates to local YYYY-MM-DD (handles ISO/UTC)
-  const normalizeDate = (d) => {
-    if (!d) return '';
-    const parsed = new Date(d);
-    if (isNaN(parsed.getTime())) return '';
-    return parsed.toLocaleDateString('en-CA', { timeZone: 'UTC' });  // Treat as UTC, convert to local day
-  };
+  const getAppointmentsForDate = (date) => {
+    if (!date) return [];
 
-  const dateStr = normalizeDate(date);
+    // ✅ Use local date instead of UTC
+    const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
 
-  const fromContext = Array.isArray(appointments)
-    ? appointments.filter(apt => normalizeDate(apt.date) === dateStr)
-    : [];
+    const fromContext = Array.isArray(appointments)
+      ? appointments.filter(apt => apt.date === dateStr)
+      : [];
 
-  const fromProfile = Array.isArray(fetchedEvents)
-    ? fetchedEvents.filter(evt => normalizeDate(evt.date) === dateStr)
-    : [];
+    const fromProfile = Array.isArray(fetchedEvents)
+      ? fetchedEvents.filter(evt => evt.date === dateStr)
+      : [];
 
-  const mergedMap = new Map();
+    const mergedMap = new Map();
 
-  fromProfile.forEach(evt => {
-    mergedMap.set(evt.id || `${evt.title}-${evt.time}`, evt);
-  });
-
-  fromContext.forEach(apt => {
-    const key = apt.id || apt._id || `${apt.title}-${apt.time}`;
-    mergedMap.set(key, {
-      id: apt.id || apt._id || key,
-      title: apt.title || apt.serviceName || apt.name || '',
-      date: dateStr,  // Normalized
-      time: apt.time || apt.startTime || '',
-      status: apt.status || 'pending',
-      type: apt.type || apt.meetingType || '1-1',
+    fromProfile.forEach(evt => {
+      mergedMap.set(evt.id || `${evt.title}-${evt.time}`, evt);
     });
-  });
 
-  return Array.from(mergedMap.values()).sort((a, b) =>
-    (a.time || '').localeCompare(b.time || '')
-  );
-};
-  // const getAppointmentsForDate = (date) => {
-  //   if (!date) return [];
+    fromContext.forEach(apt => {
+      const key = apt.id || apt._id || `${apt.title}-${apt.time}`;
+      mergedMap.set(key, {
+        id: apt.id || apt._id || key,
+        title: apt.title || apt.serviceName || apt.name || '',
+        date: apt.date,
+        time: apt.time || apt.startTime || '',
+        status: apt.status || 'pending',
+        type: apt.type || apt.meetingType || '1-1',
+      });
+    });
 
-  //   // ✅ Use local date instead of UTC
-  //   const dateStr = date.toLocaleDateString('en-CA'); // YYYY-MM-DD in local timezone
-
-  //   const fromContext = Array.isArray(appointments)
-  //     ? appointments.filter(apt => apt.date === dateStr)
-  //     : [];
-
-  //   const fromProfile = Array.isArray(fetchedEvents)
-  //     ? fetchedEvents.filter(evt => evt.date === dateStr)
-  //     : [];
-
-  //   const mergedMap = new Map();
-
-  //   fromProfile.forEach(evt => {
-  //     mergedMap.set(evt.id || `${evt.title}-${evt.time}`, evt);
-  //   });
-
-  //   fromContext.forEach(apt => {
-  //     const key = apt.id || apt._id || `${apt.title}-${apt.time}`;
-  //     mergedMap.set(key, {
-  //       id: apt.id || apt._id || key,
-  //       title: apt.title || apt.serviceName || apt.name || '',
-  //       date: apt.date,
-  //       time: apt.time || apt.startTime || '',
-  //       status: apt.status || 'pending',
-  //       type: apt.type || apt.meetingType || '1-1',
-  //     });
-  //   });
-
-  //   return Array.from(mergedMap.values()).sort((a, b) =>
-  //     (a.time || '').localeCompare(b.time || '')
-  //   );
-  // };
+    return Array.from(mergedMap.values()).sort((a, b) =>
+      (a.time || '').localeCompare(b.time || '')
+    );
+  };
 
 
   const toggleTimeSlot = (day, time) => {
@@ -538,113 +496,115 @@ const getAppointmentsForDate = (date) => {
 
         {/* Week View */}
         {/* Week View */}
-      {view === 'week' && (
-  <div>
-    <div className="grid grid-cols-8 gap-2">
-      {/* Time Column */}
-      <div className="space-y-12">
-        <div className="h-12"></div> {/* Header space */}
-        {timeSlots.filter((_, i) => i % 2 === 0).map((time) => (
-          <div key={time} className="text-xs text-gray-500 text-right pr-2">
-            {time}
-          </div>
-        ))}
-      </div>
+        {view === 'week' && (
+          <div>
+            <div className="grid grid-cols-8 gap-2">
+              {/* Time Column */}
+              <div className="space-y-12">
+                <div className="h-12"></div>
+                {timeSlots.filter((_, i) => i % 2 === 0).map((time) => (
+                  <div key={time} className="text-xs text-gray-500 text-right pr-2">
+                    {time}
+                  </div>
+                ))}
+              </div>
 
-      {/* Week Days */}
-      {getWeekDays(currentDate).map((day, dayIndex) => {
-        const dayAppointments = getAppointmentsForDate(day);
-        console.log("Day Appointments:", dayAppointments);  // Keep for debug
-        const isToday = day.toDateString() === new Date().toDateString();
+              {/* Week Days */}
+              {getWeekDays(currentDate).map((day, dayIndex) => {
+                const dayAppointments = getAppointmentsForDate(day);
+                const isToday = day.toDateString() === new Date().toDateString();
 
-        // 🧠 ROBUST TIME PARSER (replaces buggy normalizeTime)
-        const parseTimeToMinutes = (t) => {
-          if (!t) return null;
-          const clean = t.toString().trim().replace(/\./g, ':').replace(/[^0-9:]/g, '');
-          const match = clean.match(/^(\d{1,2}):?(\d{2})?$/);
-          if (!match) return null;
-          const [, hStr, mStr] = match;
-          const h = parseInt(hStr, 10);
-          const m = mStr ? parseInt(mStr, 10) : 0;
-          if (isNaN(h) || h > 23 || m > 59) return null;
-          return h * 60 + m;
-        };
+                // Robust time parser: handles "16:45", "16.45", "16:45:00", "4:45 PM"
+                const parseTime = (t) => {
+                  if (!t) return null;
+                  const s = t.toString().trim().replace(/\./g, ':').replace(/[^0-9:]/g, '');
+                  const match = s.match(/^(\d{1,2}):?(\d{2})?:?(\d{2})?$/);
+                  if (!match) return null;
+                  const [, h, m] = match;
+                  const hours = parseInt(h, 10);
+                  const minutes = m ? parseInt(m, 10) : 0;
+                  if (isNaN(hours) || isNaN(minutes)) return null;
+                  return { hours, minutes, total: hours * 60 + minutes };
+                };
 
-        // 🧠 Pre-compute slot minutes
-        const slotMinutes = timeSlots.map(slot => {
-          const [h, m] = slot.split(':').map(Number);
-          return h * 60 + m;
-        });
+                // Convert timeSlots to minutes
+                const slotMinutes = timeSlots.map(t => {
+                  const [h, m] = t.split(':').map(Number);
+                  return h * 60 + m;
+                });
 
-        // 🧠 Map appointments to closest slot (prefer later if tie)
-        const slotMap = new Map(timeSlots.map(t => [t, []]));
-        dayAppointments.forEach(apt => {
-          const aptMinutes = parseTimeToMinutes(apt.time || apt.startTime);
-          if (aptMinutes === null) return;
+                // Map events to closest slot
+                const slotMap = new Map(timeSlots.map(t => [t, []]));
+                dayAppointments.forEach(apt => {
+                  const parsed = parseTime(apt.time || apt.startTime);
+                  if (!parsed) return;
 
-          let closestSlot = timeSlots[0];
-          let minDiff = Infinity;
-          slotMinutes.forEach((slotMin, i) => {
-            const diff = Math.abs(slotMin - aptMinutes);
-            if (diff < minDiff || (diff === minDiff && slotMin > parseTimeToMinutes(closestSlot))) {  // Prefer later slot on tie
-              minDiff = diff;
-              closestSlot = timeSlots[i];
-            }
-          });
-          slotMap.get(closestSlot).push(apt);
-        });
+                  let closestSlot = timeSlots[0];
+                  let minDiff = Infinity;
 
-        return (
-          <div key={dayIndex} className="space-y-1">
-            {/* Day Header */}
-            <div
-              className={`text-center p-2 rounded-lg ${isToday ? 'bg-primary-100 text-primary-700' : 'bg-gray-50'
-                }`}
-            >
-              <div className="text-xs text-gray-600">{weekDays[dayIndex]}</div>
-              <div className="font-medium">{day.getDate()}</div>
-            </div>
+                  slotMinutes.forEach((slotMin, i) => {
+                    const diff = Math.abs(slotMin - parsed.total);
+                    if (diff < minDiff) {
+                      minDiff = diff;
+                      closestSlot = timeSlots[i];
+                    }
+                  });
 
-            {/* Time Slots */}
-            <div className="space-y-1">
-              {timeSlots.map((time) => {
-                const appointments = slotMap.get(time) || [];
-                if (appointments.length === 0) {
-                  return (
-                    <div
-                      key={time}
-                      className="h-6 rounded border border-gray-100 bg-gray-50 hover:bg-gray-100"
-                    />
-                  );
-                }
-                const firstApt = appointments[0];
+                  slotMap.get(closestSlot).push(apt);
+                });
+
                 return (
-                  <div
-                    key={time}
-                    className={`h-6 rounded border border-gray-100 ${firstApt.status === 'confirmed'
-                        ? 'bg-green-100 border-green-300'
-                        : 'bg-yellow-100 border-yellow-300'
-                      }`}
-                  >
-                    <div className="text-xs p-1 text-gray-700 truncate">
-                      {appointments.map((apt, i) => (
-                        <span key={apt.id || i}>
-                          {apt.type === '1-1' ? '👤' : '👥'}{' '}
-                          {apt.title ? `• ${apt.title}` : apt.time}
-                          {i < appointments.length - 1 && ', '}
-                        </span>
-                      ))}
+                  <div key={dayIndex} className="space-y-1">
+                    {/* Day Header */}
+                    <div
+                      className={`text-center p-2 rounded-lg ${isToday ? 'bg-primary-100 text-primary-700' : 'bg-gray-50'
+                        }`}
+                    >
+                      <div className="text-xs text-gray-600">{weekDays[dayIndex]}</div>
+                      <div className="font-medium">{day.getDate()}</div>
+                    </div>
+
+                    {/* Time Slots */}
+                    <div className="space-y-1">
+                      {timeSlots.map((time) => {
+                        const appts = slotMap.get(time) || [];
+                        if (appts.length === 0) {
+                          return (
+                            <div
+                              key={time}
+                              className="h-6 rounded border border-gray-100 bg-gray-50 hover:bg-gray-100"
+                            />
+                          );
+                        }
+
+                        const first = appts[0];
+                        return (
+                          <div
+                            key={time}
+                            className={`h-6 rounded border ${first.status === 'confirmed'
+                                ? 'bg-green-100 border-green-300'
+                                : 'bg-yellow-100 border-yellow-300'
+                              }`}
+                          >
+                            <div className="text-xs p-1 text-gray-700 truncate">
+                              {appts.map((a, i) => (
+                                <span key={a.id || i}>
+                                  {a.type === '1-1' ? 'Individual' : 'Group'}{' '}
+                                  {a.title ? `• ${a.title}` : a.time}
+                                  {i < appts.length - 1 ? ', ' : ''}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 );
               })}
             </div>
           </div>
-        );
-      })}
-    </div>
-  </div>
-)}
+        )}
 
       </div>
 

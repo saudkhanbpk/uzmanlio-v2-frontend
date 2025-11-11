@@ -1,8 +1,11 @@
 import axios from "axios";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
+import { useUser } from "../context/UserContext";
 
 export const Profile = () => {
+ const { user, loading, error } = useUser(); // Get user from Context
+
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const userId = "68c94094d011cdb0e5fa2caa";
   const [profile, setProfile] = useState({
@@ -35,25 +38,31 @@ export const Profile = () => {
   });
 
   // Fetch Profile
-  const getProfile = async () => {
+  const getProfile =  () => {
     try {
-      const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
-      if (res.data) {
+      // const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
+      if (!user) {
+         console.log("User Not Available")
+         return;
+      }
+      const res =  user 
+      console.log(user)
+      if (res) {
         setProfile((prevProfile) => ({
           ...prevProfile,
-          pp: res.data.pp || prevProfile.pp,
-          ppFile: res.data.ppFile || "",
+          // pp: res.pp || prevProfile.pp,
+          ppFile: res.ppFile || "",
           information: {
             ...prevProfile.information,
-            ...(res.data.information || {}),
+            ...(res.information || {}),
           },
           socialMedia: {
             ...prevProfile.socialMedia,
-            ...(res.data.socialMedia || {}),
+            ...(res.socialMedia || {}),
           },
           expertPaymentInfo: {
             ...prevProfile.expertPaymentInfo,
-            ...(res.data.expertPaymentInfo || {}),
+            ...(res.expertPaymentInfo || {}),
           },
         }));
         Swal.fire({
@@ -64,7 +73,7 @@ export const Profile = () => {
           showConfirmButton: false,
         });
       }
-      console.log("Profile fetched:", profile.pp);
+      console.log("Profile fetched:", res);
     } catch (error) {
       console.error("Fetch profile failed:", {
         message: error.message,
