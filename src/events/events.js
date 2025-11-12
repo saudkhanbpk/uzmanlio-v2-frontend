@@ -11,7 +11,7 @@ export const Events = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  var userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  const userId = localStorage.getItem('userId') // Mock user ID for development
 
   // Load events on component mount
   useEffect(() => {

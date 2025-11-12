@@ -24,7 +24,7 @@ export default function Services() {
 
 
 
-  const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId')
 
   // Fetch services from API
   const fetchServices = async () => {

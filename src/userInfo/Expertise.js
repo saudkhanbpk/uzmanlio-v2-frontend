@@ -53,7 +53,7 @@ export const Expertise = () => {
   const [selectedTitle, setSelectedTitle] = useState(null);
 
   useEffect(() => {
-    const userId = '68c94094d011cdb0e5fa2caa';
+    const userId = localStorage.getItem('userId')
     loadExpertProfile(userId).catch(console.error);
   }, [loadExpertProfile]);
 
@@ -69,7 +69,7 @@ export const Expertise = () => {
   const handleDeleteEducation = async (educationId) => {
     if (window.confirm('Bu eğitim kaydını silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteEducation(userId, educationId);
       } catch (error) {
         console.error('Failed to delete education:', error);
@@ -86,7 +86,7 @@ export const Expertise = () => {
   const handleDeleteCertificate = async (certificateId) => {
     if (window.confirm('Bu sertifikayı silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteCertificate(userId, certificateId);
       } catch (error) {
         console.error('Failed to delete certificate:', error);
@@ -103,7 +103,7 @@ export const Expertise = () => {
   const handleDeleteExperience = async (experienceId) => {
     if (window.confirm('Bu deneyim kaydını silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteExperience(userId, experienceId);
       } catch (error) {
         console.error('Failed to delete experience:', error);
@@ -120,7 +120,7 @@ export const Expertise = () => {
   const handleDeleteSkill = async (skillId) => {
     if (window.confirm('Bu beceriyi silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteSkill(userId, skillId);
       } catch (error) {
         console.error('Failed to delete skill:', error);
@@ -137,7 +137,7 @@ export const Expertise = () => {
   const handleDeleteService = async (serviceId) => {
     if (window.confirm('Bu hizmeti silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteService(userId, serviceId);
       } catch (error) {
         console.error('Failed to delete service:', error);
@@ -154,7 +154,7 @@ export const Expertise = () => {
   const handleDeletePackage = async (packageId) => {
     if (window.confirm('Bu paketi silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deletePackage(userId, packageId);
       } catch (error) {
         console.error('Failed to delete package:', error);
@@ -166,7 +166,7 @@ export const Expertise = () => {
   const handleDeleteTitle = async (titleId) => {
     if (window.confirm('Bu unvanı silmek istediğinizden emin misiniz?')) {
       try {
-        const userId = '68c94094d011cdb0e5fa2caa';
+        const userId = localStorage.getItem('userId')
         await deleteTitle(userId, titleId);
       } catch (error) {
         console.error('Failed to delete title:', error);
@@ -215,7 +215,7 @@ export const Expertise = () => {
     }
 
     try {
-      const userId = '68c94094d011cdb0e5fa2caa';
+      const userId = localStorage.getItem('userId')
       const fileDataArray = validFiles.map(file => ({
         file,
         type: file.type.includes('pdf') ? 'pdf' : 'image'
@@ -249,7 +249,7 @@ export const Expertise = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          const userId = '68c94094d011cdb0e5fa2caa';
+          const userId = localStorage.getItem('userId')
           await deleteGalleryFile(userId, fileId);
           Swal.fire({
             title: "Deleted!",

@@ -18,7 +18,7 @@ export const Settings = () => {
 
 
   // IMPORTANT: keep this the same user id or replace dynamically
-  const userId = "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId') ;
 
   // Pricing (lowercase keys)
   const monthlyPrices = {

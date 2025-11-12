@@ -33,7 +33,7 @@ export const EducationEditModal = ({ onClose, education }) => {
 
     try {
       // For now, using a mock userId - in a real app, this would come from auth context
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID
+      const userId = localStorage.getItem('userId') // Mock user ID
 
       const educationData = {
         level: formData.degree,

@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 // Blog Create Component
 export const BlogCreate = () => {
   const navigate = useNavigate();
-  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  const userId = localStorage.getItem('userId') // Mock user ID for development
   const categories = ["Psikoloji", "Kişisel Gelişim", "Spor", "Beslenme", "Teknoloji", "Business", "Tasarım", "Lifestyle"];
 
   const [formData, setFormData] = useState({

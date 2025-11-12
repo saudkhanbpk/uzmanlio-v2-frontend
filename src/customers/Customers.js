@@ -16,7 +16,7 @@ export default function Customers(){
   const [statusFilter, setStatusFilter] = useState('all');
   const [stats, setStats] = useState(null);
 
-  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  const userId = localStorage.getItem('userId') // Mock user ID for development
 
   // Load customers on component mount
   useEffect(() => {

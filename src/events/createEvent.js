@@ -7,7 +7,7 @@ import { log10 } from "chart.js/helpers";
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
   const navigate = useNavigate();
-  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  const userId = localStorage.getItem('userId') // Mock user ID for development
 
   const [eventData, setEventData] = useState({
     service: '', // Changed: Now uses service/package dropdown instead of title

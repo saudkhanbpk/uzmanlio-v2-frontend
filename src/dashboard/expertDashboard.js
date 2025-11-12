@@ -35,7 +35,7 @@ export default function Dashboard ({ onLogout }) {
 
   useEffect(() => {
     const checkAdmin = async () => {
-      const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+      const userId = localStorage.getItem('userId') 
       try {
         const user = await profileService.getProfile(userId);
         console.log("User:", user);

@@ -39,7 +39,7 @@ export const SkillEditModal = ({ onClose, skill }) => {
 
     try {
       // TODO: Replace with real user ID from authentication context in production
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      const userId = localStorage.getItem('userId') // Mock user ID for development
       
       await updateSkill(userId, skill.id, {
         name: formData.name.trim(),

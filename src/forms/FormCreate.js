@@ -6,7 +6,7 @@ import Swal from "sweetalert2"
 // Form Create Component
 export const FormCreate = () => {
   const navigate = useNavigate();
-  const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  const userId = localStorage.getItem('userId') // Mock user ID for development
 
   const [formData, setFormData] = useState({
     title: '',

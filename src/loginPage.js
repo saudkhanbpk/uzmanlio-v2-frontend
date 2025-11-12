@@ -1,17 +1,33 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { auth } from './services/Auth.js';
+import {useUser} from "./context/UserContext.js"
+
 
 // Login Page Component
 export default function LoginPage({ onLogin }){
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+ const { setUser, loading, error } = useUser(); // Get user from Context
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Simulate login - in real app would validate credentials
+const handleSubmit = async (e) => {
+  e.preventDefault(); // prevent page reload
+
+  const formData = { email, password };
+
+  try {
+    const user = await auth.login(formData);
+    setUser(user);
+    console.log("Login successful!",user);
     onLogin();
-  };
+    // Optionally redirect user
+    // navigate("/dashboard");
+  } catch (error) {
+    console.error("Login failed:", error.message);
+    // Optionally show toast or message to user
+  }
+};
 
   return (
     <div className="min-h-screen flex">
@@ -51,9 +67,9 @@ export default function LoginPage({ onLogin }){
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Hoş geldiniz!</h2>
             <p className="text-gray-600 text-sm">
-              Korvo hesabınız yok mu? 
-              <Link to="https://www.uzmanlio.com/kayit-ol" className="text-primary-600 hover:text-primary-700 ml-1">
-                Hemen ücretsiz hesap oluşturun
+              Hesabınız yok mu? 
+              <Link to="/signup" className="text-primary-600 hover:text-primary-700 ml-1 font-semibold">
+                Hemen kaydolun
               </Link>
             </p>
           </div>
@@ -102,8 +118,18 @@ export default function LoginPage({ onLogin }){
               </a>
             </div>
           </form>
+
+          {/* Signup Link */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Hesabınız yok mu?{' '}
+              <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-semibold">
+                Kaydolun
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
-};
+}

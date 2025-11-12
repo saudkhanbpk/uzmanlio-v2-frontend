@@ -3,10 +3,16 @@ import { useExpertData } from "./hooks/useExpertData";
 import Swal from "sweetalert2";
 import { useSearchParams } from "react-router-dom";
 import { profileService } from "./services/ProfileServices";
+// import { useUser } from "./context/UserContext";
 
 
 // Calendar Component
 export const Calendar = () => {
+  // const { user } = useUser(); // Get user from Context
+  // console.log("user from context", user)
+  let userId = localStorage.getItem('userId') 
+  console.log("user from local storage", userId)
+
   const {
     availability,
     appointments,
@@ -58,7 +64,7 @@ export const Calendar = () => {
   // Load calendar data on component mount
 
   useEffect(() => {
-    const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+    // const userId = localStorage.getItem('userId') // Mock user ID for development
     loadExpertProfile(userId).catch(console.error);
     // keep your original debug call
     profileService.getProfile(userId)
@@ -223,7 +229,7 @@ export const Calendar = () => {
   const handleSaveAvailability = async () => {
     try {
       setIsSaving(true);
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
       const availabilityData = {
         alwaysAvailable,
@@ -245,7 +251,7 @@ export const Calendar = () => {
   const handleResetAvailability = async () => {
     try {
       setIsSaving(true);
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
       // Reset local state
       setSelectedSlots(new Set());
@@ -275,7 +281,7 @@ export const Calendar = () => {
     try {
       setCalendarLoading(true);
       setCalendarError(null);
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
       const response = await fetch(`https://uzmanlio-backend-kpwz.onrender.com/api/calendar/auth/${provider}/auth/${userId}`);
       console.log("Response From Goolge calendar", response)
@@ -318,7 +324,7 @@ export const Calendar = () => {
 
   const loadCalendarProviders = async () => {
     try {
-      const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+      // const userId = localStorage.getItem('userId') // Mock user ID for development
       const response = await fetch(`${backendUrl}/api/calendar/auth/${userId}/providers`);
       const data = await response.json();
 

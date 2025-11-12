@@ -12,7 +12,7 @@ export const DashboardHome = () => {
   const { user, loading, error } = useUser(); // Get user from Context
 
   // useEffect(() => {
-  //   const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+  //   const userId = localStorage.getItem('userId') // Mock user ID for development
   //   profileService.getProfile(userId)
   //     .then(data => {
   //       if (data && data.events && Array.isArray(data.events)) {

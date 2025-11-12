@@ -42,7 +42,7 @@ export const Marketing = () => {
 
   const [selectedEmail, setSelectedEmail] = useState(null);
 
-  const userId = "68c94094d011cdb0e5fa2caa"; // adjust as needed
+  const userId = localStorage.getItem('userId') ; // adjust as needed
 
 
 

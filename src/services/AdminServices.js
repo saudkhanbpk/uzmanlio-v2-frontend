@@ -1,7 +1,7 @@
 // Admin Service - API calls for institution management
 const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
-const userId = '68c94094d011cdb0e5fa2caa'; // Mock user ID for development
+const userId = localStorage.getItem('userId') // Mock user ID for development
 
 export const adminService = {
     // Get institution profile

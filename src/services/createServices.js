@@ -8,7 +8,7 @@ import { AddCustomerModal } from "../customers/AddCustomerModal";
 export const CreateService = () => {
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId')
 
   const [serviceData, setServiceData] = useState({
     title: '',

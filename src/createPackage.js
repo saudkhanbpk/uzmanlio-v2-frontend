@@ -26,7 +26,7 @@ export const CreatePackage = () => {
     client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId') || "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId')
 
   const [packageData, setPackageData] = useState({
     title: '',

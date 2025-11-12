@@ -23,7 +23,7 @@ const SubscriptionPaymentForm = ({
   } = useForm();
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
-  const userId = "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId') ;
 
   // Local price configs (same as Settings.js)
   const monthlyPrices = {

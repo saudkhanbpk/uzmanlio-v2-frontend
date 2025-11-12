@@ -19,5 +19,4 @@ class ProfileService {
   }
 }
 
-// Export a singleton instance
 export const profileService = new ProfileService();

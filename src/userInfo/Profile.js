@@ -7,7 +7,7 @@ export const Profile = () => {
  const { user, loading, error } = useUser(); // Get user from Context
 
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
-  const userId = "68c94094d011cdb0e5fa2caa";
+  const userId = localStorage.getItem('userId') ;
   const [profile, setProfile] = useState({
     pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
     ppFile: "", // store filename for replacement
