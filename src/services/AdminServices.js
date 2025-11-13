@@ -1,11 +1,11 @@
 // Admin Service - API calls for institution management
 const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
-const userId = localStorage.getItem('userId') // Mock user ID for development
 
 export const adminService = {
     // Get institution profile
-    async getInstitution() {
+    async getInstitution(userId) {
+        console.log("Fetching institution profile for user:", userId);
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution`);
             if (!response.ok) {
@@ -20,7 +20,7 @@ export const adminService = {
     },
 
     // Update institution profile with multipart form data
-    async updateInstitution(formdata) {
+    async updateInstitution(formdata, userId) {
         try {
             console.log("Sending FormData to backend...");
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/Update`, {
@@ -45,7 +45,7 @@ export const adminService = {
     },
 
     // Get invited users
-    async getInvitedUsers() {
+    async getInvitedUsers(userId) {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users`);
             if (!response.ok) {
@@ -60,7 +60,7 @@ export const adminService = {
     },
 
     // Invite user to institution
-    async inviteUser(name, email) {
+    async inviteUser(userId, name, email) {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invite-user`, {
                 method: 'POST',
@@ -85,7 +85,7 @@ export const adminService = {
     },
 
     // Remove invited user
-    async removeInvitedUser(id) {
+    async removeInvitedUser(userId, id) {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users/${id}`, {
                 method: 'DELETE',
@@ -106,7 +106,7 @@ export const adminService = {
     },
 
     // Resend invitation
-    async resendInvitation(email) {
+    async resendInvitation(userId, email) {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/resend-invite/${email}`, {
                 method: 'POST',

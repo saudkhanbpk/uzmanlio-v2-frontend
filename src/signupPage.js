@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import { auth } from './services/Auth.js';
 
@@ -26,7 +26,7 @@ export default function SignupPage() {
       expiry: '',
       cvv: '',
       cardHolderName: '',
-      seats: 1,
+      seats: 1, // Will be overridden to 2 when institutional
     },
     agreement: {
       status: false,
@@ -44,6 +44,19 @@ export default function SignupPage() {
   const yearlyPrices = { individual: 5000, institutional: 7400, seatPrice: 100 };
 
   const prices = formData.subscription.duration === 'yearly' ? yearlyPrices : monthlyPrices;
+
+  // Auto-set seats to 2 when switching to institutional
+  useEffect(() => {
+    if (formData.subscription.plantype === 'institutional' && formData.subscription.seats < 2) {
+      setFormData((prev) => ({
+        ...prev,
+        subscription: {
+          ...prev.subscription,
+          seats: 2,
+        },
+      }));
+    }
+  }, [formData.subscription.plantype]);
 
   const totalPrice = useMemo(() => {
     const base = formData.subscription.plantype === 'individual'
@@ -141,36 +154,36 @@ export default function SignupPage() {
     if (step > 1) setStep(step - 1);
   };
 
-const handleSubmit = async () => {
-  try {
-    setLoading(true);
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
 
-    // Calculate price
-    const prices = formData.subscription.duration === 'yearly' ? yearlyPrices : monthlyPrices;
-    const base = formData.subscription.plantype === 'individual'
-      ? prices.individual
-      : prices.institutional;
-    const extraSeats = formData.subscription.plantype === 'institutional'
-      ? Math.max(0, parseInt(formData.subscription.seats || '1', 10) - 1)
-      : 0;
-    const totalPrice = base + extraSeats * prices.seatPrice;
+      // Calculate price
+      const prices = formData.subscription.duration === 'yearly' ? yearlyPrices : monthlyPrices;
+      const base = formData.subscription.plantype === 'individual'
+        ? prices.individual
+        : prices.institutional;
+      const extraSeats = formData.subscription.plantype === 'institutional'
+        ? Math.max(0, parseInt(formData.subscription.seats || '2', 10) - 1)
+        : 0;
+      const totalPrice = base + extraSeats * prices.seatPrice;
 
-    // Prepare payload
-    const signupData = {
-      ...formData,
-      price: totalPrice, // Add calculated price
-    };
-    delete signupData.confirmPassword;
+      // Prepare payload
+      const signupData = {
+        ...formData,
+        price: totalPrice,
+      };
+      delete signupData.confirmPassword;
 
-    const data = await auth.signUp(signupData);
-    console.log("Sign up Data:", signupData);
-  } catch (error) {
-    console.error('Signup error:', error);
-    setErrors({ submit: error.message });
-  } finally {
-    setLoading(false);
-  }
-};
+      const data = await auth.signUp(signupData);
+      console.log("Sign up Data:", signupData);
+    } catch (error) {
+      console.error('Signup error:', error);
+      setErrors({ submit: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getErrorMessage = (field) => errors[field] || '';
 
@@ -545,14 +558,15 @@ const handleSubmit = async () => {
                 {formData.subscription.plantype === 'institutional' && (
                   <div className="pt-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Number of Seats
+                      Number of Seats (Minimum 2)
                     </label>
                     <input
                       type="number"
                       name="subscription.seats"
                       value={formData.subscription.seats}
                       onChange={handleInputChange}
-                      min="1"
+                      min="2"
+                      step="1"
                       className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
                         getErrorMessage('subscription.seats')
                           ? 'border-red-500 focus:ring-red-500'

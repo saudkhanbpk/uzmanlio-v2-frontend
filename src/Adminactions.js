@@ -46,6 +46,8 @@ export const Adminactions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+ const userId = localStorage.getItem('userId') ;
+
 
 useEffect(() => {
   const fetchData = async () => {
@@ -54,7 +56,7 @@ useEffect(() => {
       setError('');
 
       // Fetch institution data
-      const institution = await adminService.getInstitution();
+      const institution = await adminService.getInstitution(userId);
       if (institution && institution.name) {
         setOrgName(institution.name || '');
         setOrgBio(institution.bio || '');
@@ -62,7 +64,7 @@ useEffect(() => {
       }
 
       // Fetch invited users
-      const users = await adminService.getInvitedUsers();
+      const users = await adminService.getInvitedUsers(userId);
       setInvitedUsers(users || []);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -120,7 +122,7 @@ const handleSaveOrganization = async (e) => {
     if (coverFile) formdata.append('axe', coverFile);
 
     console.log('Saving organization...');
-    await adminService.updateInstitution(formdata);
+    await adminService.updateInstitution(formdata, userId);
 
     // Clear file inputs after successful save
     setLogoFile(null);
@@ -166,10 +168,10 @@ const handleInvite = async (e) => {
     setLoading(true);
     setError('');
 
-    await adminService.inviteUser(inviteName, inviteEmail);
+    await adminService.inviteUser(userId, inviteName, inviteEmail);
 
     // Refresh invited users list
-    const users = await adminService.getInvitedUsers();
+    const users = await adminService.getInvitedUsers(userId);
     setInvitedUsers(users || []);
 
     setInviteName('');
@@ -201,10 +203,10 @@ const handleResend = async (email) => {
     setLoading(true);
     setError('');
 
-    await adminService.resendInvitation(email);
+    await adminService.resendInvitation(userId, email);
 
     // Refresh invited users list
-    const users = await adminService.getInvitedUsers();
+    const users = await adminService.getInvitedUsers(userId);
     setInvitedUsers(users || []);
 
     await Swal.fire({
@@ -246,10 +248,10 @@ const handleRemove = async (id) => {
     setLoading(true);
     setError('');
 
-    await adminService.removeInvitedUser(id);
+    await adminService.removeInvitedUser(userId ,id);
 
     // Refresh invited users list
-    const users = await adminService.getInvitedUsers();
+    const users = await adminService.getInvitedUsers(userId);
     setInvitedUsers(users || []);
 
     await Swal.fire({
