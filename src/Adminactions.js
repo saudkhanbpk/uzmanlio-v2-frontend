@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import {useUser } from './context/UserContext';
 import { Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -27,6 +28,7 @@ ChartJS.register(
 );
 
 export const Adminactions = () => {
+  const { user, setUser , patchUser} = useUser();
   const [activeTab, setActiveTab] = useState('organization');
 
   // Kurum Bilgileri state
@@ -46,35 +48,45 @@ export const Adminactions = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
- const userId = localStorage.getItem('userId') ;
+  const userId = localStorage.getItem('userId');
 
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      // Fetch institution data
-      const institution = await adminService.getInstitution(userId);
-      if (institution && institution.name) {
-        setOrgName(institution.name || '');
-        setOrgBio(institution.bio || '');
-        setOrgAbout(institution.about || '');
+  useEffect(() => {
+    console.log("User User User:", user)
+    const fetchData = async () => {
+        if (user?.invitedUsers && user?.institution) {
+          console.log("Setting From the context")
+        setOrgName(user.institution?.name || '');
+        setOrgBio(user.institution?.bio || '');
+        setOrgAbout(user.institution?.about || '');
+        setInvitedUsers(user.invitedUsers || [])
+        return;
       }
+    
+      try {
+        setLoading(true);
+        setError('');
 
-      // Fetch invited users
-      const users = await adminService.getInvitedUsers(userId);
-      setInvitedUsers(users || []);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setError('Failed to load data');
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchData();
-}, []);
+        // Fetch institution data
+        const institution = await adminService.getInstitution(userId, user , patchUser);
+        if (institution && institution.name) {
+          setOrgName(institution.name || '');
+          setOrgBio(institution.bio || '');
+          setOrgAbout(institution.about || '');
+        }
+
+        // Fetch invited users
+        const users = await adminService.getInvitedUsers(userId, user , patchUser);
+        setInvitedUsers(users || []);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
 
   const handleLogoChange = (e) => {
@@ -107,172 +119,172 @@ useEffect(() => {
   };
 
 
-const handleSaveOrganization = async (e) => {
-  e.preventDefault();
+  const handleSaveOrganization = async (e) => {
+    e.preventDefault();
 
-  try {
-    setLoading(true);
-    setError('');
+    try {
+      setLoading(true);
+      setError('');
 
-    const formdata = new FormData();
-    formdata.append('name', orgName);
-    formdata.append('bio', orgBio);
-    formdata.append('about', orgAbout);
-    if (logoFile) formdata.append('logo', logoFile);
-    if (coverFile) formdata.append('axe', coverFile);
+      const formdata = new FormData();
+      formdata.append('name', orgName);
+      formdata.append('bio', orgBio);
+      formdata.append('about', orgAbout);
+      if (logoFile) formdata.append('logo', logoFile);
+      if (coverFile) formdata.append('axe', coverFile);
 
-    console.log('Saving organization...');
-    await adminService.updateInstitution(formdata, userId);
+      console.log('Saving organization...');
+      await adminService.updateInstitution(formdata, userId);
 
-    // Clear file inputs after successful save
-    setLogoFile(null);
-    setCoverFile(null);
-    setLogoPreview('');
-    setCoverPreview('');
+      // Clear file inputs after successful save
+      setLogoFile(null);
+      setCoverFile(null);
+      setLogoPreview('');
+      setCoverPreview('');
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Başarılı!',
-      text: 'Kurum bilgileri başarıyla kaydedildi.',
-      confirmButtonText: 'Tamam',
-    });
-  } catch (error) {
-    console.error('Error updating institution:', error);
-    setError(error.message || 'Kurum bilgileri kaydedilirken hata oluştu.');
-    await Swal.fire({
-      icon: 'error',
-      title: 'Hata!',
-      text: error.message || 'Kurum bilgileri kaydedilirken hata oluştu.',
-      confirmButtonText: 'Tamam',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Kurum bilgileri başarıyla kaydedildi.',
+        confirmButtonText: 'Tamam',
+      });
+    } catch (error) {
+      console.error('Error updating institution:', error);
+      setError(error.message || 'Kurum bilgileri kaydedilirken hata oluştu.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: error.message || 'Kurum bilgileri kaydedilirken hata oluştu.',
+        confirmButtonText: 'Tamam',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
-const handleInvite = async (e) => {
-  e.preventDefault();
-  if (!inviteEmail || !inviteName) {
-    setError('Ad ve e-posta adresi gereklidir.');
-    await Swal.fire({
+  const handleInvite = async (e) => {
+    e.preventDefault();
+    if (!inviteEmail || !inviteName) {
+      setError('Ad ve e-posta adresi gereklidir.');
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Eksik Bilgi',
+        text: 'Lütfen ad ve e-posta adresini giriniz.',
+        confirmButtonText: 'Tamam',
+      });
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError('');
+
+      await adminService.inviteUser(userId, inviteName, inviteEmail);
+
+      // Refresh invited users list
+      const users = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(users || []);
+
+      setInviteName('');
+      setInviteEmail('');
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Davet e-postası başarıyla gönderildi.',
+        confirmButtonText: 'Tamam',
+      });
+    } catch (error) {
+      console.error('Error inviting user:', error);
+      setError(error.message || 'Davet gönderilirken hata oluştu.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: error.message || 'Davet gönderilirken hata oluştu.',
+        confirmButtonText: 'Tamam',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleResend = async (email) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      await adminService.resendInvitation(userId, email);
+
+      // Refresh invited users list
+      const users = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(users || []);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Davet e-postası başarıyla yeniden gönderildi.',
+        confirmButtonText: 'Tamam',
+      });
+    } catch (error) {
+      console.error('Error resending invitation:', error);
+      setError(error.message || 'Davet yeniden gönderilirken hata oluştu.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: error.message || 'Davet yeniden gönderilirken hata oluştu.',
+        confirmButtonText: 'Tamam',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleRemove = async (id) => {
+    const result = await Swal.fire({
+      title: 'Emin misiniz?',
+      text: 'Bu kullanıcıyı kaldırmak istediğinizden emin misiniz?',
       icon: 'warning',
-      title: 'Eksik Bilgi',
-      text: 'Lütfen ad ve e-posta adresini giriniz.',
-      confirmButtonText: 'Tamam',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Evet, kaldır!',
+      cancelButtonText: 'Vazgeç',
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-    setError('');
+    if (!result.isConfirmed) return;
 
-    await adminService.inviteUser(userId, inviteName, inviteEmail);
+    try {
+      setLoading(true);
+      setError('');
 
-    // Refresh invited users list
-    const users = await adminService.getInvitedUsers(userId);
-    setInvitedUsers(users || []);
+      await adminService.removeInvitedUser(userId, id);
 
-    setInviteName('');
-    setInviteEmail('');
+      // Refresh invited users list
+      const users = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(users || []);
 
-    await Swal.fire({
-      icon: 'success',
-      title: 'Başarılı!',
-      text: 'Davet e-postası başarıyla gönderildi.',
-      confirmButtonText: 'Tamam',
-    });
-  } catch (error) {
-    console.error('Error inviting user:', error);
-    setError(error.message || 'Davet gönderilirken hata oluştu.');
-    await Swal.fire({
-      icon: 'error',
-      title: 'Hata!',
-      text: error.message || 'Davet gönderilirken hata oluştu.',
-      confirmButtonText: 'Tamam',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-const handleResend = async (email) => {
-  try {
-    setLoading(true);
-    setError('');
-
-    await adminService.resendInvitation(userId, email);
-
-    // Refresh invited users list
-    const users = await adminService.getInvitedUsers(userId);
-    setInvitedUsers(users || []);
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Başarılı!',
-      text: 'Davet e-postası başarıyla yeniden gönderildi.',
-      confirmButtonText: 'Tamam',
-    });
-  } catch (error) {
-    console.error('Error resending invitation:', error);
-    setError(error.message || 'Davet yeniden gönderilirken hata oluştu.');
-    await Swal.fire({
-      icon: 'error',
-      title: 'Hata!',
-      text: error.message || 'Davet yeniden gönderilirken hata oluştu.',
-      confirmButtonText: 'Tamam',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-const handleRemove = async (id) => {
-  const result = await Swal.fire({
-    title: 'Emin misiniz?',
-    text: 'Bu kullanıcıyı kaldırmak istediğinizden emin misiniz?',
-    icon: 'warning',
-    showCancelButton: true,
-    confirmButtonColor: '#3085d6',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Evet, kaldır!',
-    cancelButtonText: 'Vazgeç',
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    setLoading(true);
-    setError('');
-
-    await adminService.removeInvitedUser(userId ,id);
-
-    // Refresh invited users list
-    const users = await adminService.getInvitedUsers(userId);
-    setInvitedUsers(users || []);
-
-    await Swal.fire({
-      icon: 'success',
-      title: 'Kaldırıldı!',
-      text: 'Kullanıcı başarıyla kaldırıldı.',
-      confirmButtonText: 'Tamam',
-    });
-  } catch (error) {
-    console.error('Error removing invited user:', error);
-    setError(error.message || 'Kullanıcı kaldırılırken hata oluştu.');
-    await Swal.fire({
-      icon: 'error',
-      title: 'Hata!',
-      text: error.message || 'Kullanıcı kaldırılırken hata oluştu.',
-      confirmButtonText: 'Tamam',
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      await Swal.fire({
+        icon: 'success',
+        title: 'Kaldırıldı!',
+        text: 'Kullanıcı başarıyla kaldırıldı.',
+        confirmButtonText: 'Tamam',
+      });
+    } catch (error) {
+      console.error('Error removing invited user:', error);
+      setError(error.message || 'Kullanıcı kaldırılırken hata oluştu.');
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: error.message || 'Kullanıcı kaldırılırken hata oluştu.',
+        confirmButtonText: 'Tamam',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   return (
@@ -283,17 +295,15 @@ const handleRemove = async (id) => {
       <div className="bg-white rounded-xl p-2 shadow-sm border border-gray-200 flex w-full md:w-auto">
         <button
           onClick={() => setActiveTab('organization')}
-          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'organization' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
-          }`}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'organization' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
+            }`}
         >
           Kurum Bilgileri
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`ml-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-            activeTab === 'users' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
-          }`}
+          className={`ml-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'users' ? 'bg-primary-100 text-primary-700' : 'text-gray-700 hover:bg-gray-100'
+            }`}
         >
           Kullanıcı İşlemleri
         </button>

@@ -60,7 +60,7 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
     )
     : [];
 
-  console.log('Filtered Services:', filteredServices);
+  // console.log('Filtered Services:', filteredServices);
   if (filteredServices.length === 0) return null;
 
   return (

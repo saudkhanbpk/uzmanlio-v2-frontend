@@ -56,7 +56,7 @@ export const DashboardHome = () => {
   useEffect(() => {
     // Wait for user to load from context
     if (!user || !user.events || !Array.isArray(user.events)) return;
-    console.log("User:",user)
+    // console.log("User:",user)
 
     const sortedEvents = [...user.events].sort(
       (a, b) => new Date(a.date) - new Date(b.date)
@@ -89,12 +89,17 @@ export const DashboardHome = () => {
     setRecentEvents(recent);
 
   }, [user]); // Re-run when user changes
+  // console.log("User From Context:", user)
+  const customerscount = user?.customers?.length
+  const completedEvents = user?.events?.map((event) => {
+    event.status == "completed"
+  }) || 0;
 
   const stats = [
     { name: 'Toplam Gelir', value: '₺42,890', change: '+12.5%', trend: 'up' },
-    { name: 'Aktif Müşteriler', value: '1,247', change: '+8.2%', trend: 'up' },
+    { name: 'Aktif Müşteriler', value: customerscount, change: '+8.2%', trend: 'up' },
     { name: 'Bu Ay Satış', value: '156', change: '+23.1%', trend: 'up' },
-    { name: 'Tamamlanan Etkinlikler', value: '23', change: '+5.4%', trend: 'up' },
+    { name: 'Tamamlanan Etkinlikler', value: completedEvents>0?completedEvents:0, change: '+5.4%', trend: 'up' },
   ];
 
   const [showVacationModal, setShowVacationModal] = useState(false);

@@ -34,7 +34,7 @@ export const Expertise = () => {
     uploadGalleryFile,
     deleteGalleryFile
   } = useExpertData();
-  console.log("Gallery Files", galleryFiles)
+  // console.log("Gallery Files", galleryFiles)
 
   const [showCertModal, setCertModal] = useState(false);
   const [showExpModal, setExpModal] = useState(false);

@@ -2,16 +2,21 @@
 const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
+
 export const adminService = {
+
     // Get institution profile
-    async getInstitution(userId) {
-        console.log("Fetching institution profile for user:", userId);
+    async getInstitution(userId, user, patchUser) {
+        // console.log("Fetching institution profile for user:", userId);
+
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            patchUser({ institution: data.institution });
+            console.log("Data.institution:", data.institution)
             return data.institution || {};
         } catch (error) {
             console.error('Error fetching institution:', error);
@@ -45,13 +50,15 @@ export const adminService = {
     },
 
     // Get invited users
-    async getInvitedUsers(userId) {
+    async getInvitedUsers(userId, user, patchUser) {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            patchUser({invitedUsers: data.invitedUsers })
+            console.log("Data.invitedUsers:", data.invitedUsers)
             return data.invitedUsers || [];
         } catch (error) {
             console.error('Error fetching invited users:', error);

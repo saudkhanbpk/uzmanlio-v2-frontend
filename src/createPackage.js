@@ -4,21 +4,17 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { AddCustomerModal } from "./customers/AddCustomerModal";
+import { useUser } from "./context/UserContext";
 
 // CreatePackage Component
 export const CreatePackage = () => {
+  const user = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
   // Mock clients data (in real app, this would come from your backend)
-  const availableClients = [
-    { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com' },
-    { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com' },
-    { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com' },
-    { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com' },
-    { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com' }
-  ];
+  const availableClients = user.customers;
 
 
   const filteredClients = availableClients.filter(client =>

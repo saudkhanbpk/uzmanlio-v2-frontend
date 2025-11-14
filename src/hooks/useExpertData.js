@@ -208,11 +208,11 @@ export const useExpertData = () => {
       dispatch({ type: EXPERT_ACTIONS.SET_TITLE, payload: profile.title || '' });
       dispatch({ type: EXPERT_ACTIONS.SET_TITLES, payload: titles.titles || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_CATEGORIES, payload: profile.expertCategories || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_EDUCATION, payload: profile.education || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_EDUCATION, payload: profile.resume?.education || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_CERTIFICATES, payload: profile.certificates || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_EXPERIENCE, payload: profile.experience || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SKILLS, payload: profile.skills || [] });
-      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.gallery || [] });
+      dispatch({ type: EXPERT_ACTIONS.SET_GALLERY_FILES, payload: profile.galleryFiles || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_SERVICES, payload: profile.services || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_ACTIVE_SERVICES, payload: profile.activeServices || [] });
       dispatch({ type: EXPERT_ACTIONS.SET_PACKAGES, payload: profile.packages || [] });

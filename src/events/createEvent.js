@@ -3,9 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { eventService } from "../services/eventService";
 import AddCustomerModal from "../customers/AddCustomerModal"
 import { log10 } from "chart.js/helpers";
+import { useUser } from "../context/UserContext";
+
+
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
+  const { user } = useUser();
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId') // Mock user ID for development
 
@@ -122,13 +126,14 @@ export const CreateEvent = () => {
   //   ];
 
   // Mock clients data with package information  
-  const availableClients = [
-    { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com', packages: [7, 9] },
-    { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com', packages: [8] },
-    { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com', packages: [7] },
-    { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
-    { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
-  ];
+  // const availableClients = [
+  //   { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com', packages: [7, 9] },
+  //   { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com', packages: [8] },
+  //   { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com', packages: [7] },
+  //   { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
+  //   { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
+  // ];
+  const availableClients = user.customers
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||

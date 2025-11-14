@@ -65,13 +65,13 @@ export const Profile = () => {
             ...(res.expertPaymentInfo || {}),
           },
         }));
-        Swal.fire({
-          icon: "success",
-          title: "Başarılı!",
-          text: "Profil bilgileri başarıyla yüklendi.",
-          timer: 1500,
-          showConfirmButton: false,
-        });
+        // Swal.fire({
+        //   icon: "success",
+        //   title: "Başarılı!",
+        //   text: "Profil bilgileri başarıyla yüklendi.",
+        //   timer: 1500,
+        //   showConfirmButton: false,
+        // });
       }
       console.log("Profile fetched:", res);
     } catch (error) {

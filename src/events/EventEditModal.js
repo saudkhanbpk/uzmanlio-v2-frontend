@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useUser } from "../context/UserContext";
 
 // Event Edit Modal Component
 export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
+  const user = useUser();
   const [formData, setFormData] = useState({
     title: event.title || '',
     description: event.description || '',
@@ -23,13 +25,8 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
   // Mock clients data (in real app, this would come from your backend)
-  const availableClients = [
-    { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com' },
-    { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com' },
-    { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com' },
-    { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com' },
-    { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com' }
-  ];
+  const availableClients = user.user.customers||[]
+  console.log("User From context",user.user.customers)
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||

@@ -226,27 +226,41 @@ export const Calendar = () => {
     setCurrentDate(newDate);
   };
 
-  const handleSaveAvailability = async () => {
-    try {
-      setIsSaving(true);
-      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
-      const availabilityData = {
-        alwaysAvailable,
-        selectedSlots: Array.from(selectedSlots)
-      };
+const handleSaveAvailability = async () => {
+  try {
+    setIsSaving(true);
 
-      await updateAvailability(userId, availabilityData);
+    const availabilityData = {
+      alwaysAvailable,
+      selectedSlots: Array.from(selectedSlots)
+    };
 
-      // Show success message (you can replace with a toast notification)
-      alert('Müsaitlik ayarları başarıyla kaydedildi!');
-    } catch (error) {
-      console.error('Failed to save availability:', error);
-      alert('Müsaitlik ayarları kaydedilirken bir hata oluştu.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    await updateAvailability(userId, availabilityData);
+
+    // ✅ SUCCESS SweetAlert
+    Swal.fire({
+      icon: "success",
+      title: "Başarılı!",
+      text: "Müsaitlik ayarları başarıyla kaydedildi!",
+      timer: 1800,
+      showConfirmButton: false
+    });
+
+  } catch (error) {
+    console.error("Failed to save availability:", error);
+
+    // ❌ ERROR SweetAlert
+    Swal.fire({
+      icon: "error",
+      title: "Hata!",
+      text: "Müsaitlik ayarları kaydedilirken bir hata oluştu."
+    });
+
+  } finally {
+    setIsSaving(false);
+  }
+};
 
   const handleResetAvailability = async () => {
     try {

@@ -38,7 +38,7 @@ export default function Dashboard ({ onLogout }) {
       const userId = localStorage.getItem('userId') 
       try {
         const user = await profileService.getProfile(userId);
-        console.log("User:", user);
+        // console.log("User:", user);
         setUser(user);
         setLoading(false);
         setError(null);

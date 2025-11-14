@@ -165,19 +165,29 @@ const expertReducer = (state, action) => {
 
     // Education, Experience, Certificates, Languages, Skills, Gallery, Services, Packages, Events, Blogs, Forms, Customers, Appointments, Emails
     // Use same pattern for consistency
+    case EXPERT_ACTIONS.ADD_EDUCATION:
+      return { ...state, education: [...state.education, action.payload] };
+    case EXPERT_ACTIONS.UPDATE_EDUCATION:
+      return {
+        ...state,
+        education: state.education.map((e) => (e.id === action.payload.id ? action.payload : e)),
+      };
+    case EXPERT_ACTIONS.DELETE_EDUCATION:
+      return { ...state, education: state.education.filter((e) => e.id !== action.payload) };
+
     default: {
       const actionType = action.type;
-      
+
       if (actionType.startsWith("SET_")) {
-        const key = actionType.replace("SET_", "").toLowerCase();
+        const key = actionType.replace("SET_", "").toLowerCase().replace(/_([a-z])/g, (match, letter) => letter.toUpperCase());
         return { ...state, [key]: action.payload };
       }
-      
+
       if (actionType.startsWith("ADD_")) {
         const key = actionType.replace("ADD_", "").toLowerCase() + "s";
         return { ...state, [key]: [...(state[key] || []), action.payload] };
       }
-      
+
       if (actionType.startsWith("UPDATE_")) {
         const key = actionType.replace("UPDATE_", "").toLowerCase() + "s";
         return {
@@ -187,15 +197,15 @@ const expertReducer = (state, action) => {
           ),
         };
       }
-      
+
       if (actionType.startsWith("DELETE_")) {
-        const key = actionType.replace("DELETE_", "").toLowerCase() + "s";
-        return { 
-          ...state, 
-          [key]: (state[key] || []).filter((item) => item.id !== action.payload) 
+        const key = actionType.replace("DELETE_", "").toLowerCase().replace(/_([a-z])/g, (match, letter) => letter.toUpperCase()) + "s";
+        return {
+          ...state,
+          [key]: (state[key] || []).filter((item) => item.id !== action.payload)
         };
       }
-      
+
       console.warn('Unknown action type:', actionType);
       return state;
     }

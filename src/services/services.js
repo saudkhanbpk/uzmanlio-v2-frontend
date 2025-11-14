@@ -4,17 +4,19 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import ServiceSection from "./ServicesSection";
 import PackageSection from "./PackageSection";
+import { useUser } from "../context/UserContext";
 
-
+ 
 
 export default function Services() {
+  const {user} = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
   const [activeTab, setActiveTab] = useState('hizmetler');
   const [editServiceModal, setEditServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
   const [services, setServices] = useState([]);
   const [packages, setPackages] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState();
   // Add state for package modal
   const [editPackageModal, setEditPackageModal] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState(null);
@@ -54,10 +56,22 @@ export default function Services() {
     }
   };
 
-  useEffect(() => {
+  //If the services is Available in the context , Get It From there , else Fetch From the Backend
+useEffect(() => {
+  if (!user) return; // wait until user is loaded
+  if (user.services) {
+    setServices(user.services);
+  } else {
     fetchServices();
+  }
+
+  if (user.packages) {
+    setPackages(user.packages);
+  } else {
     fetchPackages();
-  }, []);
+  }
+}, [user]);  // run when user updates
+
 
   const saveServiceChanges = async (updatedService) => {
     try {

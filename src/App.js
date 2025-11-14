@@ -10,7 +10,7 @@ import { UserProvider } from './context/UserContext';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated (in a real app, you'd check localStorage/sessionStorage or a cookie)
-    return localStorage.getItem('isAuthenticated') === 'true';
+    return localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId');
   });
 
   const handleLogin = () => {
