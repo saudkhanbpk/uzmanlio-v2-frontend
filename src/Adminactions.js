@@ -78,6 +78,7 @@ export const Adminactions = () => {
         // Fetch invited users
         const users = await adminService.getInvitedUsers(userId, user , patchUser);
         setInvitedUsers(users || []);
+        setUser({...user, invitedUsers: users || []});
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data');
@@ -242,7 +243,7 @@ export const Adminactions = () => {
   };
 
 
-  const handleRemove = async (id) => {
+  const handleRemove = async (invitation_id) => {
     const result = await Swal.fire({
       title: 'Emin misiniz?',
       text: 'Bu kullanıcıyı kaldırmak istediğinizden emin misiniz?',
@@ -257,21 +258,24 @@ export const Adminactions = () => {
     if (!result.isConfirmed) return;
 
     try {
-      setLoading(true);
-      setError('');
+      // setLoading(true);
+      // setError('');
 
-      await adminService.removeInvitedUser(userId, id);
+      const response = await adminService.removeInvitedUser(userId, invitation_id);
+      console.log("Response :", response)
+      setInvitedUsers(response.invitedUsers || []);
 
-      // Refresh invited users list
-      const users = await adminService.getInvitedUsers(userId);
-      setInvitedUsers(users || []);
 
-      await Swal.fire({
-        icon: 'success',
-        title: 'Kaldırıldı!',
-        text: 'Kullanıcı başarıyla kaldırıldı.',
-        confirmButtonText: 'Tamam',
-      });
+      // // Refresh invited users list
+      // const users = await adminService.getInvitedUsers(userId);
+      // setInvitedUsers(users || []);
+
+      // await Swal.fire({
+      //   icon: 'success',
+      //   title: 'Kaldırıldı!',
+      //   text: 'Kullanıcı başarıyla kaldırıldı.',
+      //   confirmButtonText: 'Tamam',
+      // });
     } catch (error) {
       console.error('Error removing invited user:', error);
       setError(error.message || 'Kullanıcı kaldırılırken hata oluştu.');
