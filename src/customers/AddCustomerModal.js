@@ -183,6 +183,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
               <select
                 name="gender"
                 value={formData.gender}
+                required
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={loading}
