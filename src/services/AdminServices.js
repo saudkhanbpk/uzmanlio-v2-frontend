@@ -57,7 +57,9 @@ export const adminService = {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            patchUser({invitedUsers: data.invitedUsers })
+            if (typeof patchUser === 'function') {
+                patchUser({ invitedUsers: data.invitedUsers });
+            }
             console.log("Data.invitedUsers:", data.invitedUsers)
             return data.invitedUsers || [];
         } catch (error) {
@@ -113,9 +115,10 @@ export const adminService = {
     },
 
     // Resend invitation
-    async resendInvitation(userId, email) {
+    async resendInvitation(userId, invitationId) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/resend-invite/${email}`, {
+            // Using the institution route as requested
+            const response = await fetch(`${API_BASE_URL}/${userId}/institution/resend-invite/${invitationId}`, {
                 method: 'POST',
             });
 
@@ -126,10 +129,12 @@ export const adminService = {
 
             const data = await response.json();
             console.log("Invitation resent:", data);
-            return data.invitedUser;
+            return data;
         } catch (error) {
             console.error('Error resending invitation:', error);
             throw error;
         }
-    }
+    },
+
+
 }

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import {useUser } from './context/UserContext';
+import { useUser } from './context/UserContext';
 import { Routes, Route, Link, useLocation, useParams, useNavigate } from 'react-router-dom';
 import {
   Chart as ChartJS,
@@ -28,7 +28,7 @@ ChartJS.register(
 );
 
 export const Adminactions = () => {
-  const { user, setUser , patchUser} = useUser();
+  const { user, setUser, patchUser } = useUser();
   const [activeTab, setActiveTab] = useState('organization');
 
   // Kurum Bilgileri state
@@ -54,31 +54,31 @@ export const Adminactions = () => {
   useEffect(() => {
     console.log("User User User:", user)
     const fetchData = async () => {
-        if (user?.invitedUsers && user?.institution) {
-          console.log("Setting From the context")
+      if (user?.invitedUsers && user?.institution) {
+        console.log("Setting From the context")
         setOrgName(user.institution?.name || '');
         setOrgBio(user.institution?.bio || '');
         setOrgAbout(user.institution?.about || '');
         setInvitedUsers(user.invitedUsers || [])
         return;
       }
-    
+
       try {
         setLoading(true);
         setError('');
 
         // Fetch institution data
-        const institution = await adminService.getInstitution(userId, user , patchUser);
+        const institution = await adminService.getInstitution(userId, user, patchUser);
         if (institution && institution.name) {
           setOrgName(institution.name || '');
           setOrgBio(institution.bio || '');
           setOrgAbout(institution.about || '');
         }
 
-        // Fetch invited users
-        const users = await adminService.getInvitedUsers(userId, user , patchUser);
-        setInvitedUsers(users || []);
-        setUser({...user, invitedUsers: users || []});
+        // Fetch invitations (new system)
+        const invitations = await adminService.getInvitedUsers(userId, user, patchUser);
+        setInvitedUsers(invitations || []);
+        setUser({ ...user, invitedUsers: invitations || [] });
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data');
@@ -181,11 +181,12 @@ export const Adminactions = () => {
       setLoading(true);
       setError('');
 
+      // Use new email invitation system via institution route
       await adminService.inviteUser(userId, inviteName, inviteEmail);
 
-      // Refresh invited users list
-      const users = await adminService.getInvitedUsers(userId);
-      setInvitedUsers(users || []);
+      // Refresh invitations list
+      const invitations = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(invitations || []);
 
       setInviteName('');
       setInviteEmail('');
@@ -193,7 +194,7 @@ export const Adminactions = () => {
       await Swal.fire({
         icon: 'success',
         title: 'Başarılı!',
-        text: 'Davet e-postası başarıyla gönderildi.',
+        text: `${inviteEmail} adresine davet e-postası gönderildi.`,
         confirmButtonText: 'Tamam',
       });
     } catch (error) {
@@ -211,16 +212,16 @@ export const Adminactions = () => {
   };
 
 
-  const handleResend = async (email) => {
+  const handleResend = async (invitationId) => {
     try {
       setLoading(true);
       setError('');
 
-      await adminService.resendInvitation(userId, email);
+      await adminService.resendInvitation(userId, invitationId);
 
       // Refresh invited users list
-      const users = await adminService.getInvitedUsers(userId);
-      setInvitedUsers(users || []);
+      const invitations = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(invitations || []);
 
       await Swal.fire({
         icon: 'success',
@@ -258,24 +259,21 @@ export const Adminactions = () => {
     if (!result.isConfirmed) return;
 
     try {
-      // setLoading(true);
-      // setError('');
+      setLoading(true);
+      setError('');
 
-      const response = await adminService.removeInvitedUser(userId, invitation_id);
-      console.log("Response :", response)
-      setInvitedUsers(response.invitedUsers || []);
+      await adminService.removeInvitedUser(userId, invitation_id);
 
+      // Refresh invited users list
+      const invitations = await adminService.getInvitedUsers(userId);
+      setInvitedUsers(invitations || []);
 
-      // // Refresh invited users list
-      // const users = await adminService.getInvitedUsers(userId);
-      // setInvitedUsers(users || []);
-
-      // await Swal.fire({
-      //   icon: 'success',
-      //   title: 'Kaldırıldı!',
-      //   text: 'Kullanıcı başarıyla kaldırıldı.',
-      //   confirmButtonText: 'Tamam',
-      // });
+      await Swal.fire({
+        icon: 'success',
+        title: 'Kaldırıldı!',
+        text: 'Kullanıcı başarıyla kaldırıldı.',
+        confirmButtonText: 'Tamam',
+      });
     } catch (error) {
       console.error('Error removing invited user:', error);
       setError(error.message || 'Kullanıcı kaldırılırken hata oluştu.');
@@ -408,57 +406,78 @@ export const Adminactions = () => {
               />
               <button
                 type="submit"
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                disabled={loading}
+                className={`px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Davet Gönder
+                {loading ? 'Gönderiliyor...' : 'Davet Gönder'}
               </button>
             </form>
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Davet Edilen Kullanıcılar</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Gönderilen Davetler</h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ad Soyad</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-Posta</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ekip Adı</th>
                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Durum</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Davet Tarihi</th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gönderim Tarihi</th>
                     <th className="px-4 py-2"></th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {invitedUsers.map((u) => (
-                    <tr key={u.id}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{u.name}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{u.email}</td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm">
-                        <span className={`px-2 py-1 rounded text-xs ${u.status.includes('Yeniden') ? 'bg-yellow-100 text-yellow-800' : u.status === 'Davet Gönderildi' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {u.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(u.invitedAt).toLocaleDateString('tr-TR')}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-right text-sm">
-                        <button
-                          onClick={() => handleResend(u._id)}
-                          className="mr-2 text-primary-600 hover:text-primary-700"
-                          title="Davet e-postasını yeniden gönder"
-                        >
-                          Yeniden Gönder
-                        </button>
-                        <button
-                          onClick={() => handleRemove(u._id)}
-                          className="text-red-600 hover:text-red-700"
-                          title="Kullanıcıyı kaldır"
-                        >
-                          Kaldır
-                        </button>
+                  {invitedUsers.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
+                        Henüz davet gönderilmedi
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    invitedUsers.map((inv) => (
+                      <tr key={inv.id}>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">{inv.email}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{inv.teamName}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm">
+                          <span className={`px-2 py-1 rounded text-xs font-semibold ${inv.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                            inv.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                              inv.status === 'declined' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
+                            }`}>
+                            {inv.status === 'pending' ? 'Beklemede' :
+                              inv.status === 'accepted' ? 'Kabul Edildi' :
+                                inv.status === 'declined' ? 'Reddedildi' :
+                                  inv.status === 'expired' ? 'Süresi Doldu' : inv.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">
+                          {new Date(inv.invitedAt).toLocaleDateString('tr-TR')}
+                        </td>
+                        <td className="px-4 py-2 whitespace-nowrap text-right text-sm space-x-2">
+                          {inv.status !== 'accepted' && (
+                            <button
+                              onClick={() => handleResend(inv.id)}
+                              className="text-blue-600 hover:text-blue-700 disabled:opacity-50"
+                              title="Daveti tekrar gönder"
+                              disabled={loading}
+                            >
+                              Tekrar Gönder
+                            </button>
+                          )}
+
+                          <button
+                            onClick={() => handleRemove(inv.id)}
+                            className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                            title={inv.status === 'pending' ? "Daveti iptal et" : "Listeden kaldır"}
+                            disabled={loading}
+                          >
+                            {inv.status === 'pending' ? 'İptal Et' : 'Kaldır'}
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

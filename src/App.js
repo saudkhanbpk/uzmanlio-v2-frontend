@@ -5,6 +5,8 @@ import Dashboard from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
 import SignupPage from './signupPage';
 import ForgotPasswordPage from './ForgotPasswordPage';
+import AcceptInvitationPage from './AcceptInvitationPage';
+import DeclineInvitationPage from './DeclineInvitationPage';
 import { ExpertProvider } from './contexts/ExpertContext';
 import { UserProvider } from './context/UserContext';
 
@@ -57,6 +59,10 @@ function App() {
                     <ForgotPasswordPage />
                 }
               />
+              {/* Invitation Routes - Public access */}
+              <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
+              <Route path="/decline-invitation/:token" element={<DeclineInvitationPage />} />
+
               <Route
                 path="/dashboard/*"
                 element={
