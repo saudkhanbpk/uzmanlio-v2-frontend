@@ -1,41 +1,41 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from './services/Auth.js';
-import {useUser} from "./context/UserContext.js"
+import { useUser } from "./context/UserContext.js"
 
 
 // Login Page Component
-export default function LoginPage({ onLogin }){
+export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
- const { setUser, loading, error } = useUser(); // Get user from Context
+  const { setUser, loading, error } = useUser(); // Get user from Context
 
-const handleSubmit = async (e) => {
-  e.preventDefault(); // prevent page reload
+  const handleSubmit = async (e) => {
+    e.preventDefault(); // prevent page reload
 
-  const formData = { email, password };
+    const formData = { email, password };
 
-  try {
-    const user = await auth.login(formData);
-    setUser(user);
-    console.log("Login successful!",user);
-    onLogin();
-    // Optionally redirect user
-    // navigate("/dashboard");
-  } catch (error) {
-    console.error("Login failed:", error.message);
-    // Optionally show toast or message to user
-  }
-};
+    try {
+      const user = await auth.login(formData);
+      setUser(user);
+      console.log("Login successful!", user);
+      onLogin();
+      // Optionally redirect user
+      // navigate("/dashboard");
+    } catch (error) {
+      console.error("Login failed:", error.message);
+      // Optionally show toast or message to user
+    }
+  };
 
   return (
     <div className="min-h-screen flex">
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-100 to-primary-200">
         <div className="flex-1 flex items-center justify-center p-8">
-          <img 
-            src="https://images.pexels.com/photos/5475760/pexels-photo-5475760.jpeg" 
+          <img
+            src="https://images.pexels.com/photos/5475760/pexels-photo-5475760.jpeg"
             alt="Professional woman using laptop"
             className="max-w-full max-h-full object-cover rounded-3xl shadow-2xl"
           />
@@ -55,8 +55,8 @@ const handleSubmit = async (e) => {
 
           {/* Logo */}
           <div className="text-center">
-            <img 
-              src="https://uzmanlio.com/images/logo.png" 
+            <img
+              src="https://uzmanlio.com/images/logo.png"
               alt="Uzmanlio Logo"
               className="h-12 mx-auto mb-2"
             />
@@ -67,7 +67,7 @@ const handleSubmit = async (e) => {
           <div className="text-center">
             <h2 className="text-2xl font-semibold text-gray-900 mb-2">Hoş geldiniz!</h2>
             <p className="text-gray-600 text-sm">
-              Hesabınız yok mu? 
+              Hesabınız yok mu?
               <Link to="/signup" className="text-primary-600 hover:text-primary-700 ml-1 font-semibold">
                 Hemen kaydolun
               </Link>
@@ -113,9 +113,9 @@ const handleSubmit = async (e) => {
             </button>
 
             <div className="text-center">
-              <a href="#" className="text-sm text-gray-600 hover:text-primary-600">
+              <Link to="/forgot-password" className="text-sm text-gray-600 hover:text-primary-600">
                 Şifremi unuttum?
-              </a>
+              </Link>
             </div>
           </form>
 

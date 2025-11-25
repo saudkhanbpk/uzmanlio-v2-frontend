@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
 import SignupPage from './signupPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
 import { ExpertProvider } from './contexts/ExpertContext';
 import { UserProvider } from './context/UserContext';
 
@@ -46,6 +47,14 @@ function App() {
                   isAuthenticated ?
                     <Navigate to="/dashboard" replace /> :
                     <SignupPage />
+                }
+              />
+              <Route
+                path="/forgot-password"
+                element={
+                  isAuthenticated ?
+                    <Navigate to="/dashboard" replace /> :
+                    <ForgotPasswordPage />
                 }
               />
               <Route
