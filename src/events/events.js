@@ -43,6 +43,7 @@ export const Events = () => {
     { id: 'approved', name: 'Yaklaşan', count: displayEvents.filter(e => e.status === 'approved').length },
     { id: 'completed', name: 'Tamamlandı', count: displayEvents.filter(e => e.status === 'completed').length },
     { id: 'cancelled', name: 'İptal Edildi', count: displayEvents.filter(e => e.status === 'cancelled').length },
+    { id: 'scheduled', name: 'Yaklaşan', count: displayEvents.filter(e => e.status === 'scheduled').length },
   ];
 
   const filteredEvents = activeTab === 'all' ? displayEvents : displayEvents.filter(e => e.status === activeTab);
@@ -52,9 +53,10 @@ export const Events = () => {
       pending: { text: 'Onay Bekliyor', color: 'bg-yellow-100 text-yellow-800' },
       approved: { text: 'Onaylandı', color: 'bg-blue-100 text-blue-800' },
       completed: { text: 'Tamamlandı', color: 'bg-green-100 text-green-800' },
-      cancelled: { text: 'İptal Edildi', color: 'bg-red-100 text-red-800' }
+      cancelled: { text: 'İptal Edildi', color: 'bg-red-100 text-red-800' },
+      scheduled: { text: 'Yaklaşan', color: 'bg-yellow-100 text-yellow-800' }
     };
-    
+
     const config = statusConfig[status];
     return (
       <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
@@ -96,7 +98,6 @@ export const Events = () => {
   const handleDelete = async (eventId) => {
     if (window.confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
       try {
-        userId = localStorage.getItem(user._id)
         await eventService.deleteEvent(userId, eventId);
         await loadEvents(userId); // Reload events to reflect changes
       } catch (err) {
@@ -116,13 +117,13 @@ export const Events = () => {
       console.error('Error updating event:', err);
     }
   };
- 
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Etkinlikler</h1>
-        <Link 
+        <Link
           to="/dashboard/etkinlikler/olustur"
           className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
         >
@@ -137,11 +138,10 @@ export const Events = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === tab.id
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
             >
               {tab.name} ({tab.count})
             </button>
@@ -189,94 +189,93 @@ export const Events = () => {
             <h3 className="text-lg font-medium text-gray-900">Etkinlik Listesi</h3>
           </div>
           <div className="divide-y divide-gray-200">
-          {filteredEvents.map((event) => (
-            <div key={event.id} className="px-6 py-4 hover:bg-gray-50">
-              <div className="flex items-center justify-between">
-                <div className="flex-1">
+            {filteredEvents.map((event) => (
+              <div key={event.id} className="px-6 py-4 hover:bg-gray-50">
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-3">
+                      <h4 className="text-lg font-medium text-gray-900">{event.title}</h4>
+                      <span className={`px-2 py-1 text-xs rounded-full ${event.eventType === 'online' ? 'bg-blue-100 text-blue-800' :
+                        event.eventType === 'offline' ? 'bg-green-100 text-green-800' :
+                          'bg-primary-100 text-primary-800'
+                        }`}>
+                        {event.eventType === 'online' ? 'Online' :
+                          event.eventType === 'offline' ? 'Yüz Yüze' : 'Hibrit'}
+                      </span>
+                      {event.meetingType === '1-1' && event.consultee ? (
+                        <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                          {event.consultee.name}
+                        </span>
+                      ) : event.meetingType === '1-1' ? (
+                        <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+                          1-1 Özel
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 flex items-center space-x-6 text-sm text-gray-600">
+                      <span>📅 {event.date}</span>
+                      <span>⏰ {event.time}</span>
+                      <span>⏱️ {event.duration} dk</span>
+                      {event.meetingType === 'grup' ? (
+                        <span>👥 {event.attendees}/{event.maxAttendees}</span>
+                      ) : event.consultee ? (
+                        <span>👤 {event.consultee.name}</span>
+                      ) : (
+                        <span>👤 Birebir</span>
+                      )}
+                      <span>💰 ₺{event.price}</span>
+                      {event.platform && <span>🔗 {event.platform}</span>}
+                      {event.location && <span>📍 {event.location}</span>}
+                    </div>
+                  </div>
                   <div className="flex items-center space-x-3">
-                    <h4 className="text-lg font-medium text-gray-900">{event.title}</h4>
-                    <span className={`px-2 py-1 text-xs rounded-full ${
-                      event.eventType === 'online' ? 'bg-blue-100 text-blue-800' : 
-                      event.eventType === 'offline' ? 'bg-green-100 text-green-800' : 
-                      'bg-primary-100 text-primary-800'
-                    }`}>
-                      {event.eventType === 'online' ? 'Online' : 
-                       event.eventType === 'offline' ? 'Yüz Yüze' : 'Hibrit'}
-                    </span>
-                    {event.meetingType === '1-1' && event.consultee ? (
-                      <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
-                        {event.consultee.name}
-                      </span>
-                    ) : event.meetingType === '1-1' ? (
-                      <span className="px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
-                        1-1 Özel
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-2 flex items-center space-x-6 text-sm text-gray-600">
-                    <span>📅 {event.date}</span>
-                    <span>⏰ {event.time}</span>
-                    <span>⏱️ {event.duration} dk</span>
-                    {event.meetingType === 'grup' ? (
-                      <span>👥 {event.attendees}/{event.maxAttendees}</span>
-                    ) : event.consultee ? (
-                      <span>👤 {event.consultee.name}</span>
-                    ) : (
-                      <span>👤 Birebir</span>
-                    )}
-                    <span>💰 ₺{event.price}</span>
-                    {event.platform && <span>🔗 {event.platform}</span>}
-                    {event.location && <span>📍 {event.location}</span>}
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  {/* Action Buttons - Left side */}
-                  <div className="flex items-center space-x-2">
-                    {/* Approve/Reject buttons for non-completed events */}
-                    {event.status !== 'completed' && event.status === 'pending' && (
-                      <>
-                        <button 
-                          onClick={() => handleApprove(event.id)}
-                          className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
-                          title="Onayla"
+                    {/* Action Buttons - Left side */}
+                    <div className="flex items-center space-x-2">
+                      {/* Approve/Reject buttons for non-completed events */}
+                      {event.status !== 'completed' && event.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleApprove(event.id)}
+                            className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                            title="Onayla"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => handleReject(event.id)}
+                            className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                            title="Reddet"
+                          >
+                            ✗
+                          </button>
+                        </>
+                      )}
+
+                      {/* Join button for approved events */}
+                      {event.status === 'approved' && (
+                        <button
+                          onClick={() => handleJoin(event.id)}
+                          className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-sm hover:bg-primary-200 transition-colors"
                         >
-                          ✓
+                          Katıl
                         </button>
-                        <button 
-                          onClick={() => handleReject(event.id)}
-                          className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
-                          title="Reddet"
-                        >
-                          ✗
-                        </button>
-                      </>
-                    )}
-                    
-                    {/* Join button for approved events */}
-                    {event.status === 'approved' && (
-                      <button 
-                        onClick={() => handleJoin(event.id)}
-                        className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-sm hover:bg-primary-200 transition-colors"
+                      )}
+                    </div>
+
+                    {/* Status Badge and Settings - Right side */}
+                    <div className="flex items-center space-x-2">
+                      {getStatusBadge(event.status)}
+                      <button
+                        onClick={() => handleEdit(event)}
+                        className="text-gray-400 hover:text-gray-600 p-1"
                       >
-                        Katıl
+                        ⚙️
                       </button>
-                    )}
-                  </div>
-                  
-                  {/* Status Badge and Settings - Right side */}
-                  <div className="flex items-center space-x-2">
-                    {getStatusBadge(event.status)}
-                    <button 
-                      onClick={() => handleEdit(event)}
-                      className="text-gray-400 hover:text-gray-600 p-1"
-                    >
-                      ⚙️
-                    </button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
           </div>
         </div>
       )}

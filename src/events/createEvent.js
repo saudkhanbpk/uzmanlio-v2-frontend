@@ -133,7 +133,7 @@ export const CreateEvent = () => {
   //   { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
   //   { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
   // ];
-  const availableClients = user.customers
+  const availableClients = user.customers || []
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||

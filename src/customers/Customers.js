@@ -6,6 +6,7 @@ import { customerService } from "../services/customerService";
 // Customers Component
 export default function Customers(){
   const [customers, setCustomers] = useState([]);
+  console.log("Customers :" , customers)
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadTooltip, setShowUploadTooltip] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
