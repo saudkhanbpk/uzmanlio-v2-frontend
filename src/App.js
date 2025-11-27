@@ -4,8 +4,14 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
 import SignupPage from './signupPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
+import AcceptInvitationPage from './AcceptInvitationPage';
+import DeclineInvitationPage from './DeclineInvitationPage';
+import EmailVerificationPage from './EmailVerificationPage';
 import { ExpertProvider } from './contexts/ExpertContext';
 import { UserProvider } from './context/UserContext';
+
+import EmailVerificationModal from './EmailVerificationModal';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -24,6 +30,7 @@ function App() {
     localStorage.removeItem('user');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('verificationSkipped');
   };
 
   return (
@@ -49,6 +56,19 @@ function App() {
                 }
               />
               <Route
+                path="/forgot-password"
+                element={
+                  isAuthenticated ?
+                    <Navigate to="/dashboard" replace /> :
+                    <ForgotPasswordPage />
+                }
+              />
+              {/* Invitation Routes - Public access */}
+              <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
+              <Route path="/decline-invitation/:token" element={<DeclineInvitationPage />} />
+              <Route path="/verify-email" element={<EmailVerificationPage />} />
+
+              <Route
                 path="/dashboard/*"
                 element={
                   isAuthenticated ?
@@ -59,6 +79,7 @@ function App() {
               {/* <Route path="/blog/:slug" element={<BlogPublicView />} /> */}
               <Route path="/" element={<Navigate to="/login" replace />} />
             </Routes>
+            <EmailVerificationModal />
           </BrowserRouter>
         </ExpertProvider>
       </UserProvider>
