@@ -41,6 +41,8 @@ export const Marketing = () => {
   ]);
 
   const [selectedEmail, setSelectedEmail] = useState(null);
+  const [expertName, setExpertName] = useState('');
+  const [companyName, setCompanyName] = useState('');
 
   const userId = localStorage.getItem('userId') ; // adjust as needed
 
@@ -68,6 +70,7 @@ export const Marketing = () => {
   useEffect(() => {
     fetchCoupons();
     fetchEmails();
+    fetchExpertInfo();
   }, []);
 
   // Fetch emails for user
@@ -381,7 +384,7 @@ export const Marketing = () => {
                         </td>
                         <td className="px-6 py-4">
                           <div className="text-sm text-gray-900 max-w-xs truncate">
-                            {email.body}
+                            {email.body.replace(/\{\{expert_name\}\}/g, expertName).replace(/\{\{company_name\}\}/g, companyName)}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">

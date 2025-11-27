@@ -102,10 +102,13 @@ export const CreateEmailModal = ({ onClose, onSave, initialData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    // Append placeholders at the end of the email body
+    let body = emailData.text;
+    body += '\n\n{{expert_name}}\n{{company_name}}';
     // Build payload matching backend: subject, body, recipientType, recipients[], scheduledAt
     const payload = {
       subject: emailData.title,
-      body: emailData.text,
+      body: body,
       recipientType: emailData.recipientType,
       recipients: emailData.recipientType === 'selected' ? emailData.selectedCustomers.map(c => c.email) : [],
       scheduledAt: emailData.scheduledAt ? new Date(emailData.scheduledAt).toISOString() : undefined
