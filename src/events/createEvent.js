@@ -41,19 +41,19 @@ export const CreateEvent = () => {
 
   // Load services and packages on component mount
   // useEffect(() => {
-    const ShowServices  = async () => {
-      
+  const ShowServices = async () => {
+
     const storedUser = localStorage.getItem("user");
 
     try {
       // Check if storedUser exists and can be parsed
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
-        
+
         // Check if parsedUser has services or packages
         if (parsedUser && (parsedUser.services?.length || parsedUser.packages?.length)) {
           console.log("Using stored user data:", parsedUser);
-          
+
           const services = Array.isArray(parsedUser.services) ? parsedUser.services : [];
           const packages = Array.isArray(parsedUser.packages) ? parsedUser.packages : [];
 
@@ -78,15 +78,15 @@ export const CreateEvent = () => {
     }
   };
 
-     useEffect(() => {
-      ShowServices()
-     }, []);
+  useEffect(() => {
+    ShowServices()
+  }, []);
 
   const loadServicesAndPackages = async () => {
     console.log("Loading services and packages from DB");
     try {
       const user = await eventService.getServicesAndPackages(userId);
-      
+
       if (!user) {
         console.error("No user data received");
         return;
@@ -100,7 +100,7 @@ export const CreateEvent = () => {
       //   ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
       //   ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
       // ];
-      
+
       // setAvailableServices(combined);
       // console.log("Fetched services and packages:", combined);
     } catch (err) {
@@ -133,12 +133,15 @@ export const CreateEvent = () => {
   //   { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
   //   { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
   // ];
-  const availableClients = user.customers || []
+  const availableClients = user.customers
+    .map(c => c.customerId)
+    .filter(Boolean);
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
     client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
+
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -599,7 +602,7 @@ export const CreateEvent = () => {
                           {client.name}
                           <button
                             type="button"
-                            onClick={() => handleRemoveClient(client.id)}
+                            onClick={() => handleRemoveClient(client._id)}
                             className="ml-1 text-primary-600 hover:text-primary-800"
                           >
                             ✕

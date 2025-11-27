@@ -25,8 +25,10 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
   // Mock clients data (in real app, this would come from your backend)
-  const availableClients = user.user.customers||[]
-  console.log("User From context",user.user.customers)
+  console.log("user in Edit model:", user)
+  const availableClients = user.user.customers
+    .map(c => c.customerId)
+    .filter(Boolean);
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
@@ -74,10 +76,10 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
       name: `${newClientData.name} ${newClientData.surname}`,
       email: newClientData.email
     };
-    
+
     // Add to available clients list
     availableClients.push(newClient);
-    
+
     // Auto-select the new client
     if (formData.meetingType === '1-1') {
       setFormData(prev => ({
@@ -90,7 +92,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
         selectedClients: [...prev.selectedClients, newClient]
       }));
     }
-    
+
     setShowAddClientModal(false);
   };
 
@@ -111,10 +113,10 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
 
   // Show meeting type field only for Online or Hibrit
   const showMeetingType = formData.eventType === 'online' || formData.eventType === 'hybrid';
-  
+
   // Show date/time section only if Grup is selected
   const showDateTime = formData.meetingType === 'grup';
-  
+
   // Determine which location fields to show
   const showPlatform = formData.eventType === 'online' || formData.eventType === 'hybrid';
   const showLocation = formData.eventType === 'offline' || formData.eventType === 'hybrid';
@@ -126,7 +128,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           <h3 className="text-xl font-semibold text-gray-900">Etkinlik Düzenle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Basic Information */}
           <div className="bg-gray-50 rounded-xl p-6">
@@ -145,7 +147,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                   required
                 />
               </div>
-              
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Etkinlik Açıklaması
@@ -235,7 +237,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                     required={showDateTime}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Başlangıç Saati *
@@ -249,7 +251,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                     required={showDateTime}
                   />
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Süre (dakika)
@@ -271,7 +273,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           <div className="bg-gray-50 rounded-xl p-6">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              
+
               {/* Platform - Only visible for Online or Hibrit */}
               {showPlatform && (
                 <div>
@@ -292,7 +294,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                   </select>
                 </div>
               )}
-              
+
               {/* Location - Only visible for Yüz Yüze or Hibrit */}
               {showLocation && (
                 <div>
@@ -309,7 +311,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                   />
                 </div>
               )}
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Maksimum Katılımcı
@@ -323,7 +325,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Süre (dakika)
@@ -337,7 +339,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Fiyat (₺)
@@ -375,13 +377,13 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           {formData.isOfflineEvent && (
             <div className="bg-gray-50 rounded-xl p-6">
               <h4 className="text-lg font-medium text-gray-900 mb-4">Danışan Bilgileri</h4>
-              
+
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Danışan Seç *
                   </label>
-                  
+
                   {/* Search Input */}
                   <div className="relative mb-3">
                     <input
@@ -427,11 +429,10 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                             <div
                               key={client.id}
                               onClick={() => handleClientSelect(client.id)}
-                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${
-                                formData.selectedClients.some(c => c.id === client.id)
-                                  ? 'bg-primary-50 text-primary-700'
-                                  : ''
-                              }`}
+                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${formData.selectedClients.some(c => c.id === client.id)
+                                ? 'bg-primary-50 text-primary-700'
+                                : ''
+                                }`}
                             >
                               <div className="flex items-center">
                                 <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
@@ -455,7 +456,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                           Aradığınız kriterlere uygun danışan bulunamadı.
                         </div>
                       )}
-                      
+
                       {/* Add Client Option */}
                       <div
                         onClick={() => setShowAddClientModal(true)}
@@ -498,9 +499,9 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-blue-100 rounded-lg">
                         <span className="text-blue-600">
-                          {file.type === 'pdf' ? '📄' : 
-                           file.type === 'doc' ? '📝' : 
-                           file.type === 'image' ? '🖼️' : '📎'}
+                          {file.type === 'pdf' ? '📄' :
+                            file.type === 'doc' ? '📝' :
+                              file.type === 'image' ? '🖼️' : '📎'}
                         </span>
                       </div>
                       <div>
@@ -508,7 +509,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                         <p className="text-xs text-gray-500">{file.size} • {file.uploadDate}</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => window.open(file.url, '_blank')}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
                     >
@@ -528,14 +529,14 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                         <p className="text-xs text-gray-500">245 KB • 20.06.2024</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => window.open('#', '_blank')}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
                     >
                       İndir
                     </button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-green-100 rounded-lg">
@@ -546,14 +547,14 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                         <p className="text-xs text-gray-500">89 KB • 18.06.2024</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => window.open('#', '_blank')}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
                     >
                       İndir
                     </button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
                     <div className="flex items-center space-x-3">
                       <div className="p-2 bg-primary-100 rounded-lg">
@@ -564,7 +565,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                         <p className="text-xs text-gray-500">1.2 MB • 17.06.2024</p>
                       </div>
                     </div>
-                    <button 
+                    <button
                       onClick={() => window.open('#', '_blank')}
                       className="px-3 py-1 bg-blue-100 text-blue-700 rounded text-sm hover:bg-blue-200 transition-colors"
                     >

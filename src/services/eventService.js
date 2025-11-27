@@ -140,44 +140,44 @@ export const eventService = {
   },
 
   // Get services and packages for event creation
-async getServicesAndPackages(userId) {
-  try {
-    console.log("Fetching services and packages for user:", userId)
-    const response = await fetch(`${API_BASE_URL}/${userId}/profile`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  async getServicesAndPackages(userId) {
+    try {
+      console.log("Fetching services and packages for user:", userId)
+      const response = await fetch(`${API_BASE_URL}/${userId}/profile`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Parse JSON body
+      const data = await response.json();
+      console.log("User data:", data);
+
+      // Save the parsed user in localStorage
+      localStorage.setItem("user", JSON.stringify(data));
+
+      // Extract services
+      const services = (data.services || []).map(service => ({
+        id: service.id,
+        name: service.name,
+        type: "service",
+        price: service.price,
+      }));
+
+      // Extract packages
+      const packages = (data.packages || []).map(pkg => ({
+        id: pkg.id,
+        name: pkg.name,
+        type: "package",
+        price: pkg.price,
+        appointments: pkg.sessionsIncluded,
+      }));
+
+      return [...services, ...packages];
+    } catch (error) {
+      console.error("Error fetching services and packages:", error);
+      throw error;
     }
-
-    // Parse JSON body
-    const data = await response.json();
-    console.log("User data:", data);
-
-    // Save the parsed user in localStorage
-    localStorage.setItem("user", JSON.stringify(data));
-
-    // Extract services
-    const services = (data.services || []).map(service => ({
-      id: service.id,
-      name: service.name,
-      type: "service",
-      price: service.price,
-    }));
-
-    // Extract packages
-    const packages = (data.packages || []).map(pkg => ({
-      id: pkg.id,
-      name: pkg.name,
-      type: "package",
-      price: pkg.price,
-      appointments: pkg.sessionsIncluded,
-    }));
-
-    return [...services, ...packages];
-  } catch (error) {
-    console.error("Error fetching services and packages:", error);
-    throw error;
-  }
-},
+  },
 
   // Helper function to format event data for API
   formatEventData(formData, selectedService) {

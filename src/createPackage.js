@@ -9,13 +9,14 @@ import { useUser } from "./context/UserContext";
 // CreatePackage Component
 export const CreatePackage = () => {
   const user = useUser();
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
   // Mock clients data (in real app, this would come from your backend)
-  const availableClients = user.customers || [];
-
+  const availableClients = user.user.customers
+    .map(c => c.customerId)
+    .filter(Boolean);
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
