@@ -39,7 +39,7 @@ export const Events = () => {
 
   const tabs = [
     { id: 'all', name: 'Tümü', count: displayEvents.length },
-    { id: 'pending', name: 'Onay Bekliyor', count: displayEvents.filter(e => e.status === 'pending').length },
+    { id: 'pending', name: 'Onay Bekliyor', count: displayEvents.filter(e => e.status === 'pending' || e.status === 'onay-bekliyor').length },
     { id: 'approved', name: 'Yaklaşan', count: displayEvents.filter(e => e.status === 'approved').length },
     { id: 'completed', name: 'Tamamlandı', count: displayEvents.filter(e => e.status === 'completed').length },
     { id: 'cancelled', name: 'İptal Edildi', count: displayEvents.filter(e => e.status === 'cancelled').length },
@@ -56,8 +56,10 @@ export const Events = () => {
       cancelled: { text: 'İptal Edildi', color: 'bg-red-100 text-red-800' },
       scheduled: { text: 'Yaklaşan', color: 'bg-yellow-100 text-yellow-800' }
     };
+    const normalizedStatus = status === 'onay-bekliyor' ? 'pending' : status;
 
-    const config = statusConfig[status];
+    // Fallback for unknown status
+    const config = statusConfig[normalizedStatus] || { text: 'Bilinmiyor', color: 'bg-gray-100 text-gray-800' };
     return (
       <span className={`px-3 py-1 rounded-full text-sm font-medium ${config.color}`}>
         {config.text}

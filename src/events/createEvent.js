@@ -25,7 +25,7 @@ export const CreateEvent = () => {
     price: '',
     maxAttendees: '',
     category: '',
-    status: 'onay-bekliyor', // New: Etkinlik Durumu field
+    status: 'pending', // New: Etkinlik Durumu field
     selectedClients: [],
     paymentType: 'online', // New: Payment section
     isRecurring: false, // New: Recurring checkbox
@@ -163,7 +163,7 @@ export const CreateEvent = () => {
   };
 
   const handleClientSelect = (clientId) => {
-    const client = availableClients.find(c => c.id === clientId);
+    const client = availableClients.find(c => (c._id || c.id) === clientId);
     if (eventData.meetingType === '1-1') {
       setEventData(prev => ({
         ...prev,
@@ -172,8 +172,8 @@ export const CreateEvent = () => {
     } else {
       setEventData(prev => ({
         ...prev,
-        selectedClients: prev.selectedClients.some(c => c.id === clientId)
-          ? prev.selectedClients.filter(c => c.id !== clientId)
+        selectedClients: prev.selectedClients.some(c => (c._id || c.id) === clientId)
+          ? prev.selectedClients.filter(c => (c._id || c.id) !== clientId)
           : [...prev.selectedClients, client]
       }));
     }
@@ -182,7 +182,7 @@ export const CreateEvent = () => {
   const handleRemoveClient = (clientId) => {
     setEventData(prev => ({
       ...prev,
-      selectedClients: prev.selectedClients.filter(c => c.id !== clientId)
+      selectedClients: prev.selectedClients.filter(c => (c._id || c.id) !== clientId)
     }));
   };
 
@@ -230,12 +230,21 @@ export const CreateEvent = () => {
         return;
       }
 
+      // ✅ Format selectedClients to use the correct ID field
+      const formattedClients = eventData.selectedClients.map(client => ({
+        id: client._id || client.id, // Use _id (MongoDB default) or fallback to id
+        name: client.name,
+        email: client.email,
+        packages: client.packages || []
+      }));
+
       // ✅ Build formatted data with required fields
       const formattedData = {
         ...eventData,
         serviceName: selectedService.title,   // ✅ now filled
         title: eventData.title || selectedService.title, // ✅ required by backend
         serviceType: selectedService.type,    // optional but often useful
+        selectedClients: formattedClients,    // ✅ properly formatted clients
       };
 
       console.log("✅ Formatted Data before API:", formattedData);
@@ -535,6 +544,7 @@ export const CreateEvent = () => {
                 <option value="approved">Yaklaşan</option>
                 <option value="completed">Tamamlandı</option>
                 <option value="cancelled">İptal Edildi</option>
+                <option value="scheduled">Planlandı</option>
               </select>
             </div>
 
@@ -596,13 +606,13 @@ export const CreateEvent = () => {
                     <div className="flex flex-wrap gap-2">
                       {eventData.selectedClients.map((client) => (
                         <span
-                          key={client.id}
+                          key={client._id || client.id}
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
                         >
                           {client.name}
                           <button
                             type="button"
-                            onClick={() => handleRemoveClient(client._id)}
+                            onClick={() => handleRemoveClient(client._id || client.id)}
                             className="ml-1 text-primary-600 hover:text-primary-800"
                           >
                             ✕
@@ -620,9 +630,9 @@ export const CreateEvent = () => {
                       <>
                         {filteredClients.map((client) => (
                           <div
-                            key={client.id}
-                            onClick={() => handleClientSelect(client.id)}
-                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${eventData.selectedClients.some(c => c.id === client.id)
+                            key={client._id || client.id}
+                            onClick={() => handleClientSelect(client._id || client.id)}
+                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${eventData.selectedClients.some(c => (c._id || c.id) === (client._id || client.id))
                               ? 'bg-primary-50 text-primary-700'
                               : ''
                               }`}
@@ -642,7 +652,7 @@ export const CreateEvent = () => {
                                   </p>
                                 )}
                               </div>
-                              {eventData.selectedClients.some(c => c.id === client.id) && (
+                              {eventData.selectedClients.some(c => (c._id || c.id) === (client._id || client.id)) && (
                                 <span className="ml-auto text-primary-600">✓</span>
                               )}
                             </div>
