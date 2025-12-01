@@ -91,7 +91,11 @@ export const CreatePackage = () => {
         iconBg: packageData.iconColor || '#3B82F6',
         status: packageData.status || 'active',
         isOfflineEvent: packageData.isOfflineEvent,
-        selectedClients: packageData.selectedClients,
+        selectedClients: packageData.selectedClients.map(client => ({
+          id: client._id,
+          name: client.name,
+          email: client.email
+        })),
         features: [] // You can add features if needed
       };
 
@@ -141,7 +145,7 @@ export const CreatePackage = () => {
   };
 
   const handleClientSelect = (clientId) => {
-    const client = availableClients.find(c => c.id === clientId);
+    const client = availableClients.find(c => c._id === clientId);
     if (packageData.meetingType === '1-1') {
       // Single selection for 1-1 events
       setPackageData(prev => ({
@@ -152,8 +156,8 @@ export const CreatePackage = () => {
       // Multiple selection for group events
       setPackageData(prev => ({
         ...prev,
-        selectedClients: prev.selectedClients.some(c => c.id === clientId)
-          ? prev.selectedClients.filter(c => c.id !== clientId)
+        selectedClients: prev.selectedClients.some(c => c._id === clientId)
+          ? prev.selectedClients.filter(c => c._id !== clientId)
           : [...prev.selectedClients, client]
       }));
     }
@@ -162,7 +166,7 @@ export const CreatePackage = () => {
   const handleRemoveClient = (clientId) => {
     setPackageData(prev => ({
       ...prev,
-      selectedClients: prev.selectedClients.filter(c => c.id !== clientId)
+      selectedClients: prev.selectedClients.filter(c => c._id !== clientId)
     }));
   };
 
@@ -551,13 +555,13 @@ export const CreatePackage = () => {
                     <div className="flex flex-wrap gap-2">
                       {packageData.selectedClients.map((client) => (
                         <span
-                          key={client.id}
+                          key={client._id}
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
                         >
                           {client.name}
                           <button
                             type="button"
-                            onClick={() => handleRemoveClient(client.id)}
+                            onClick={() => handleRemoveClient(client._id)}
                             className="ml-1 text-primary-600 hover:text-primary-800"
                           >
                             ✕
@@ -575,9 +579,9 @@ export const CreatePackage = () => {
                       <>
                         {filteredClients.map((client) => (
                           <div
-                            key={client.id}
-                            onClick={() => handleClientSelect(client.id)}
-                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${packageData.selectedClients.some(c => c.id === client.id)
+                            key={client._id}
+                            onClick={() => handleClientSelect(client._id)}
+                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${packageData.selectedClients.some(c => c._id === client._id)
                               ? 'bg-primary-50 text-primary-700'
                               : ''
                               }`}
@@ -592,7 +596,7 @@ export const CreatePackage = () => {
                                 <p className="text-sm font-medium text-gray-900">{client.name}</p>
                                 <p className="text-xs text-gray-500">{client.email}</p>
                               </div>
-                              {packageData.selectedClients.some(c => c.id === client.id) && (
+                              {packageData.selectedClients.some(c => c._id === client._id) && (
                                 <span className="ml-auto text-primary-600">✓</span>
                               )}
                             </div>
