@@ -12,7 +12,7 @@ export const Events = () => {
   const [error, setError] = useState(null);
 
   const userId = localStorage.getItem('userId') // Mock user ID for development
-
+  const user = localStorage.getItem('user')
   // Load events on component mount
   useEffect(() => {
     loadEvents(userId);
@@ -65,8 +65,9 @@ export const Events = () => {
     );
   };
 
-  const handleApprove = async (eventId) => {
+  const handleApprove = async (event) => {
     try {
+      const eventId = event.id;
       await eventService.updateEventStatus(userId, eventId, 'approved');
       await loadEvents(userId); // Reload events to reflect changes
     } catch (err) {
@@ -235,7 +236,7 @@ export const Events = () => {
                       {event.status !== 'completed' && event.status === 'pending' && (
                         <>
                           <button
-                            onClick={() => handleApprove(event.id)}
+                            onClick={() => handleApprove(event)}
                             className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
                             title="Onayla"
                           >
