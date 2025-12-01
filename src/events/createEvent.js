@@ -25,7 +25,7 @@ export const CreateEvent = () => {
     price: '',
     maxAttendees: '',
     category: '',
-    status: 'onay-bekliyor', // New: Etkinlik Durumu field
+    status: 'scheduled',
     selectedClients: [],
     paymentType: 'online', // New: Payment section
     isRecurring: false, // New: Recurring checkbox
@@ -133,13 +133,13 @@ export const CreateEvent = () => {
   //   { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
   //   { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
   // ];
-  const availableClients = user.customers
+  const availableClients = user.customers || []
     .map(c => c.customerId)
     .filter(Boolean);
 
-  const filteredClients = availableClients.filter(client =>
-    client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
+  const filteredClients = availableClients?.filter(client =>
+    client?.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+    client?.email?.toLowerCase().includes(clientSearchTerm.toLowerCase())
   );
 
 
@@ -191,6 +191,7 @@ export const CreateEvent = () => {
       id: Date.now(),
       name: `${newClientData.name} ${newClientData.surname}`,
       email: newClientData.email,
+      phone: newClientData.phone,
       packages: []
     };
 
