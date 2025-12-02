@@ -25,7 +25,7 @@ export const CreateEvent = () => {
     price: '',
     maxAttendees: '',
     category: '',
-    status: 'scheduled',
+    status: 'pending', // New: Etkinlik Durumu field
     selectedClients: [],
     paymentType: 'online', // New: Payment section
     isRecurring: false, // New: Recurring checkbox
@@ -96,7 +96,7 @@ export const CreateEvent = () => {
     .map(c => {
       // Handle both cases: when customerId is an object or when it's directly the customer
       const customer = c.customerId || c;
-      
+
       return {
         id: customer._id || customer.id,
         name: customer.name || '',
@@ -157,8 +157,8 @@ export const CreateEvent = () => {
     } else {
       setEventData(prev => ({
         ...prev,
-        selectedClients: prev.selectedClients.some(c => c.id === clientId)
-          ? prev.selectedClients.filter(c => c.id !== clientId)
+        selectedClients: prev.selectedClients.some(c => (c._id || c.id) === clientId)
+          ? prev.selectedClients.filter(c => (c._id || c.id) !== clientId)
           : [...prev.selectedClients, client]
       }));
     }
@@ -167,7 +167,7 @@ export const CreateEvent = () => {
   const handleRemoveClient = (clientId) => {
     setEventData(prev => ({
       ...prev,
-      selectedClients: prev.selectedClients.filter(c => c.id !== clientId)
+      selectedClients: prev.selectedClients.filter(c => (c._id || c.id) !== clientId)
     }));
   };
 
@@ -498,6 +498,7 @@ export const CreateEvent = () => {
                 <option value="approved">Yaklaşan</option>
                 <option value="completed">Tamamlandı</option>
                 <option value="cancelled">İptal Edildi</option>
+                <option value="scheduled">Planlandı</option>
               </select>
             </div>
 
@@ -559,7 +560,7 @@ export const CreateEvent = () => {
                     <div className="flex flex-wrap gap-2">
                       {eventData.selectedClients.map((client) => (
                         <span
-                          key={client.id}
+                          key={client._id || client.id}
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
                         >
                           {client.fullName}
@@ -584,11 +585,10 @@ export const CreateEvent = () => {
                         <div
                           key={client.id}
                           onClick={() => handleClientSelect(client.id)}
-                          className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${
-                            eventData.selectedClients.some(c => c.id === client.id)
+                          className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${eventData.selectedClients.some(c => c.id === client.id)
                               ? 'bg-primary-50 text-primary-700'
                               : ''
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center">
                             <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
@@ -614,8 +614,8 @@ export const CreateEvent = () => {
                     </>
                   ) : (
                     <div className="px-4 py-3 text-gray-500 text-sm">
-                      {availableClients.length === 0 
-                        ? "Henüz danışan eklenmemiş." 
+                      {availableClients.length === 0
+                        ? "Henüz danışan eklenmemiş."
                         : "Aradığınız kriterlere uygun danışan bulunamadı."}
                     </div>
                   )}
