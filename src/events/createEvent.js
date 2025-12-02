@@ -35,22 +35,16 @@ export const CreateEvent = () => {
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [availableServices, setAvailableServices] = useState([]);
-  // const [availablePackages , setAvailablePackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Load services and packages on component mount
-  // useEffect(() => {
   const ShowServices = async () => {
-
     const storedUser = localStorage.getItem("user");
 
     try {
-      // Check if storedUser exists and can be parsed
       if (storedUser) {
         const parsedUser = JSON.parse(storedUser);
 
-        // Check if parsedUser has services or packages
         if (parsedUser && (parsedUser.services?.length || parsedUser.packages?.length)) {
           console.log("Using stored user data:", parsedUser);
 
@@ -61,7 +55,6 @@ export const CreateEvent = () => {
             ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
             ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
           ];
-
 
           setAvailableServices(combined);
         } else {
@@ -92,55 +85,45 @@ export const CreateEvent = () => {
         return;
       }
       ShowServices();
-
-      // const services = Array.isArray(user.services) ? user.services : [];
-      // const packages = Array.isArray(user.packages) ? user.packages : [];
-
-      // const combined = [
-      //   ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
-      //   ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
-      // ];
-
-      // setAvailableServices(combined);
-      // console.log("Fetched services and packages:", combined);
     } catch (err) {
       console.error('Error loading services:', err);
-      setAvailableServices([]); // Set empty array on error
+      setAvailableServices([]);
     }
   };
 
-  // Mock services and packages data (from Hizmetlerim and Paketlerim)
-  //   const availableServices = [
-  // //  const mockservices= [
-  //     // Services from Hizmetlerim
-  //     { id: 1, name: 'Dijital Pazarlama Eğitimi - Birebir', type: 'service', price: 500 },
-  //     { id: 2, name: 'Dijital Pazarlama Eğitimi - Grup', type: 'service', price: 200 },
-  //     { id: 3, name: 'Kurumsal Web Sitesi', type: 'service', price: 15000 },
-  //     { id: 4, name: 'E-ticaret Sitesi', type: 'service', price: 25000 },
-  //     { id: 5, name: 'SEO Danışmanlığı', type: 'service', price: 3000 },
-  //     { id: 6, name: 'Sosyal Medya Yönetimi', type: 'service', price: 2500 },
-  //     // Packages from Paketlerim 
-  //     { id: 7, name: 'Dijital Pazarlama Paketi', type: 'package', price: 5000, appointments: 10 },
-  //     { id: 8, name: 'Web Geliştirme Danışmanlığı', type: 'package', price: 8000, appointments: 15 },
-  //     { id: 9, name: 'Kapsamlı SEO Paketi', type: 'package', price: 12000, appointments: 20 }
-  //   ];
+  // ✅ FIXED: Properly extract and normalize customer data
+  const availableClients = (user?.customers || [])
+    .map(c => {
+      // Handle both cases: when customerId is an object or when it's directly the customer
+      const customer = c.customerId || c;
+      
+      return {
+        id: customer._id || customer.id,
+        name: customer.name || '',
+        surname: customer.surname || '',
+        fullName: `${customer.name || ''} ${customer.surname || ''}`.trim(),
+        email: customer.email || '',
+        phone: customer.phone || '',
+        packages: customer.packages || [],
+        _id: customer._id || customer.id
+      };
+    })
+    .filter(c => c.id && c.fullName); // Only keep valid customers
 
-  // Mock clients data with package information  
-  // const availableClients = [
-  //   { id: 1, name: 'Ayşe Demir', email: 'ayse.demir@email.com', packages: [7, 9] },
-  //   { id: 2, name: 'Mehmet Kaya', email: 'mehmet.kaya@email.com', packages: [8] },
-  //   { id: 3, name: 'Fatma Özkan', email: 'fatma.ozkan@email.com', packages: [7] },
-  //   { id: 4, name: 'Ali Yılmaz', email: 'ali.yilmaz@email.com', packages: [] },
-  //   { id: 5, name: 'Zeynep Şahin', email: 'zeynep.sahin@email.com', packages: [9] }
-  // ];
-  const availableClients = user.customers || []
-    .map(c => c.customerId)
-    .filter(Boolean);
+  console.log("Available Clients:", availableClients);
 
-  const filteredClients = availableClients?.filter(client =>
-    client?.name?.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client?.email?.toLowerCase().includes(clientSearchTerm.toLowerCase())
-  );
+  // ✅ FIXED: Filter by full name, email, or phone
+  const filteredClients = availableClients.filter(client => {
+    const searchLower = clientSearchTerm.toLowerCase();
+    return (
+      client.fullName.toLowerCase().includes(searchLower) ||
+      client.email.toLowerCase().includes(searchLower) ||
+      (client.phone && client.phone.includes(searchLower))
+    );
+  });
+
+  console.log("Filtered Clients:", filteredClients);
+  console.log("Search Term:", clientSearchTerm);
 
 
   const handleInputChange = (e) => {
@@ -164,6 +147,8 @@ export const CreateEvent = () => {
 
   const handleClientSelect = (clientId) => {
     const client = availableClients.find(c => c.id === clientId);
+    if (!client) return;
+
     if (eventData.meetingType === '1-1') {
       setEventData(prev => ({
         ...prev,
@@ -189,14 +174,15 @@ export const CreateEvent = () => {
   const handleAddNewClient = (newClientData) => {
     const newClient = {
       id: Date.now(),
-      name: `${newClientData.name} ${newClientData.surname}`,
+      name: newClientData.name,
+      surname: newClientData.surname,
+      fullName: `${newClientData.name} ${newClientData.surname}`,
       email: newClientData.email,
       phone: newClientData.phone,
       packages: []
     };
 
-    availableClients.push(newClient);
-
+    // Note: You should also add this to your backend/user state
     if (eventData.meetingType === '1-1') {
       setEventData(prev => ({
         ...prev,
@@ -219,7 +205,6 @@ export const CreateEvent = () => {
       setLoading(true);
       setError(null);
 
-      // 🛠️ Make sure you're comparing the same property (serviceId)
       const selectedService = availableServices.find(
         s => s.id === eventData.service
       );
@@ -231,20 +216,17 @@ export const CreateEvent = () => {
         return;
       }
 
-      // ✅ Build formatted data with required fields
       const formattedData = {
         ...eventData,
-        serviceName: selectedService.title,   // ✅ now filled
-        title: eventData.title || selectedService.title, // ✅ required by backend
-        serviceType: selectedService.type,    // optional but often useful
+        serviceName: selectedService.title,
+        title: eventData.title || selectedService.title,
+        serviceType: selectedService.type,
       };
 
       console.log("✅ Formatted Data before API:", formattedData);
 
-      // ✅ Create event
       await eventService.createEvent(userId, formattedData);
 
-      // ✅ Navigate back
       navigate("/dashboard/events");
     } catch (err) {
       console.error("❌ Error creating event:", err);
@@ -254,20 +236,14 @@ export const CreateEvent = () => {
     }
   };
 
-
-  // Show meeting type field for Online or Hibrit
   const showMeetingType = eventData.eventType === 'online' || eventData.eventType === 'hybrid';
-
-  // Show platform and location fields based on event type  
   const showPlatform = eventData.eventType === 'online' || eventData.eventType === 'hybrid';
   const showLocation = eventData.eventType === 'offline' || eventData.eventType === 'hybrid';
 
-  // Check if selected client has packages (for Paketten Tahsil Et option)
   const hasPackageClient = eventData.selectedClients.some(client =>
     client.packages && client.packages.length > 0
   );
 
-  // Show price field only if not "Paketten Tahsil Et"
   const showPriceField = eventData.paymentType !== 'paketten-tahsil';
 
   return (
@@ -305,7 +281,6 @@ export const CreateEvent = () => {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Temel Bilgiler</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Changed: Etkinlik Başlığı now shows dropdown of services/packages */}
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Etkinlik Başlığı *
@@ -318,30 +293,22 @@ export const CreateEvent = () => {
                 required
               >
                 <option value="">Hizmet veya Paket Seçin</option>
-                {/* {availableServices.filter(s => s.type === 'service').length > 0 && ( */}
                 <optgroup label="Hizmetlerim">
                   {availableServices.filter(s => s.type === 'service').map(service => (
                     <option key={service.id} value={service.id}>
                       {service.title}
                     </option>
                   ))}
-
                 </optgroup>
-                {/* )} */}
-                {/* {availableServices.filter(s => s.type === 'package').length > 0 && ( */}
                 <optgroup label="Paketlerim">
                   {availableServices.filter(s => s.type === 'package').map(service => (
                     <option key={service.id} value={service.id}>
                       {service.title}
                     </option>
                   ))}
-
                 </optgroup>
-                {/* )} */}
               </select>
             </div>
-
-            {/* Removed: Etkinlik Açıklaması field */}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -380,7 +347,6 @@ export const CreateEvent = () => {
               </select>
             </div>
 
-            {/* Meeting Type - Only visible for Online or Hibrit */}
             {showMeetingType && (
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -402,7 +368,7 @@ export const CreateEvent = () => {
           </div>
         </div>
 
-        {/* Changed: Date and Time - Now available for both event types */}
+        {/* Date and Time */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Tarih ve Saat</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -434,7 +400,6 @@ export const CreateEvent = () => {
               />
             </div>
 
-            {/* New: Recurring options when Paketten Tahsil Et is selected */}
             {eventData.paymentType === 'paketten-tahsil' && (
               <>
                 <div className="md:col-span-2">
@@ -480,7 +445,6 @@ export const CreateEvent = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            {/* Platform - Only visible for Online or Hibrit */}
             {showPlatform && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -502,7 +466,6 @@ export const CreateEvent = () => {
               </div>
             )}
 
-            {/* Location - Only visible for Yüz Yüze or Hibrit */}
             {showLocation && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -520,7 +483,6 @@ export const CreateEvent = () => {
               </div>
             )}
 
-            {/* New: Etkinlik Durumu field */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Etkinlik Durumu *
@@ -568,7 +530,7 @@ export const CreateEvent = () => {
             </div>
           </div>
 
-          {/* Changed: Danışan Bilgileri always visible (removed offline checkbox) */}
+          {/* Client Information */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <h4 className="text-md font-medium text-gray-900 mb-4">Danışan Bilgileri</h4>
 
@@ -600,10 +562,10 @@ export const CreateEvent = () => {
                           key={client.id}
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-primary-100 text-primary-800"
                         >
-                          {client.name}
+                          {client.fullName}
                           <button
                             type="button"
-                            onClick={() => handleRemoveClient(client._id)}
+                            onClick={() => handleRemoveClient(client.id)}
                             className="ml-1 text-primary-600 hover:text-primary-800"
                           >
                             ✕
@@ -614,60 +576,61 @@ export const CreateEvent = () => {
                   </div>
                 )}
 
-                {/* Dropdown */}
-                {(clientSearchTerm || eventData.selectedClients.length === 0) && (
-                  <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
-                    {filteredClients.length > 0 ? (
-                      <>
-                        {filteredClients.map((client) => (
-                          <div
-                            key={client.id}
-                            onClick={() => handleClientSelect(client.id)}
-                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${eventData.selectedClients.some(c => c.id === client.id)
+                {/* Client List Dropdown - Always show when search is active or no clients selected */}
+                <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
+                  {filteredClients.length > 0 ? (
+                    <>
+                      {filteredClients.map((client) => (
+                        <div
+                          key={client.id}
+                          onClick={() => handleClientSelect(client.id)}
+                          className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${
+                            eventData.selectedClients.some(c => c.id === client.id)
                               ? 'bg-primary-50 text-primary-700'
                               : ''
-                              }`}
-                          >
-                            <div className="flex items-center">
-                              <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                                <span className="text-primary-600 text-sm font-medium">
-                                  {client.name.split(' ').map(n => n[0]).join('')}
-                                </span>
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">{client.name}</p>
-                                <p className="text-xs text-gray-500">{client.email}</p>
-                                {client.packages && client.packages.length > 0 && (
-                                  <p className="text-xs text-green-600">
-                                    {client.packages.length} aktif paket
-                                  </p>
-                                )}
-                              </div>
-                              {eventData.selectedClients.some(c => c.id === client.id) && (
-                                <span className="ml-auto text-primary-600">✓</span>
+                          }`}
+                        >
+                          <div className="flex items-center">
+                            <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                              <span className="text-primary-600 text-sm font-medium">
+                                {client.name.charAt(0)}{client.surname.charAt(0)}
+                              </span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{client.fullName}</p>
+                              <p className="text-xs text-gray-500">{client.email}</p>
+                              {client.packages && client.packages.length > 0 && (
+                                <p className="text-xs text-green-600">
+                                  {client.packages.length} aktif paket
+                                </p>
                               )}
                             </div>
+                            {eventData.selectedClients.some(c => c.id === client.id) && (
+                              <span className="ml-auto text-primary-600">✓</span>
+                            )}
                           </div>
-                        ))}
-                      </>
-                    ) : (
-                      <div className="px-4 py-3 text-gray-500 text-sm">
-                        Aradığınız kriterlere uygun danışan bulunamadı.
-                      </div>
-                    )}
+                        </div>
+                      ))}
+                    </>
+                  ) : (
+                    <div className="px-4 py-3 text-gray-500 text-sm">
+                      {availableClients.length === 0 
+                        ? "Henüz danışan eklenmemiş." 
+                        : "Aradığınız kriterlere uygun danışan bulunamadı."}
+                    </div>
+                  )}
 
-                    {/* Add Client Option */}
-                    <div
-                      onClick={() => setShowAddClientModal(true)}
-                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-200 bg-gray-25"
-                    >
-                      <div className="flex items-center text-primary-600">
-                        <span className="mr-2">+</span>
-                        <span className="text-sm font-medium">Danışan Ekle</span>
-                      </div>
+                  {/* Add Client Option */}
+                  <div
+                    onClick={() => setShowAddClientModal(true)}
+                    className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-200 bg-gray-25"
+                  >
+                    <div className="flex items-center text-primary-600">
+                      <span className="mr-2">+</span>
+                      <span className="text-sm font-medium">Danışan Ekle</span>
                     </div>
                   </div>
-                )}
+                </div>
 
                 {eventData.selectedClients.length === 0 && (
                   <p className="text-red-500 text-sm mt-1">En az bir danışan seçmelisiniz.</p>
@@ -677,7 +640,7 @@ export const CreateEvent = () => {
           </div>
         </div>
 
-        {/* New: Payment Section */}
+        {/* Payment Section */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Ödeme</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -705,7 +668,6 @@ export const CreateEvent = () => {
               )}
             </div>
 
-            {/* Price - Only visible if not Paketten Tahsil Et */}
             {showPriceField && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
