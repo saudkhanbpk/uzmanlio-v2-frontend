@@ -5,13 +5,16 @@ import { useUser } from "../context/UserContext";
 export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   const user = useUser();
   const [formData, setFormData] = useState({
+    id: event.id,
     title: event.title || '',
     description: event.description || '',
     date: event.date || '',
     time: event.time || '',
     duration: event.duration || '',
+    status : event.status || 'pending',
     location: event.location || '',
     platform: event.platform || '',
+    serviceType : event.serviceType || '',
     eventType: event.eventType || 'online',
     meetingType: event.meetingType || '',
     price: event.price || '',
@@ -113,9 +116,6 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
 
   // Show meeting type field only for Online or Hibrit
   const showMeetingType = formData.eventType === 'online' || formData.eventType === 'hybrid';
-
-  // Show date/time section only if Grup is selected
-  const showDateTime = formData.meetingType === 'grup';
 
   // Determine which location fields to show
   const showPlatform = formData.eventType === 'online' || formData.eventType === 'hybrid';
@@ -219,55 +219,53 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
             </div>
           </div>
 
-          {/* Date and Time - Only visible if Grup is selected */}
-          {showDateTime && (
-            <div className="bg-gray-50 rounded-xl p-6">
-              <h4 className="text-lg font-medium text-gray-900 mb-4">Tarih ve Saat</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Tarih *
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required={showDateTime}
-                  />
-                </div>
+          {/* Date and Time */}
+          <div className="bg-gray-50 rounded-xl p-6">
+            <h4 className="text-lg font-medium text-gray-900 mb-4">Tarih ve Saat</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tarih *
+                </label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Başlangıç Saati *
-                  </label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                    required={showDateTime}
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Başlangıç Saati *
+                </label>
+                <input
+                  type="time"
+                  name="time"
+                  value={formData.time}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                />
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Süre (dakika)
-                  </label>
-                  <input
-                    type="number"
-                    name="duration"
-                    value={formData.duration}
-                    onChange={handleInputChange}
-                    placeholder="120"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Süre (dakika)
+                </label>
+                <input
+                  type="number"
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleInputChange}
+                  placeholder="120"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
               </div>
             </div>
-          )}
+          </div>
 
           {/* Platform and Location */}
           <div className="bg-gray-50 rounded-xl p-6">
