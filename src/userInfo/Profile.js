@@ -4,12 +4,12 @@ import Swal from "sweetalert2";
 import { useUser } from "../context/UserContext";
 
 export const Profile = () => {
- const { user, loading, error } = useUser(); // Get user from Context
+  const { user, loading, error } = useUser(); // Get user from Context
 
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
-  const userId = localStorage.getItem('userId') ;
+  const userId = localStorage.getItem('userId');
   const [profile, setProfile] = useState({
-    pp: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+    pp: "",
     ppFile: "", // store filename for replacement
     information: {
       name: "",
@@ -38,19 +38,19 @@ export const Profile = () => {
   });
 
   // Fetch Profile
-  const getProfile =  () => {
+  const getProfile = () => {
     try {
       // const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
       if (!user) {
-         console.log("User Not Available")
-         return;
+        console.log("User Not Available")
+        return;
       }
-      const res =  user 
+      const res = user
       console.log(user)
       if (res) {
         setProfile((prevProfile) => ({
           ...prevProfile,
-          // pp: res.pp || prevProfile.pp,
+          pp: res.pp || prevProfile.pp,
           ppFile: res.ppFile || "",
           information: {
             ...prevProfile.information,
@@ -218,7 +218,7 @@ export const Profile = () => {
   // Call getProfile on component mount
   useEffect(() => {
     getProfile();
-  }, []);
+  }, [user]);
 
   return (
     <div className="space-y-6">

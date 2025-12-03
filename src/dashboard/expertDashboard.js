@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useEffect, useState, useRef } from "react";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { DashboardHome } from "./dashboardHome";
 import { Profile } from "../userInfo/Profile";
 import { Expertise } from "../userInfo/Expertise";
-import  Services  from "../services/services";
+import Services from "../services/services";
 import { Calendar } from "../calendar";
 import { Events } from "../events/events";
 import { CreateEvent } from "../events/createEvent";
@@ -20,99 +20,165 @@ import Customers from "../customers/Customers";
 import Payments from "../payments";
 import { Marketing } from "../marketing";
 import Reports from "../reports";
-import  {Settings}  from "../settings";
-import {Adminactions} from "../Adminactions";
+import { Settings } from "../settings";
+import { Adminactions } from "../Adminactions";
 import { profileService } from "../services/ProfileServices";
 import { useUser } from "../context/UserContext";
 
 // Dashboard Component
-export default function Dashboard ({ onLogout }) {
+export default function Dashboard({ onLogout }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  //Using user context API
-  const { setUser, setLoading, setError } = useUser();
+
+  // context (correct usage)
+  const { user, setUser, setLoading, setError } = useUser();
+
+  // guard ref to avoid double effects when dev HMR or strict mode mount/unmount happens
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const userId = localStorage.getItem('userId') 
-      try {
-        const user = await profileService.getProfile(userId);
-        // console.log("User:", user);
-        setUser(user);
-        setLoading(false);
-        setError(null);
-        setIsAdmin(user.subscription.plantype === "institutional" && user.subscription.isAdmin === true?true:false)
-        console.log("Is Admin:", isAdmin);
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+    mountedRef.current = true;
+    const controller = new AbortController();
+
+    async function checkAdminAndLoad() {
+      const userId = localStorage.getItem("userId");
+
+      // If no userId, don't call API
+      if (!userId) {
+        // ensure loading is false if nothing to fetch
+        setLoading?.(false);
+        return;
       }
+
+      // If we already have user and it's the same userId, skip fetch (prevents loops)
+      if (user && String(user._id) === String(userId)) {
+        // ensure isAdmin correctly set (in case user came from elsewhere)
+        const adminCheck =
+          user?.subscription?.plantype === "institutional" &&
+          user?.subscription?.isAdmin === true;
+        setIsAdmin(adminCheck);
+        setLoading?.(false);
+        return;
+      }
+
+      try {
+        setLoading?.(true);
+        // Pass abort signal to your service if it supports it
+        const userData = await profileService.getProfile(userId, {
+          signal: controller.signal,
+        });
+
+        if (!mountedRef.current) return;
+
+        // update context once with fresh data
+        setUser(userData);
+        setError?.(null);
+
+        // evaluate admin from fresh data
+        const adminCheck =
+          userData?.subscription?.plantype === "institutional" &&
+          userData?.subscription?.isAdmin === true;
+        setIsAdmin(adminCheck);
+      } catch (err) {
+        if (err.name === "AbortError") {
+          // fetch aborted — ignore
+          return;
+        }
+        console.error("Error fetching user profile:", err);
+        if (mountedRef.current) {
+          setError?.(err);
+        }
+      } finally {
+        if (mountedRef.current) {
+          setLoading?.(false);
+        }
+      }
+    }
+
+    checkAdminAndLoad();
+
+    return () => {
+      mountedRef.current = false;
+      controller.abort();
     };
 
-    checkAdmin();
-  }, []);
+  }, [ /* no user-based deps here to avoid accidental loops */]);
 
+  // Computed safe values for rendering
+  const fullName = [user?.information?.name ?? "", user?.information?.surname ?? ""]
+    .join(" ")
+    .trim();
 
-
+  const profileImage = user?.pp;
 
   const navigation = [
-    { name: 'Anasayfa', href: '/dashboard', icon: '🏠' },
-    { name: 'Profil Bilgileri', href: '/dashboard/profile', icon: '👤' },
-    { name: 'Administrator Actions', href: '/dashboard/Administrator', icon: '👮' , disabled : !isAdmin,},
-    { name: 'Uzmanlık Bilgileri', href: '/dashboard/expertise', icon: '🎓' },
-    { name: 'Hizmetlerim', href: '/dashboard/services', icon: '🛠️' },
-    { name: 'Takvim', href: '/dashboard/calendar', icon: '📅' },
-    { name: 'Etkinlikler', href: '/dashboard/events', icon: '🎯' },
-    { name: 'Blog', href: '/dashboard/blog', icon: '📝' },
-    { name: 'Testler ve Formlar', href: '/dashboard/forms', icon: '📋' },
-    { name: 'Müşteriler', href: '/dashboard/customers', icon: '👥' },
-    { name: 'Ödemeler', href: '/dashboard/payments', icon: '💳' },
-    { name: 'Pazarlama', href: '/dashboard/marketing', icon: '📢' },
-    { name: 'Raporlar', href: '/dashboard/reports', icon: '📊' },
-    { name: 'Hesap Ayarları', href: '/dashboard/settings', icon: '⚙️' },
+    { name: "Anasayfa", href: "/dashboard", icon: "🏠" },
+    { name: "Profil Bilgileri", href: "/dashboard/profile", icon: "👤" },
+    {
+      name: "Administrator Actions",
+      href: "/dashboard/Administrator",
+      icon: "👮",
+      disabled: !isAdmin,
+    },
+    { name: "Uzmanlık Bilgileri", href: "/dashboard/expertise", icon: "🎓" },
+    { name: "Hizmetlerim", href: "/dashboard/services", icon: "🛠️" },
+    { name: "Takvim", href: "/dashboard/calendar", icon: "📅" },
+    { name: "Etkinlikler", href: "/dashboard/events", icon: "🎯" },
+    { name: "Blog", href: "/dashboard/blog", icon: "📝" },
+    { name: "Testler ve Formlar", href: "/dashboard/forms", icon: "📋" },
+    { name: "Müşteriler", href: "/dashboard/customers", icon: "👥" },
+    { name: "Ödemeler", href: "/dashboard/payments", icon: "💳" },
+    { name: "Pazarlama", href: "/dashboard/marketing", icon: "📢" },
+    { name: "Raporlar", href: "/dashboard/reports", icon: "📊" },
+    { name: "Hesap Ayarları", href: "/dashboard/settings", icon: "⚙️" },
   ];
 
   return (
     <div className="min-h-screen bg-gray-50 lg:flex">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-gray-600 bg-opacity-75 lg:hidden z-20"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:flex-shrink-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div
+        className={`fixed inset-y-0 left-0 z-30 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 lg:flex-shrink-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+      >
         <div className="flex items-center justify-between h-16 px-6 border-b border-gray-200">
-          <img 
-            src="https://uzmanlio.com/images/logo.png" 
+          <img
+            src="https://uzmanlio.com/images/logo.png"
             alt="Uzmanlio Logo"
             className="h-8"
           />
-          <button 
+          <button
             onClick={() => setSidebarOpen(false)}
             className="lg:hidden text-gray-500 hover:text-gray-700"
           >
             ✕
           </button>
         </div>
-        
+
         <nav className="mt-8 px-4 pb-20">
-          {navigation.filter(item => !item.disabled).map(item => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg mb-2 transition-colors ${
-                location.pathname === item.href
-                  ? 'bg-primary-100 text-primary-700'
-                  : 'text-gray-700 hover:bg-gray-100'
-              }`}
-            >
-              <span className="mr-3 text-lg">{item.icon}</span>
-              {item.name}
-            </Link>
-          ))}
+          {navigation
+            .filter((item) => !item.disabled)
+            .map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg mb-2 transition-colors ${location.pathname === item.href
+                  ? "bg-primary-100 text-primary-700"
+                  : "text-gray-700 hover:bg-gray-100"
+                  }`}
+              >
+                <span className="mr-3 text-lg">{item.icon}</span>
+                {item.name}
+              </Link>
+            ))}
         </nav>
 
         <div className="absolute bottom-0 w-full p-4 border-t border-gray-200 bg-white">
@@ -139,14 +205,16 @@ export default function Dashboard ({ onLogout }) {
                 >
                   ☰
                 </button>
-                
+
                 <div className="relative">
                   <input
                     type="text"
                     placeholder="Ara..."
                     className="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   />
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                    🔍
+                  </span>
                 </div>
 
                 {/* Booking URL */}
@@ -156,17 +224,17 @@ export default function Dashboard ({ onLogout }) {
                     <span className="text-xs text-gray-500">Randevu URL'niz:</span>
                     <div className="flex items-center space-x-2">
                       <a
-                        href="https://uzmanlio.com/ahmet-yilmaz"
+                        href={`https://uzmanlio.com/${user?.information.name + user?.information.surname}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors cursor-pointer"
                         title="URL'yi yeni sekmede aç"
                       >
-                        uzmanlio.com/ahmet-yilmaz
+                        uzmanlio.com/{user?.information.name + user?.information.surname}
                       </a>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText('https://uzmanlio.com/ahmet-yilmaz');
+                          navigator.clipboard.writeText(`https://uzmanlio.com/${user?.information.name + user?.information.surname}`);
                           alert('URL panoya kopyalandı!');
                         }}
                         className="text-gray-400 hover:text-primary-600 transition-colors"
@@ -178,20 +246,27 @@ export default function Dashboard ({ onLogout }) {
                   </div>
                 </div>
               </div>
-              
+
+
+
               <div className="flex items-center space-x-4">
                 <button className="relative p-2 text-gray-500 hover:text-gray-700">
                   <span className="text-xl">🔔</span>
                   <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400"></span>
                 </button>
-                
+
+                {/* Profile Area */}
                 <div className="flex items-center space-x-3">
                   <img
                     className="h-8 w-8 rounded-full"
-                    src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                    src={profileImage}
+                    // onError={(e) => (e.target.src = "/default-avatar.png")}
                     alt="Profile"
                   />
-                  <span className="text-sm font-medium text-gray-700">Ahmet Yılmaz</span>
+
+                  <span className="text-sm font-medium text-gray-700">
+                    {fullName || "Kullanıcı"}
+                  </span>
                 </div>
               </div>
             </div>
@@ -229,4 +304,4 @@ export default function Dashboard ({ onLogout }) {
       </div>
     </div>
   );
-};
+}
