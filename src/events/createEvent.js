@@ -24,7 +24,7 @@ export const CreateEvent = () => {
     meetingType: '', // 1-1 Özel or Grup
     price: '',
     maxAttendees: '',
-    category: '',
+    // category: '',
     status: 'pending', // New: Etkinlik Durumu field
     selectedClients: [],
     paymentType: 'online', // New: Payment section
@@ -312,26 +312,6 @@ export const CreateEvent = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kategori *
-              </label>
-              <select
-                name="category"
-                value={eventData.category}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                required
-              >
-                <option value="">Kategori seçin</option>
-                <option value="teknoloji">Teknoloji</option>
-                <option value="pazarlama">Pazarlama</option>
-                <option value="tasarim">Tasarım</option>
-                <option value="is-gelistirme">İş Geliştirme</option>
-                <option value="kisisel-gelisim">Kişisel Gelişim</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Etkinlik Kanalı *
               </label>
               <select
@@ -348,7 +328,7 @@ export const CreateEvent = () => {
             </div>
 
             {showMeetingType && (
-              <div className="md:col-span-2">
+              <div >
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Etkinlik Türü *
                 </label>
@@ -586,8 +566,8 @@ export const CreateEvent = () => {
                           key={client.id}
                           onClick={() => handleClientSelect(client.id)}
                           className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${eventData.selectedClients.some(c => c.id === client.id)
-                              ? 'bg-primary-50 text-primary-700'
-                              : ''
+                            ? 'bg-primary-50 text-primary-700'
+                            : ''
                             }`}
                         >
                           <div className="flex items-center">

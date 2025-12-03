@@ -6,7 +6,7 @@ import { AddCustomerModal } from "../customers/AddCustomerModal";
 
 
 export const CreateService = () => {
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId')
 
@@ -149,15 +149,17 @@ export const CreateService = () => {
     }
   };
 
-  // Show date/time section only for grup events (not 1-1)
-  const showDateTimeSection = serviceData.meetingType === 'grup';
 
   // Show meeting type field only for Online or Hibrit
   const showMeetingType = serviceData.eventType === 'online' || serviceData.eventType === 'hybrid';
 
-  // Show platform and location fields based on event type
+  // Show date/time section only for Grup events
+  const showDateTimeSection = serviceData.meetingType === 'grup';
+
+  // Show Platform / Location based on eventType
   const showPlatform = serviceData.eventType === 'online' || serviceData.eventType === 'hybrid';
   const showLocation = serviceData.eventType === 'offline' || serviceData.eventType === 'hybrid';
+
 
 
 
@@ -301,24 +303,24 @@ export const CreateService = () => {
             </div>
 
             {/* Meeting Type - Only visible for Online or Hibrit */}
-            {showMeetingType && (
-              <div key="meeting-type-section" className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Hizmet Türü *
-                </label>
-                <select
-                  name="meetingType"
-                  value={serviceData.meetingType}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Hizmet türü seçin</option>
-                  <option value="1-1">1-1 Özel</option>
-                  <option value="grup">Grup</option>
-                </select>
-              </div>
-            )}
+            {/* {showMeetingType && ( */}
+            <div key="meeting-type-section" className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Hizmet Türü *
+              </label>
+              <select
+                name="meetingType"
+                value={serviceData.meetingType}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                required
+              >
+                <option value="">Hizmet türü seçin</option>
+                <option value="1-1">1-1 Özel</option>
+                <option value="grup">Grup</option>
+              </select>
+            </div>
+            {/* )}*/}
           </div>
         </div>
 
@@ -359,49 +361,61 @@ export const CreateService = () => {
         )}
 
         {/* Platform and Location */}
+        {(showPlatform || showLocation) && (
+          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Platform - Only visible for Online or Hibrit */}
+              {showPlatform && (
+                <div key="platform-section">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Platform {serviceData.eventType !== 'hybrid' ? '*' : ''}
+                  </label>
+                  <select
+                    name="platform"
+                    value={serviceData.platform}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    required={serviceData.eventType === 'online'}
+                  >
+                    <option value="">Platform seçin</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="google-meet">Google Meet</option>
+                    <option value="microsoft-teams">Microsoft Teams</option>
+                    <option value="jitsi">Jitsi</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Location - Only visible for Yüz Yüze or Hibrit */}
+              {showLocation && (
+                <div key="location-section">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Konum {serviceData.eventType !== 'hybrid' ? '*' : ''}
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={serviceData.location}
+                    onChange={handleInputChange}
+                    placeholder="Hizmet konumu (adres)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    required={serviceData.eventType === 'offline'}
+                  />
+                </div>
+              )}
+
+            </div>
+          </div>
+        )}
+
+
+
+
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Süre ve Fiyatlandırma</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* Platform - Only visible for Online or Hibrit */}
-            {showPlatform && (
-              <div key="platform-section">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Platform {serviceData.eventType !== 'hybrid' ? '*' : ''}
-                </label>
-                <select
-                  name="platform"
-                  value={serviceData.platform}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  required={serviceData.eventType === 'online'}
-                >
-                  <option value="">Platform seçin</option>
-                  <option value="zoom">Zoom</option>
-                  <option value="google-meet">Google Meet</option>
-                  <option value="microsoft-teams">Microsoft Teams</option>
-                  <option value="jitsi">Jitsi</option>
-                </select>
-              </div>
-            )}
-
-            {/* Location - Only visible for Yüz Yüze or Hibrit */}
-            {showLocation && (
-              <div key="location-section">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Konum {serviceData.eventType !== 'hybrid' ? '*' : ''}
-                </label>
-                <input
-                  type="text"
-                  name="location"
-                  value={serviceData.location}
-                  onChange={handleInputChange}
-                  placeholder="Hizmet konumu (adres)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  required={serviceData.eventType === 'offline'}
-                />
-              </div>
-            )}
 
             {serviceData.meetingType !== '1-1' && (<div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -481,6 +495,7 @@ export const CreateService = () => {
           </div>
 
         </div>
+
 
         {/* Actions */}
         <div className="flex justify-end space-x-4">

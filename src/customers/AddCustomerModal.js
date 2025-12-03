@@ -10,17 +10,17 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
     surname: '',
     email: '',
     phone: '',
-    dateOfBirth: '',
-    gender: '',
-    occupation: '',
-    company: '',
-    category: '',
-    source: 'website',
-    referredBy: '',
-    consentGiven: {
-      dataProcessing: false,
-      marketing: false
-    }
+    // dateOfBirth: '',
+    // gender: '',
+    // occupation: '',
+    // company: '',
+    // category: '',
+    // source: 'website',
+    // referredBy: '',
+    // consentGiven: {
+    //   dataProcessing: false,
+    //   marketing: false
+    // }
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -70,7 +70,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
       if (onAdd) {
         await onAdd(formData);
       }
-     
+
       // Close modal on success
       onClose();
     } catch (err) {
@@ -165,7 +165,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
           </div>
 
           {/* Additional Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Doğum Tarihi</label>
               <input
@@ -273,7 +273,6 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
             </div>
           )}
 
-          {/* Consent Section */}
           <div className="border-t pt-4">
             <h4 className="text-sm font-medium text-gray-900 mb-3">İzinler</h4>
             <div className="space-y-2">
@@ -305,7 +304,7 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
                 </span>
               </label>
             </div>
-          </div>
+          </div>*/}
 
           <div className="flex space-x-3 pt-6">
             <button
@@ -318,10 +317,10 @@ export const AddCustomerModal = ({ onClose, onAdd }) => {
             </button>
             <button
               type="submit"
-              disabled={loading || !formData.consentGiven.dataProcessing}
-              className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${loading || !formData.consentGiven.dataProcessing
-                  ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-primary-600 hover:bg-primary-700'
+              disabled={loading}
+              className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2 ${loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-primary-600 hover:bg-primary-700'
                 } text-white`}
             >
               {loading && (
