@@ -8,7 +8,7 @@ export const customerService = {
   async getCustomers(userId, filters = {}) {
     try {
       const queryParams = new URLSearchParams();
-      
+
       if (filters.status && filters.status !== 'all') {
         queryParams.append('status', filters.status);
       }
@@ -21,11 +21,11 @@ export const customerService = {
 
       const url = `${API_BASE_URL}/${userId}/customers${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      
+
       const data = await response.json();
       return data.customers || [];
     } catch (error) {
@@ -253,7 +253,7 @@ export const customerService = {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      console.log("Stats:",response)
+      console.log("Stats:", response)
       const data = await response.json();
       return data.stats;
     } catch (error) {
@@ -289,15 +289,27 @@ export const customerService = {
   // Export customers
   async exportCustomers(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/export`);
+      const response = await fetch(`${API_BASE_URL}/${userId}/customerscsv/export`);
+
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error("Failed to download CSV");
       }
-      const data = await response.json();
-      return data.customers;
-    } catch (error) {
-      console.error('Error exporting customers:', error);
-      throw error;
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      // create invisible <a> and click it
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "customers.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+
+    } catch (err) {
+      console.error("CSV download error:", err);
     }
   },
 
@@ -345,11 +357,11 @@ export const customerService = {
       if (lines[i].trim()) {
         const values = lines[i].split(',').map(v => v.trim());
         const customer = {};
-        
+
         headers.forEach((header, index) => {
           customer[header] = values[index] || '';
         });
-        
+
         customers.push(customer);
       }
     }
@@ -368,7 +380,7 @@ export const customerService = {
 
     const csvContent = [
       headers.join(','),
-      ...customers.map(customer => 
+      ...customers.map(customer =>
         headers.map(header => customer[header] || '').join(',')
       )
     ].join('\n');
