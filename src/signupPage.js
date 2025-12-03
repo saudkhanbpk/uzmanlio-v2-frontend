@@ -238,17 +238,15 @@ export default function SignupPage() {
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-3">
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${
-                  step >= 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
-                }`}
+                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${step >= 1 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}
               >
                 {step > 1 ? <CheckCircle2 size={20} /> : '1'}
               </div>
               <div className={`w-16 h-1 transition-all ${step >= 2 ? 'bg-green-600' : 'bg-gray-200'}`}></div>
               <div
-                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${
-                  step >= 2 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
-                }`}
+                className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all ${step >= 2 ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-500'
+                  }`}
               >
                 2
               </div>
@@ -275,11 +273,10 @@ export default function SignupPage() {
                       value={formData.information.name}
                       onChange={handleInputChange}
                       placeholder="First Name"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                        getErrorMessage('information.name')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.name')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     />
                     {getErrorMessage('information.name') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.name')}</p>
@@ -293,11 +290,10 @@ export default function SignupPage() {
                       value={formData.information.surname}
                       onChange={handleInputChange}
                       placeholder="Last Name"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                        getErrorMessage('information.surname')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.surname')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     />
                     {getErrorMessage('information.surname') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.surname')}</p>
@@ -313,11 +309,10 @@ export default function SignupPage() {
                     value={formData.information.email}
                     onChange={handleInputChange}
                     placeholder="Email address"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                      getErrorMessage('information.email')
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-600'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.email')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-green-600'
+                      }`}
                   />
                   {getErrorMessage('information.email') && (
                     <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.email')}</p>
@@ -337,6 +332,7 @@ export default function SignupPage() {
                       <option value="+1">+1</option>
                       <option value="+44">+44</option>
                       <option value="+91">+91</option>
+                      <option value="+92">+92</option>
                     </select>
                   </div>
 
@@ -347,11 +343,10 @@ export default function SignupPage() {
                       value={formData.information.phone}
                       onChange={handleInputChange}
                       placeholder="Phone number"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                        getErrorMessage('information.phone')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.phone')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     />
                     {getErrorMessage('information.phone') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.phone')}</p>
@@ -365,11 +360,10 @@ export default function SignupPage() {
                     name="information.gender"
                     value={formData.information.gender}
                     onChange={handleInputChange}
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${
-                      getErrorMessage('information.gender')
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-600'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${getErrorMessage('information.gender')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-green-600'
+                      }`}
                   >
                     <option value="">Gender</option>
                     <option value="male">Male</option>
@@ -388,17 +382,17 @@ export default function SignupPage() {
                       name="information.country"
                       value={formData.information.country}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${
-                        getErrorMessage('information.country')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${getErrorMessage('information.country')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     >
                       <option value="">Country</option>
                       <option value="turkey">Turkey</option>
                       <option value="usa">USA</option>
                       <option value="uk">UK</option>
                       <option value="india">India</option>
+                      <option value="pakistan">Pakistan</option>
                     </select>
                     {getErrorMessage('information.country') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.country')}</p>
@@ -410,17 +404,17 @@ export default function SignupPage() {
                       name="information.city"
                       value={formData.information.city}
                       onChange={handleInputChange}
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${
-                        getErrorMessage('information.city')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all bg-white ${getErrorMessage('information.city')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     >
                       <option value="">City</option>
                       <option value="istanbul">Istanbul</option>
                       <option value="ankara">Ankara</option>
                       <option value="izmir">Izmir</option>
                       <option value="newyork">New York</option>
+                      <option value="Swabi">Swabi</option>
                     </select>
                     {getErrorMessage('information.city') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.city')}</p>
@@ -465,11 +459,10 @@ export default function SignupPage() {
                     value={formData.username}
                     onChange={handleInputChange}
                     placeholder="Username"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                      getErrorMessage('username')
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-600'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('username')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-green-600'
+                      }`}
                   />
                   {getErrorMessage('username') && (
                     <p className="mt-1 text-xs text-red-600">{getErrorMessage('username')}</p>
@@ -484,11 +477,10 @@ export default function SignupPage() {
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Password"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all pr-12 ${
-                      getErrorMessage('password')
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-600'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all pr-12 ${getErrorMessage('password')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-green-600'
+                      }`}
                   />
                   <button
                     type="button"
@@ -510,11 +502,10 @@ export default function SignupPage() {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     placeholder="Confirm password"
-                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all pr-12 ${
-                      getErrorMessage('confirmPassword')
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-green-600'
-                    }`}
+                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all pr-12 ${getErrorMessage('confirmPassword')
+                      ? 'border-red-500 focus:ring-red-500'
+                      : 'border-gray-300 focus:ring-green-600'
+                      }`}
                   />
                   <button
                     type="button"
@@ -567,11 +558,10 @@ export default function SignupPage() {
                       onChange={handleInputChange}
                       min="2"
                       step="1"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                        getErrorMessage('subscription.seats')
-                          ? 'border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-green-600'
-                      }`}
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.seats')
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-green-600'
+                        }`}
                     />
                     {getErrorMessage('subscription.seats') && (
                       <p className="mt-1 text-xs text-red-600">{getErrorMessage('subscription.seats')}</p>
@@ -593,7 +583,7 @@ export default function SignupPage() {
                 {/* Payment Details */}
                 <div className="pt-2">
                   <p className="text-sm font-semibold text-gray-700 mb-3">Payment Details</p>
-                  
+
                   <div className="space-y-3">
                     {/* Cardholder Name */}
                     <div>
@@ -603,11 +593,10 @@ export default function SignupPage() {
                         value={formData.subscription.cardHolderName}
                         onChange={handleInputChange}
                         placeholder="Cardholder Name"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                          getErrorMessage('subscription.cardHolderName')
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-green-600'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.cardHolderName')
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-green-600'
+                          }`}
                       />
                       {getErrorMessage('subscription.cardHolderName') && (
                         <p className="mt-1 text-xs text-red-600">
@@ -625,11 +614,10 @@ export default function SignupPage() {
                         onChange={handleInputChange}
                         placeholder="Card number"
                         maxLength={19}
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                          getErrorMessage('subscription.cardNumber')
-                            ? 'border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-green-600'
-                        }`}
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.cardNumber')
+                          ? 'border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-green-600'
+                          }`}
                       />
                       {getErrorMessage('subscription.cardNumber') && (
                         <p className="mt-1 text-xs text-red-600">
@@ -646,11 +634,10 @@ export default function SignupPage() {
                           name="subscription.expiry"
                           value={formData.subscription.expiry}
                           onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                            getErrorMessage('subscription.expiry')
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-green-600'
-                          }`}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.expiry')
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-green-600'
+                            }`}
                         />
                         {getErrorMessage('subscription.expiry') && (
                           <p className="mt-1 text-xs text-red-600">
@@ -668,11 +655,10 @@ export default function SignupPage() {
                           onChange={handleInputChange}
                           placeholder="CVV"
                           maxLength={4}
-                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${
-                            getErrorMessage('subscription.cvv')
-                              ? 'border-red-500 focus:ring-red-500'
-                              : 'border-gray-300 focus:ring-green-600'
-                          }`}
+                          className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.cvv')
+                            ? 'border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-green-600'
+                            }`}
                         />
                         {getErrorMessage('subscription.cvv') && (
                           <p className="mt-1 text-xs text-red-600">

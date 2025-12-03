@@ -4,9 +4,9 @@ import NotesModal from "../notesModal";
 import { customerService } from "../services/customerService";
 
 // Customers Component
-export default function Customers(){
+export default function Customers() {
   const [customers, setCustomers] = useState([]);
-  console.log("Customers :" , customers)
+  console.log("Customers :", customers)
   const [showAddModal, setShowAddModal] = useState(false);
   const [showUploadTooltip, setShowUploadTooltip] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -251,14 +251,14 @@ export default function Customers(){
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Download Button */} 
+          {/* Download Button */}
           <button
             onClick={handleDownloadList}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
           >
             📥 İndir
           </button>
-          
+
           {/* Bulk Upload Button with Info Icon Inside */}
           <div className="relative">
             <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2">
@@ -288,9 +288,9 @@ export default function Customers(){
               </div>
             )}
           </div>
-          
+
           {/* Add Customer Button */}
-          <button 
+          <button
             onClick={() => setShowAddModal(true)}
             className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
@@ -457,17 +457,16 @@ export default function Customers(){
                         <div className="text-sm text-gray-500">{customer.phone}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          customer.status === 'active' ? 'bg-green-100 text-green-800' :
-                          customer.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                          customer.status === 'prospect' ? 'bg-yellow-100 text-yellow-800' :
-                          customer.status === 'blocked' ? 'bg-red-100 text-red-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${customer.status === 'active' ? 'bg-green-100 text-green-800' :
+                            customer.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                              customer.status === 'prospect' ? 'bg-yellow-100 text-yellow-800' :
+                                customer.status === 'blocked' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
+                          }`}>
                           {customer.status === 'active' ? 'Aktif' :
-                           customer.status === 'inactive' ? 'Pasif' :
-                           customer.status === 'prospect' ? 'Potansiyel' :
-                           customer.status === 'blocked' ? 'Engelli' : 'Bilinmiyor'}
+                            customer.status === 'inactive' ? 'Pasif' :
+                              customer.status === 'prospect' ? 'Potansiyel' :
+                                customer.status === 'blocked' ? 'Engelli' : 'Bilinmiyor'}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -501,7 +500,7 @@ export default function Customers(){
                             📝
                           </button>
                           <button
-                            onClick={() => deleteCustomer(customer.id)}
+                            onClick={() => deleteCustomer(customer._id)}
                             className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
                             title="Danışanı Sil"
                           >
