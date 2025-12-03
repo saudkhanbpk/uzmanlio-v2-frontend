@@ -16,7 +16,11 @@ import EmailVerificationModal from './EmailVerificationModal';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated (in a real app, you'd check localStorage/sessionStorage or a cookie)
-    return localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId');
+    const authenticated = localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId');
+    const subscriptionExpired = localStorage.getItem('subscriptionExpired') === 'true';
+
+    // If subscription is expired, don't consider user as authenticated for dashboard access
+    return authenticated && !subscriptionExpired;
   });
 
   const handleLogin = () => {
@@ -30,6 +34,8 @@ function App() {
     localStorage.removeItem('user');
     localStorage.removeItem('refreshToken');
     localStorage.removeItem('accessToken');
+    localStorage.removeItem('subscriptionExpired');
+    localStorage.removeItem('subscriptionEndDate');
     sessionStorage.removeItem('verificationSkipped');
   };
 

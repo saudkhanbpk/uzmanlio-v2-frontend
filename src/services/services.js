@@ -6,11 +6,11 @@ import ServiceSection from "./ServicesSection";
 import PackageSection from "./PackageSection";
 import { useUser } from "../context/UserContext";
 
- 
+
 
 export default function Services() {
-  const {user} = useUser();
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  const { user } = useUser();
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [activeTab, setActiveTab] = useState('hizmetler');
   const [editServiceModal, setEditServiceModal] = useState(false);
   const [selectedService, setSelectedService] = useState(null);
@@ -57,20 +57,38 @@ export default function Services() {
   };
 
   //If the services is Available in the context , Get It From there , else Fetch From the Backend
-useEffect(() => {
-  if (!user) return; // wait until user is loaded
-  if (user.services) {
-    setServices(user.services);
-  } else {
-    fetchServices();
-  }
+  useEffect(() => {
+    if (!user) return; // wait until user is loaded
+    if (user.services) {
+      setServices(user.services);
+    } else {
+      fetchServices();
+    }
 
-  if (user.packages) {
-    setPackages(user.packages);
-  } else {
+    if (user.packages) {
+      setPackages(user.packages);
+    } else {
+      fetchPackages();
+    }
+  }, [user]);  // run when user updates
+
+  // Reload data when component mounts or when switching tabs
+  useEffect(() => {
+    // Reload services when on hizmetler tab
+    if (activeTab === 'hizmetler') {
+      fetchServices();
+    }
+    // Reload packages when on paketler tab
+    if (activeTab === 'paketler') {
+      fetchPackages();
+    }
+  }, [activeTab]); // run when tab changes
+
+  // Also reload when component first mounts (when navigating back to this page)
+  useEffect(() => {
+    fetchServices();
     fetchPackages();
-  }
-}, [user]);  // run when user updates
+  }, []); // run once on mount
 
 
   const saveServiceChanges = async (updatedService) => {
