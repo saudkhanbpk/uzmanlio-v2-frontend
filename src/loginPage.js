@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { auth } from './services/Auth.js';
 import { useUser } from "./context/UserContext.js"
+import SubscriptionExpiredModal from "./components/SubscriptionExpiredModal.js";
 
 
 // Login Page Component
@@ -9,12 +10,16 @@ export default function LoginPage({ onLogin }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [subscriptionEndDate, setSubscriptionEndDate] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
   const { setUser, loading, error } = useUser(); // Get user from Context
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // prevent page reload
 
     const formData = { email, password };
+    setIsLoading(true); // Start loading
 
     try {
       const user = await auth.login(formData);
@@ -25,7 +30,19 @@ export default function LoginPage({ onLogin }) {
       // navigate("/dashboard");
     } catch (error) {
       console.error("Login failed:", error.message);
-      // Optionally show toast or message to user
+
+      // Check if error is due to expired subscription
+      if (error.message === "SUBSCRIPTION_EXPIRED") {
+        const endDate = localStorage.getItem("subscriptionEndDate");
+        setSubscriptionEndDate(endDate);
+        setShowSubscriptionModal(true);
+        setIsLoading(false); // Stop loading
+        return; // Don't proceed with login
+      }
+
+      // Optionally show toast or message to user for other errors
+    } finally {
+      setIsLoading(false); // Stop loading in all cases
     }
   };
 
@@ -107,9 +124,20 @@ export default function LoginPage({ onLogin }) {
 
             <button
               type="submit"
-              className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              disabled={isLoading}
+              className="w-full bg-primary-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-primary-700 transition-colors focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
-              GİRİŞ YAP
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Giriş yapılıyor...
+                </>
+              ) : (
+                'GİRİŞ YAP'
+              )}
             </button>
 
             <div className="text-center">
@@ -130,6 +158,11 @@ export default function LoginPage({ onLogin }) {
           </div>
         </div>
       </div>
+
+      {/* Subscription Expired Modal */}
+      {showSubscriptionModal && (
+        <SubscriptionExpiredModal subscriptionEndDate={subscriptionEndDate} />
+      )}
     </div>
   );
 }

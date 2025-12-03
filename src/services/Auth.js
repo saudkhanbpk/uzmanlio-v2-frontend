@@ -30,7 +30,6 @@ class Auth {
   }
 
   // User Login
-
   async login(formData) {
     try {
       const response = await fetch(`${API_BASE_URL}/login`, {
@@ -56,11 +55,28 @@ class Auth {
 
       const userData = await response.json();
 
+      // Check subscription status
+      if (userData.subscriptionExpired) {
+        // Store subscription data for modal display
+        localStorage.setItem("subscriptionExpired", "true");
+        localStorage.setItem("subscriptionEndDate", userData.subscriptionEndDate || "");
+
+        // Still save user data but don't show success message
+        localStorage.setItem("user", JSON.stringify(userData.user));
+        localStorage.setItem("refreshToken", userData.refreshToken);
+        localStorage.setItem("accessToken", userData.accessToken);
+        localStorage.setItem("userId", userData.user._id);
+
+        // Throw error to trigger subscription modal
+        throw new Error("SUBSCRIPTION_EXPIRED");
+      }
+
       // Save tokens and user data
       localStorage.setItem("user", JSON.stringify(userData.user));
       localStorage.setItem("refreshToken", userData.refreshToken);
       localStorage.setItem("accessToken", userData.accessToken);
       localStorage.setItem("userId", userData.user._id);
+      localStorage.setItem("subscriptionExpired", "false");
 
       // ✅ SUCCESS SweetAlert
       Swal.fire({
@@ -75,6 +91,11 @@ class Auth {
 
     } catch (error) {
       console.error("Login failed:", error);
+
+      // Don't show error alert for subscription expired - modal will handle it
+      if (error.message === "SUBSCRIPTION_EXPIRED") {
+        throw error;
+      }
 
       // Optional: handle unexpected errors
       Swal.fire({
@@ -158,35 +179,6 @@ class Auth {
       throw error;
     }
   }
-
-  // async login(formData) {
-  //   try {
-  //     const response = await fetch(`${API_BASE_URL}/login`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(formData),
-  //     });
-
-  //     if (!response.ok) {
-  //       const errorData = await response.json();
-  //       throw new Error(`Login failed: ${errorData.message || response.statusText}`);
-  //     }
-
-  //     const userData = await response.json();
-
-  //     localStorage.setItem("user", JSON.stringify(userData.user));
-  //     localStorage.setItem("refreshToken", userData.refreshToken);
-  //     localStorage.setItem("accessToken", userData.accessToken);
-  //     localStorage.setItem("userId", userData.user._id);
-
-  //     return userData.user;
-  //   } catch (error) {
-  //     console.error("Login failed:", error);
-  //     throw error;
-  //   }
-  // }
 }
 
 export const auth = new Auth();
