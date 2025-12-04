@@ -5,6 +5,8 @@ import axios from "axios";
 import ServiceSection from "./ServicesSection";
 import PackageSection from "./PackageSection";
 import { useUser } from "../context/UserContext";
+import { AddCustomerModal } from "../customers/AddCustomerModal";
+import { createPurchaseEntry } from "./purchaseService";
 
 
 
@@ -23,6 +25,12 @@ export default function Services() {
   // Add search state
   const [serviceSearchTerm, setServiceSearchTerm] = useState('');
   const [packageSearchTerm, setPackageSearchTerm] = useState('');
+  // Purchase modal states
+  const [showPurchaseModal, setShowPurchaseModal] = useState(false);
+  const [showAddCustomerModal, setShowAddCustomerModal] = useState(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedPurchasePackageId, setSelectedPurchasePackageId] = useState('');
+  const [availableCustomers, setAvailableCustomers] = useState([]);
 
 
 
@@ -349,6 +357,94 @@ export default function Services() {
     }
   };
 
+  // Fetch available customers for purchase modal
+  const fetchCustomers = async () => {
+    try {
+      const response = await axios.get(`${SERVER_URL}/api/expert/${userId}/customers`);
+      setAvailableCustomers(response.data.customers || []);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    }
+  };
+
+  // Handle adding new customer from modal
+  const handleAddNewCustomer = async (customerData) => {
+    try {
+      const response = await axios.post(
+        `${SERVER_URL}/api/expert/${userId}/customers`,
+        customerData
+      );
+
+      const newCustomer = response.data.customer;
+      setAvailableCustomers(prev => [...prev, newCustomer]);
+      setSelectedCustomerId(newCustomer._id || newCustomer.id);
+      setShowAddCustomerModal(false);
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Danışan başarıyla eklendi.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    } catch (error) {
+      console.error('Error adding customer:', error);
+      throw error;
+    }
+  };
+
+  // Handle purchase entry submission
+  const handlePurchaseSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!selectedCustomerId || !selectedPurchasePackageId) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı!',
+        text: 'Lütfen danışan ve paket seçin.',
+      });
+      return;
+    }
+
+    try {
+      Swal.fire({
+        title: 'Satın alma kaydı oluşturuluyor...',
+        text: 'Lütfen bekleyin',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        willOpen: () => Swal.showLoading()
+      });
+
+      const result = await createPurchaseEntry(
+        userId,
+        selectedCustomerId,
+        selectedPurchasePackageId
+      );
+
+      setShowPurchaseModal(false);
+      setSelectedCustomerId('');
+      setSelectedPurchasePackageId('');
+
+      // Refresh packages to show updated purchase data
+      await fetchPackages();
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Başarılı!',
+        text: 'Satın alma kaydı başarıyla oluşturuldu.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+    } catch (error) {
+      console.error('Purchase error:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: `Satın alma kaydı oluşturulamadı: ${error.error || error.message}`,
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header with Tab Switch */}
@@ -494,7 +590,15 @@ export default function Services() {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">Satın Alınan Paketler</h3>
-              <button className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600">Add Purchase entry</button>
+              <button
+                onClick={() => {
+                  setShowPurchaseModal(true);
+                  fetchCustomers();
+                }}
+                className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600"
+              >
+                Add Purchase entry
+              </button>
             </div>
 
             <div className="overflow-x-auto">
@@ -1293,6 +1397,105 @@ export default function Services() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Purchase Entry Modal */}
+      {showPurchaseModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-bold text-gray-900">Satın Alma Kaydı Ekle</h2>
+              <button
+                onClick={() => {
+                  setShowPurchaseModal(false);
+                  setSelectedCustomerId('');
+                  setSelectedPurchasePackageId('');
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handlePurchaseSubmit} className="space-y-4">
+              {/* Customer Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Danışan Seçin *
+                </label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => setSelectedCustomerId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Danışan seçin</option>
+                  {availableCustomers.map((customer) => (
+                    <option key={customer._id || customer.id} value={customer._id || customer.id}>
+                      {customer.name} {customer.surname} ({customer.email})
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setShowAddCustomerModal(true)}
+                  className="mt-2 text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  + Yeni Danışan Ekle
+                </button>
+              </div>
+
+              {/* Package Selection */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Paket Seçin *
+                </label>
+                <select
+                  value={selectedPurchasePackageId}
+                  onChange={(e) => setSelectedPurchasePackageId(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Paket seçin</option>
+                  {packages.filter(pkg => pkg.status === 'active').map((pkg) => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.title} - ₺{pkg.price} ({pkg.appointmentCount || pkg.sessionsIncluded} randevu)
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Actions */}
+              <div className="flex space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPurchaseModal(false);
+                    setSelectedCustomerId('');
+                    setSelectedPurchasePackageId('');
+                  }}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Kaydet
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Customer Modal */}
+      {showAddCustomerModal && (
+        <AddCustomerModal
+          onClose={() => setShowAddCustomerModal(false)}
+          onAdd={handleAddNewCustomer}
+        />
       )}
     </div>
   );
