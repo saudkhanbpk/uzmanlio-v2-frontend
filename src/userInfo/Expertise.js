@@ -13,8 +13,8 @@ import { SkillEditModal } from "./SkillEditModal";
 import Swal from 'sweetalert2';
 
 export const Expertise = () => {
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL; 
-   const {
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+  const {
     education,
     certificates,
     experience,
@@ -49,7 +49,7 @@ export const Expertise = () => {
   const [selectedCertificate, setSelectedCertificate] = useState(null);
   const [selectedExperience, setSelectedExperience] = useState(null);
   const [selectedSkill, setSelectedSkill] = useState(null);
- 
+
   const [selectedTitle, setSelectedTitle] = useState(null);
 
   useEffect(() => {
@@ -318,15 +318,23 @@ export const Expertise = () => {
                     <p className="text-sm text-gray-600">Unvan</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => {
-                    setSelectedTitle(title);
-                    setTitleEditModal(true);
-                  }}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ⚙️
-                </button>
+                <div>
+                  <button
+                    onClick={() => handleDeleteTitle(title.id)}
+                    className="text-gray-400 mr-4 hover:text-red-600"
+                  >
+                    🗑️
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedTitle(title);
+                      setTitleEditModal(true);
+                    }}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ⚙️
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -362,18 +370,38 @@ export const Expertise = () => {
             </div>
           ) : (
             skills.map((skill) => (
-              <div key={skill.id} className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-sm font-medium text-gray-700">{skill.name}</span>
-                  <span className="text-sm text-gray-600">{skill.level}%</span>
+              <div key={skill.id} className="w-full flex flex-row justify-between">
+                <div className="w-[90%]">
+                  <div className="flex justify-between">
+                    <span className="text-sm font-medium text-gray-700">{skill.name}</span>
+                    <span className="text-sm text-gray-600">{skill.level}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div
+                      className="bg-primary-600 h-2 rounded-full"
+                      style={{ width: `${skill.level}%` }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="bg-primary-600 h-2 rounded-full"
-                    style={{ width: `${skill.level}%` }}
-                  ></div>
+
+                <div className="w-[10%] flex justify-end items-center">
+                  <button
+                    onClick={() => handleDeleteSkill(skill.id)}
+                    className="text-gray-400 mr-4 hover:text-red-600"
+                  >
+                    🗑️
+                  </button>
+                  <button
+                    onClick={() => handleEditSkill(skill)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ⚙️
+                  </button>
                 </div>
               </div>
+
+
+
             ))
           )}
         </div>
@@ -416,6 +444,12 @@ export const Expertise = () => {
                   <h4 className="font-medium text-gray-900">{edu.department} {edu.level}</h4>
                   <p className="text-sm text-gray-600">{edu.name} • {edu.graduationYear}</p>
                 </div>
+                <button
+                  onClick={() => handleDeleteEducation(edu.id)}
+                  className="text-gray-400 mr-4 hover:text-red-600"
+                >
+                  🗑️
+                </button>
                 <button
                   onClick={() => handleEditEducation(edu)}
                   className="text-gray-400 hover:text-gray-600"
@@ -466,6 +500,12 @@ export const Expertise = () => {
                   <p className="text-sm text-gray-600">{cert.company} • {new Date(cert.issueDate).getFullYear()}</p>
                 </div>
                 <button
+                  onClick={() => handleDeleteCertificate(cert.id)}
+                  className="text-gray-400 mr-4 hover:text-red-600"
+                >
+                  🗑️
+                </button>
+                <button
                   onClick={() => handleEditCertificate(cert)}
                   className="text-gray-400 hover:text-gray-600"
                 >
@@ -506,13 +546,37 @@ export const Expertise = () => {
             </div>
           ) : (
             experience.map((exp) => (
-              <div key={exp.id} className="border-l-4 border-primary-500 pl-4">
-                <h4 className="font-medium text-gray-900">{exp.position}</h4>
-                <p className="text-sm text-gray-600">{exp.company} • {exp.start} - {exp.stillWork ? 'Devam ediyor' : exp.end}</p>
-                {exp.description && (
-                  <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
-                )}
+              <div key={exp.id} className="border-l-4 border-primary-500 pl-4 flex justify-between">
+                {/* Left content */}
+                <div className="w-[90%]">
+                  <h4 className="font-medium text-gray-900">{exp.position}</h4>
+                  <p className="text-sm text-gray-600">
+                    {exp.company} • {exp.start} - {exp.stillWork ? 'Devam ediyor' : exp.end}
+                  </p>
+
+                  {exp.description && (
+                    <p className="text-sm text-gray-700 mt-2">{exp.description}</p>
+                  )}
+                </div>
+
+                {/* Right buttons */}
+                <div className="w-[10%] flex align-center justify-end items-center space-x-2">
+                  <button
+                    onClick={() => handleDeleteExperience(exp.id)}
+                    className="text-gray-400 hover:text-red-600"
+                  >
+                    🗑️
+                  </button>
+                  <button
+                    onClick={() => handleEditExperience(exp)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ⚙️
+                  </button>
+                </div>
               </div>
+
+
             ))
           )}
         </div>
@@ -545,8 +609,8 @@ export const Expertise = () => {
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging
-                ? 'border-primary-500 bg-primary-50'
-                : 'border-gray-300 hover:border-gray-400'
+              ? 'border-primary-500 bg-primary-50'
+              : 'border-gray-300 hover:border-gray-400'
               }`}
           >
             <div className="flex flex-col items-center space-y-4">
@@ -678,7 +742,7 @@ export const Expertise = () => {
           certificate={selectedCertificate}
         />
       )}
-      {showExpModal && <ExperienceModal onClose={() => setExpModal(false)} />}
+      {showExpModal && <ExperienceModal experience={selectedExperience} onClose={() => setExpModal(false)} />}
       {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
       {showSkillEditModal && (
         <SkillEditModal

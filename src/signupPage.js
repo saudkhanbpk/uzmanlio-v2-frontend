@@ -100,11 +100,11 @@ export default function SignupPage() {
 
     if (!information.name.trim()) newErrors['information.name'] = 'First name is required';
     if (!information.surname.trim()) newErrors['information.surname'] = 'Last name is required';
-    if (!information.email.trim()) newErrors['information.email'] = 'Email is required';
+    if (!information.email.trim()) newErrors['information.email'] = 'Geçerli bir E-Posta Adresi Girin';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(information.email))
-      newErrors['information.email'] = 'Invalid email format';
+      newErrors['information.email'] = 'E-Posta hatalı';
 
-    if (!information.phone.trim()) newErrors['information.phone'] = 'Phone number is required';
+    if (!information.phone.trim()) newErrors['information.phone'] = '10 Haneli Telefon Numarası Girin';
     if (!information.country) newErrors['information.country'] = 'Select country';
     if (!information.city) newErrors['information.city'] = 'Select city';
     if (!information.gender) newErrors['information.gender'] = 'Select gender';
@@ -119,7 +119,7 @@ export default function SignupPage() {
     if (!formData.username.trim()) newErrors.username = 'Username is required';
     else if (formData.username.length < 3) newErrors.username = 'Must be at least 3 characters';
 
-    if (!formData.password) newErrors.password = 'Password is required';
+    if (!formData.password) newErrors.password = 'Şifenizi Oluşturun';
     else if (formData.password.length < 8) newErrors.password = 'Must be at least 8 characters';
 
     if (formData.password !== formData.confirmPassword)

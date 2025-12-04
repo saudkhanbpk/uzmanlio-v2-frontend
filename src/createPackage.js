@@ -31,6 +31,7 @@ export const CreatePackage = () => {
     date: '',
     time: '',
     duration: '',
+    discount: '',
     location: '',
     platform: '',
     eventType: 'online',
@@ -80,6 +81,7 @@ export const CreatePackage = () => {
         duration: packageData.duration || '0',
         appointmentCount: packageData.appointmentCount || '1',
         category: packageData.category,
+        discount: packageData.discount || 0,
         eventType: packageData.eventType,
         meetingType: packageData.meetingType,
         platform: packageData.platform,
@@ -449,6 +451,22 @@ export const CreatePackage = () => {
                   <span className="text-gray-500 text-sm">₺</span>
                 </div>
               </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                İndirim (%)
+              </label>
+              <input
+                type="number"
+                name="discount"
+                value={packageData.discount}
+                onChange={handleInputChange}
+                placeholder="20"
+                min={0}
+                max={100}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
             </div>
 
             <div>

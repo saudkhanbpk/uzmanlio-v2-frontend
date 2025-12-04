@@ -33,7 +33,7 @@ export default function ForgotPasswordPage() {
         e.preventDefault();
 
         if (!email) {
-            setErrors({ email: "Email is required" });
+            setErrors({ email: "Geçerli bir E-Posta Adresi Girin" });
             return;
         }
 
@@ -94,7 +94,7 @@ export default function ForgotPasswordPage() {
 
         const newErrors = {};
 
-        if (!newPassword) newErrors.newPassword = "Password is required";
+        if (!newPassword) newErrors.newPassword = "Şifenizi Oluşturun";
         else if (newPassword.length < 8)
             newErrors.newPassword = "Password must be at least 8 characters";
 

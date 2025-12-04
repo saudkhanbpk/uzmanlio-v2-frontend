@@ -15,6 +15,7 @@ export const CreateService = () => {
     description: '',
     icon: '',
     iconBg: '',
+    discount: '',
     date: '',
     time: '',
     duration: '',
@@ -108,6 +109,7 @@ export const CreateService = () => {
         duration: serviceData.duration || '0',
         category: serviceData.category,
         date: serviceData.date,
+        discount: serviceData.discount || 0,
         time: serviceData.time,
         location: serviceData.location,
         platform: serviceData.platform,
@@ -458,7 +460,7 @@ export const CreateService = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 İndirim (%)
               </label>
@@ -472,7 +474,7 @@ export const CreateService = () => {
                 max={100}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
-            </div>
+            </div> */}
           </div>
 
 

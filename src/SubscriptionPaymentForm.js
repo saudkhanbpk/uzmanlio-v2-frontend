@@ -23,7 +23,7 @@ const SubscriptionPaymentForm = ({
   } = useForm();
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
-  const userId = localStorage.getItem('userId') ;
+  const userId = localStorage.getItem('userId');
 
   // Local price configs (same as Settings.js)
   const monthlyPrices = {
@@ -60,7 +60,7 @@ const SubscriptionPaymentForm = ({
 
       if (response.status === 200) {
         const user = response.data.user;
-        console.log("User after subscription:",response.data.user)
+        console.log("User after subscription:", response.data.user)
         const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
 
         if (currentSubscription && currentSubscription.endDate) {
@@ -148,7 +148,7 @@ const SubscriptionPaymentForm = ({
             />
             {errors.cardHolderName && (
               <p className="text-red-500 text-sm mt-1">
-                Card Holder Name is required
+                Kart Hamili Adı gereklidir
               </p>
             )}
           </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { AddCustomerModal } from "./AddCustomerModal";
 import NotesModal from "../notesModal";
 import { customerService } from "../services/customerService";
@@ -88,6 +88,16 @@ export default function Customers() {
     }
   };
 
+  const fileInputRef = useRef(null);
+
+  {/* // ... (inside the component) */ }
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  {/* // ... (in the JSX) */ }
+
   const loadStats = async () => {
     try {
       const statsData = await customerService.getCustomerStats(userId);
@@ -172,18 +182,26 @@ export default function Customers() {
 
   const handleFileUpload = async (event) => {
     const file = event.target.files[0];
-    if (file && file.type === 'text/csv') {
+    // Check for CSV MIME type OR extension (for Windows compatibility)
+    if (file && (file.type === 'text/csv' || file.name.toLowerCase().endsWith('.csv') || file.type === 'application/vnd.ms-excel')) {
       try {
+        setLoading(true); // Show loading state
         const text = await file.text();
         const customersData = customerService.parseCSVData(text);
 
         if (customersData.length === 0) {
-          alert('CSV dosyası boş veya geçersiz format.');
+          alert('CSV dosyası boş veya geçersiz format. Lütfen "Ad, Soyad, E-posta, Telefon" başlıklarını kontrol edin.');
+          setLoading(false);
           return;
         }
 
         const result = await customerService.bulkImportCustomers(userId, customersData);
-        alert(`Toplu içe aktarma tamamlandı. ${result.results.success} danışan eklendi, ${result.results.failed} başarısız.`);
+
+        let message = `Toplu içe aktarma tamamlandı.\nBaşarılı: ${result.results.success}\nBaşarısız: ${result.results.failed}`;
+        if (result.results.errors.length > 0) {
+          message += `\n\nHatalar:\n${result.results.errors.slice(0, 5).join('\n')}${result.results.errors.length > 5 ? '\n...' : ''}`;
+        }
+        alert(message);
 
         if (result.results.errors.length > 0) {
           console.log('Import errors:', result.results.errors);
@@ -193,10 +211,12 @@ export default function Customers() {
         await loadStats(); // Reload stats
       } catch (err) {
         console.error('Error uploading file:', err);
-        alert('Dosya yüklenirken bir hata oluştu.');
+        alert('Dosya yüklenirken bir hata oluştu: ' + err.message);
+      } finally {
+        setLoading(false);
       }
     } else {
-      alert('Lütfen geçerli bir CSV dosyası seçin.');
+      alert('Lütfen geçerli bir CSV dosyası seçin (.csv uzantılı).');
     }
 
     // Reset file input
@@ -259,26 +279,30 @@ export default function Customers() {
             📥 İndir
           </button>
 
+
+
           {/* Bulk Upload Button with Info Icon Inside */}
           <div className="relative">
-            <label className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2">
+            <button
+              onClick={handleUploadClick}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2"
+            >
               <span>📤 Toplu Yükle</span>
-              <button
-                type="button"
-                onMouseEnter={() => setShowUploadTooltip(true)}
-                onMouseLeave={() => setShowUploadTooltip(false)}
+              <div
+                onMouseEnter={(e) => { e.stopPropagation(); setShowUploadTooltip(true); }}
+                onMouseLeave={(e) => { e.stopPropagation(); setShowUploadTooltip(false); }}
                 className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-blue-200 transition-colors"
-                onClick={(e) => e.preventDefault()}
               >
                 i
-              </button>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
-            </label>
+              </div>
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
             {showUploadTooltip && (
               <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg z-10 max-w-xs">
                 <div className="whitespace-normal">
@@ -458,10 +482,10 @@ export default function Customers() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${customer.status === 'active' ? 'bg-green-100 text-green-800' :
-                            customer.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
-                              customer.status === 'prospect' ? 'bg-yellow-100 text-yellow-800' :
-                                customer.status === 'blocked' ? 'bg-red-100 text-red-800' :
-                                  'bg-gray-100 text-gray-800'
+                          customer.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                            customer.status === 'prospect' ? 'bg-yellow-100 text-yellow-800' :
+                              customer.status === 'blocked' ? 'bg-red-100 text-red-800' :
+                                'bg-gray-100 text-gray-800'
                           }`}>
                           {customer.status === 'active' ? 'Aktif' :
                             customer.status === 'inactive' ? 'Pasif' :
