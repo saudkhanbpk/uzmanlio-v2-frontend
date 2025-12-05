@@ -5,8 +5,7 @@ import AddCustomerModal from "../customers/AddCustomerModal"
 import { log10 } from "chart.js/helpers";
 import { useUser } from "../context/UserContext";
 import PaymentDeductionModal from "./paymentDeductionmodel";
-
-
+import RepetitionModal from "./repetitionModel";
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
@@ -38,9 +37,20 @@ export const CreateEvent = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [availableServices, setAvailableServices] = useState([]);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showRepetitionModal, setShowRepetitionModal] = useState(false);
+  const [repetitionSettings, setRepetitionSettings] = useState({
+    isRecurring: false,
+    recurringType: null,
+    repetitions: []
+  });
   const [customerPaymentSettings, setCustomerPaymentSettings] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const handleRepetitionConfirm = (settings) => {
+    setRepetitionSettings(settings);
+    console.log("Repetition settings saved:", settings);
+  };
 
   // Process customersPackageDetails when user data changes
   useEffect(() => {
@@ -266,6 +276,7 @@ export const CreateEvent = () => {
     setShowAddClientModal(false);
   };
 
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -297,7 +308,10 @@ export const CreateEvent = () => {
         serviceName: selectedService.title,
         title: eventData.title || selectedService.title,
         serviceType: selectedService.type,
-        paymentType: paymentTypeArray  // REPLACE the old paymentType with this array
+        paymentType: paymentTypeArray,  // REPLACE the old paymentType with this array
+        isRecurring: repetitionSettings.isRecurring,
+        recurringType: repetitionSettings.recurringType,
+        repetitions: repetitionSettings.repetitions
       };
 
       console.log("✅ Formatted Data before API:", formattedData);
@@ -789,6 +803,65 @@ export const CreateEvent = () => {
           )}
         </div>
 
+
+
+
+        {/* Repetition Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Tekrar Ayarları (Optional)</h3>
+
+          {!repetitionSettings.isRecurring ? (
+            // Button to enable repetition
+            <button
+              type="button"
+              onClick={() => {
+                if (eventData.selectedClients.length > 0) {
+                  setShowRepetitionModal(true);
+                }
+              }}
+              disabled={eventData.selectedClients.length === 0}
+              className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {eventData.selectedClients.length === 0
+                ? 'Önce danışan seçin'
+                : '+ Tekrar Ayarları Ekle'
+              }
+            </button>
+          ) : (
+            // Show settings when repetition is enabled
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-blue-800">
+                    ✓ Etkinlik {repetitionSettings.repetitions[0]?.numberOfRepetitions} kez {repetitionSettings.recurringType === 'weekly' ? 'haftalık' : 'aylık'} olarak tekrarlanacak
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRepetitionSettings({
+                        isRecurring: false,
+                        recurringType: null,
+                        repetitions: []
+                      });
+                    }}
+                    className="text-red-600 hover:text-red-800 text-sm font-medium"
+                  >
+                    Kaldır
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowRepetitionModal(true)}
+                className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+              >
+                Tekrar Ayarlarını Düzenle
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Actions */}
         <div className="flex justify-end space-x-4">
           <Link
@@ -822,6 +895,16 @@ export const CreateEvent = () => {
         selectedClients={eventData.selectedClients}
         customerPackageMap={customerPackageMap}
         onConfirm={handlePaymentSettingsConfirm}
+      />
+
+      {/* Repetition Modal */}
+      <RepetitionModal
+        isOpen={showRepetitionModal}
+        onClose={() => setShowRepetitionModal(false)}
+        selectedClients={eventData.selectedClients}
+        customerPackageMap={customerPackageMap}
+        customerPaymentSettings={customerPaymentSettings}  // ADD THIS LINE
+        onConfirm={handleRepetitionConfirm}
       />
     </div>
   );
