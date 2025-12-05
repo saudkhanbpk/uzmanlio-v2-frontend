@@ -4,6 +4,7 @@ import { eventService } from "../services/eventService";
 import AddCustomerModal from "../customers/AddCustomerModal"
 import { log10 } from "chart.js/helpers";
 import { useUser } from "../context/UserContext";
+import PaymentDeductionModal from "./paymentDeductionmodel";
 
 
 
@@ -11,6 +12,7 @@ import { useUser } from "../context/UserContext";
 export const CreateEvent = () => {
   const { user } = useUser();
   const navigate = useNavigate();
+  const [customerPackageMap, setCustomerPackageMap] = useState([]);
   const userId = localStorage.getItem('userId') // Mock user ID for development
 
   const [eventData, setEventData] = useState({
@@ -35,8 +37,74 @@ export const CreateEvent = () => {
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [availableServices, setAvailableServices] = useState([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [customerPaymentSettings, setCustomerPaymentSettings] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  // Process customersPackageDetails when user data changes
+  useEffect(() => {
+    if (user?.customersPackageDetails && user.customersPackageDetails.length > 0) {
+      console.log("Raw customersPackageDetails:", user.customersPackageDetails);
+
+      // Group packages by customer ID
+      const packageMap = {};
+
+      user.customersPackageDetails.forEach(order => {
+        const customerId = order.customerId?.toString() || order.customerId;
+
+        // Initialize customer entry if it doesn't exist
+        if (!packageMap[customerId]) {
+          packageMap[customerId] = {
+            userId: customerId,
+            userName: order.userInfo?.name || 'Unknown',
+            userEmail: order.userInfo?.email || '',
+            userPackages: []
+          };
+        }
+
+        // Extract package details from order events
+        if (order.orderDetails?.events) {
+          order.orderDetails.events.forEach(event => {
+            if (event.eventType === 'package' && event.package) {
+              // Only add packages with remaining sessions
+              const remainingSessions = event.package.sessions - (event.package.completedSessions || 0);
+
+              if (remainingSessions > 0) {
+                packageMap[customerId].userPackages.push({
+                  packageId: event.package.packageId,
+                  packageName: event.package.name,
+                  totalSessions: event.package.sessions,
+                  completedSessions: event.package.completedSessions || 0,
+                  remainingSessions: remainingSessions,
+                  price: event.package.price,
+                  duration: event.package.duration,
+                  meetingType: event.package.meetingType,
+                  orderId: order._id,
+                  orderDate: order.orderDetails?.orderDate,
+                  paymentStatus: order.paymentInfo?.status
+                });
+              }
+            }
+          });
+        }
+      });
+
+      // Convert to array format
+      const packageArray = Object.values(packageMap);
+
+      console.log("Processed Customer Package Map:", packageArray);
+      setCustomerPackageMap(packageArray);
+    } else {
+      console.log("No customersPackageDetails found in user data");
+      setCustomerPackageMap([]);
+    }
+  }, [user]);
+
+  const handlePaymentSettingsConfirm = (settings) => {
+    setCustomerPaymentSettings(settings);
+    console.log("Payment settings saved:", settings);
+  };
 
   const ShowServices = async () => {
     const storedUser = localStorage.getItem("user");
@@ -216,11 +284,20 @@ export const CreateEvent = () => {
         return;
       }
 
+      // Convert customerPaymentSettings object to array format
+      const paymentTypeArray = Object.values(customerPaymentSettings).map(setting => ({
+        customerId: setting.userId,
+        paymentMethod: setting.paymentMethod,
+        packageId: setting.packageId,
+        orderId: setting.orderId  // ADD THIS LINE
+      }));
+
       const formattedData = {
         ...eventData,
         serviceName: selectedService.title,
         title: eventData.title || selectedService.title,
         serviceType: selectedService.type,
+        paymentType: paymentTypeArray  // REPLACE the old paymentType with this array
       };
 
       console.log("✅ Formatted Data before API:", formattedData);
@@ -621,7 +698,7 @@ export const CreateEvent = () => {
         </div>
 
         {/* Payment Section */}
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Ödeme</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -664,6 +741,52 @@ export const CreateEvent = () => {
               </div>
             )}
           </div>
+        </div> */}
+        {/* Payment Section */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Ödeme</h3>
+
+          {/* Default Price for Non-Package Customers */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Varsayılan Fiyat (₺)
+              <span className="text-gray-500 text-xs ml-2">
+                (Paketsiz danışanlar için)
+              </span>
+            </label>
+            <input
+              type="number"
+              name="price"
+              value={eventData.price}
+              onChange={handleInputChange}
+              placeholder="199"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Bu fiyat, paketi olmayan veya paketten tahsil edilmeyen danışanlar için geçerli olacaktır.
+            </p>
+          </div>
+
+          {/* Payment Settings Button */}
+          <button
+            type="button"
+            onClick={() => setShowPaymentModal(true)}
+            disabled={eventData.selectedClients.length === 0}
+            className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {eventData.selectedClients.length === 0
+              ? 'Önce danışan seçin'
+              : `Ödeme Ayarlarını Düzenle (${eventData.selectedClients.length} danışan)`
+            }
+          </button>
+
+          {Object.keys(customerPaymentSettings).length > 0 && (
+            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-sm text-green-800">
+                ✓ {Object.keys(customerPaymentSettings).length} danışan için ödeme ayarları yapılandırıldı
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Actions */}
@@ -691,6 +814,15 @@ export const CreateEvent = () => {
           onAdd={handleAddNewClient}
         />
       )}
+
+      {/* Payment Deduction Modal */}
+      <PaymentDeductionModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        selectedClients={eventData.selectedClients}
+        customerPackageMap={customerPackageMap}
+        onConfirm={handlePaymentSettingsConfirm}
+      />
     </div>
   );
 };
