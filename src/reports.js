@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -9,7 +9,8 @@ import {
   Tooltip,
   Legend,
 } from 'chart.js';
-
+import { Line } from 'react-chartjs-2';
+import { fetchReportsSummary, fetchAnalyticsData, fetchTopServices } from "./services/reportsService";
 
 ChartJS.register(
   CategoryScale,
@@ -21,94 +22,69 @@ ChartJS.register(
   Legend
 );
 
-
-import { Line } from 'react-chartjs-2';
 // Reports Component
-export default function Reports(){
-  const [timePeriod, setTimePeriod] = useState('weekly');
+export default function Reports() {
+  const [timePeriod, setTimePeriod] = useState('monthly');
   const [selectedParameter, setSelectedParameter] = useState('gelir');
 
-  // Mock data for different parameters and time periods
-  const mockData = {
-    daily: {
-      gelir: {
-        labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
-        data: [1200, 1900, 1700, 2200, 2800, 1600, 1400],
-        color: 'rgb(34, 197, 94)',
-        bgColor: 'rgba(34, 197, 94, 0.1)'
-      },
-      randevu_sayisi: {
-        labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
-        data: [8, 12, 10, 15, 18, 9, 7],
-        color: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.1)'
-      },
-      musteri_sayisi: {
-        labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
-        data: [6, 9, 8, 11, 14, 7, 5],
-        color: 'rgb(168, 85, 247)',
-        bgColor: 'rgba(168, 85, 247, 0.1)'
-      },
-      ziyaret_sayisi: {
-        labels: ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'],
-        data: [45, 67, 52, 78, 89, 43, 38],
-        color: 'rgb(239, 68, 68)',
-        bgColor: 'rgba(239, 68, 68, 0.1)'
+  // State for real data
+  const [summary, setSummary] = useState({
+    totalIncome: 0,
+    numberOfAppointments: 0,
+    numberOfCustomers: 0,
+    numberOfVisits: 0
+  });
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [topServices, setTopServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // Get userId from localStorage
+  const userId = localStorage.getItem('userId');
+
+  // Fetch data on component mount and when time period changes
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userId) {
+        setError('User ID not found');
+        setLoading(false);
+        return;
       }
-    },
-    weekly: {
-      gelir: {
-        labels: ['1. Hafta', '2. Hafta', '3. Hafta', '4. Hafta', '5. Hafta', '6. Hafta'],
-        data: [8500, 12300, 10800, 15600, 18900, 11200],
-        color: 'rgb(34, 197, 94)',
-        bgColor: 'rgba(34, 197, 94, 0.1)'
-      },
-      randevu_sayisi: {
-        labels: ['1. Hafta', '2. Hafta', '3. Hafta', '4. Hafta', '5. Hafta', '6. Hafta'],
-        data: [54, 78, 65, 89, 105, 72],
-        color: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.1)'
-      },
-      musteri_sayisi: {
-        labels: ['1. Hafta', '2. Hafta', '3. Hafta', '4. Hafta', '5. Hafta', '6. Hafta'],
-        data: [42, 61, 48, 71, 85, 58],
-        color: 'rgb(168, 85, 247)',
-        bgColor: 'rgba(168, 85, 247, 0.1)'
-      },
-      ziyaret_sayisi: {
-        labels: ['1. Hafta', '2. Hafta', '3. Hafta', '4. Hafta', '5. Hafta', '6. Hafta'],
-        data: [320, 467, 385, 578, 645, 412],
-        color: 'rgb(239, 68, 68)',
-        bgColor: 'rgba(239, 68, 68, 0.1)'
+
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [summaryResponse, analyticsResponse, servicesResponse] = await Promise.all([
+          fetchReportsSummary(userId),
+          fetchAnalyticsData(userId, timePeriod),
+          fetchTopServices(userId, 3)
+        ]);
+
+        // Update state with fetched data
+        if (summaryResponse.success) {
+          setSummary(summaryResponse.data);
+        }
+
+        if (analyticsResponse.success) {
+          setAnalyticsData(analyticsResponse.data);
+        }
+
+        if (servicesResponse.success) {
+          setTopServices(servicesResponse.data);
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching reports data:', err);
+        setError('Failed to load reports data');
+      } finally {
+        setLoading(false);
       }
-    },
-    monthly: {
-      gelir: {
-        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'],
-        data: [34500, 42300, 38900, 51200, 67800, 45600],
-        color: 'rgb(34, 197, 94)',
-        bgColor: 'rgba(34, 197, 94, 0.1)'
-      },
-      randevu_sayisi: {
-        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'],
-        data: [210, 287, 245, 334, 412, 298],
-        color: 'rgb(59, 130, 246)',
-        bgColor: 'rgba(59, 130, 246, 0.1)'
-      },
-      musteri_sayisi: {
-        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'],
-        data: [168, 221, 189, 267, 325, 234],
-        color: 'rgb(168, 85, 247)',
-        bgColor: 'rgba(168, 85, 247, 0.1)'
-      },
-      ziyaret_sayisi: {
-        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'],
-        data: [1245, 1678, 1423, 1892, 2340, 1756],
-        color: 'rgb(239, 68, 68)',
-        bgColor: 'rgba(239, 68, 68, 0.1)'
-      }
-    }
-  };
+    };
+
+    fetchData();
+  }, [userId, timePeriod]);
 
   const parameterLabels = {
     gelir: 'Gelir',
@@ -124,7 +100,32 @@ export default function Reports(){
     ziyaret_sayisi: 'ziyaret'
   };
 
-  const currentData = mockData[timePeriod][selectedParameter];
+  // Get current data for selected parameter
+  const getCurrentData = () => {
+    if (!analyticsData || !analyticsData.data) {
+      return {
+        labels: [],
+        data: [],
+        color: 'rgb(34, 197, 94)',
+        bgColor: 'rgba(34, 197, 94, 0.1)'
+      };
+    }
+
+    const colors = {
+      gelir: { color: 'rgb(34, 197, 94)', bgColor: 'rgba(34, 197, 94, 0.1)' },
+      randevu_sayisi: { color: 'rgb(59, 130, 246)', bgColor: 'rgba(59, 130, 246, 0.1)' },
+      musteri_sayisi: { color: 'rgb(168, 85, 247)', bgColor: 'rgba(168, 85, 247, 0.1)' },
+      ziyaret_sayisi: { color: 'rgb(239, 68, 68)', bgColor: 'rgba(239, 68, 68, 0.1)' }
+    };
+
+    return {
+      labels: analyticsData.labels,
+      data: analyticsData.data[selectedParameter] || [],
+      ...colors[selectedParameter]
+    };
+  };
+
+  const currentData = getCurrentData();
 
   const chartData = {
     labels: currentData.labels,
@@ -163,10 +164,9 @@ export default function Reports(){
       },
       title: {
         display: true,
-        text: `${parameterLabels[selectedParameter]} - ${
-          timePeriod === 'daily' ? 'Günlük' : 
-          timePeriod === 'weekly' ? 'Haftalık' : 'Aylık'
-        } Analiz`,
+        text: `${parameterLabels[selectedParameter]} - ${timePeriod === 'daily' ? 'Günlük' :
+            timePeriod === 'weekly' ? 'Haftalık' : 'Aylık'
+          } Analiz`,
         font: {
           size: 18,
           weight: 'bold'
@@ -184,7 +184,7 @@ export default function Reports(){
         cornerRadius: 8,
         padding: 12,
         callbacks: {
-          label: function(context) {
+          label: function (context) {
             return `${parameterLabels[selectedParameter]}: ${context.parsed.y} ${parameterUnits[selectedParameter]}`;
           }
         }
@@ -215,7 +215,7 @@ export default function Reports(){
             size: 12
           },
           color: '#6B7280',
-          callback: function(value) {
+          callback: function (value) {
             if (selectedParameter === 'gelir') {
               return value >= 1000 ? (value / 1000) + 'K ₺' : value + ' ₺';
             }
@@ -239,16 +239,43 @@ export default function Reports(){
   // Calculate summary statistics
   const calculateStats = () => {
     const data = currentData.data;
+    if (!data || data.length === 0) {
+      return { total: 0, average: 0, max: 0, min: 0, growth: 0 };
+    }
+
     const total = data.reduce((sum, value) => sum + value, 0);
     const average = Math.round(total / data.length);
     const max = Math.max(...data);
     const min = Math.min(...data);
-    const growth = data.length > 1 ? ((data[data.length - 1] - data[0]) / data[0] * 100).toFixed(1) : 0;
+    const growth = data.length > 1 ? ((data[data.length - 1] - data[0]) / (data[0] || 1) * 100).toFixed(1) : 0;
 
     return { total, average, max, min, growth };
   };
 
   const stats = calculateStats();
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -258,6 +285,57 @@ export default function Reports(){
         <button className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
           Rapor İndir
         </button>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-3 bg-green-100 rounded-lg">
+              <span className="text-2xl">💰</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Toplam Gelir</p>
+              <p className="text-2xl font-bold text-gray-900">₺{summary.totalIncome.toLocaleString('tr-TR')}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <span className="text-2xl">📅</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Randevu Sayısı</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.numberOfAppointments}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-3 bg-purple-100 rounded-lg">
+              <span className="text-2xl">👥</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Müşteri Sayısı</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.numberOfCustomers}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center">
+            <div className="p-3 bg-red-100 rounded-lg">
+              <span className="text-2xl">👁️</span>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Ziyaret Sayısı</p>
+              <p className="text-2xl font-bold text-gray-900">{summary.numberOfVisits}</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Controls */}
@@ -282,25 +360,22 @@ export default function Reports(){
           <div className="flex bg-gray-100 rounded-lg p-1">
             <button
               onClick={() => setTimePeriod('daily')}
-              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                timePeriod === 'daily' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
-              }`}
+              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'daily' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                }`}
             >
               Günlük
             </button>
             <button
               onClick={() => setTimePeriod('weekly')}
-              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                timePeriod === 'weekly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
-              }`}
+              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'weekly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                }`}
             >
               Haftalık
             </button>
             <button
               onClick={() => setTimePeriod('monthly')}
-              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
-                timePeriod === 'monthly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
-              }`}
+              className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'monthly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                }`}
             >
               Aylık
             </button>
@@ -323,28 +398,28 @@ export default function Reports(){
           </div>
           <div className="text-sm text-gray-600 mt-1">Toplam</div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center">
           <div className="text-2xl font-bold text-blue-600">
             {selectedParameter === 'gelir' ? `₺${stats.average.toLocaleString('tr-TR')}` : `${stats.average} ${parameterUnits[selectedParameter]}`}
           </div>
           <div className="text-sm text-gray-600 mt-1">Ortalama</div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center">
           <div className="text-2xl font-bold text-green-600">
             {selectedParameter === 'gelir' ? `₺${stats.max.toLocaleString('tr-TR')}` : `${stats.max} ${parameterUnits[selectedParameter]}`}
           </div>
           <div className="text-sm text-gray-600 mt-1">En Yüksek</div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center">
           <div className="text-2xl font-bold text-red-600">
             {selectedParameter === 'gelir' ? `₺${stats.min.toLocaleString('tr-TR')}` : `${stats.min} ${parameterUnits[selectedParameter]}`}
           </div>
           <div className="text-sm text-gray-600 mt-1">En Düşük</div>
         </div>
-        
+
         <div className="bg-white rounded-xl p-4 shadow-sm border border-gray-200 text-center">
           <div className={`text-2xl font-bold ${stats.growth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {stats.growth >= 0 ? '+' : ''}{stats.growth}%
@@ -358,35 +433,37 @@ export default function Reports(){
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-medium text-gray-900 mb-4">En Çok Tercih Edilen Hizmetler</h3>
           <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Dijital Pazarlama Danışmanlığı</span>
-              <span className="font-medium">127 randevu</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Web Geliştirme Eğitimi</span>
-              <span className="font-medium">89 randevu</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">SEO Danışmanlığı</span>
-              <span className="font-medium">78 randevu</span>
-            </div>
+            {topServices.length > 0 ? (
+              topServices.map((service, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <span className="text-gray-600">{service.name}</span>
+                  <span className="font-medium">{service.count} randevu</span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 text-center py-4">Henüz hizmet verisi bulunmamaktadır.</p>
+            )}
           </div>
         </div>
 
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Müşteri Segmentleri</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Özet İstatistikler</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Yeni Müşteriler</span>
-              <span className="font-medium">45%</span>
+              <span className="text-gray-600">Toplam Sipariş</span>
+              <span className="font-medium">{summary.totalOrders || 0}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">Tekrar Eden Müşteriler</span>
-              <span className="font-medium">35%</span>
+              <span className="text-gray-600">Ortalama Gelir</span>
+              <span className="font-medium">
+                ₺{summary.numberOfAppointments > 0
+                  ? Math.round(summary.totalIncome / summary.numberOfAppointments).toLocaleString('tr-TR')
+                  : 0}
+              </span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-gray-600">VIP Müşteriler</span>
-              <span className="font-medium">20%</span>
+              <span className="text-gray-600">Aktif Müşteriler</span>
+              <span className="font-medium">{summary.numberOfCustomers}</span>
             </div>
           </div>
         </div>
