@@ -107,6 +107,8 @@ export const CreatePackage = () => {
         packageDataToSend
       );
 
+      console.log("Response from package creation:", response);
+
       // Success alert
       await Swal.fire({
         icon: 'success',

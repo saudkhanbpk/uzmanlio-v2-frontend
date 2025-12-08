@@ -127,6 +127,7 @@ export const CreateService = () => {
         `${SERVER_URL}/api/expert/${userId}/services`,
         ApiData
       );
+      console.log("Response From service Creation:", response)
 
       // Success alert
       await Swal.fire({
@@ -419,19 +420,21 @@ export const CreateService = () => {
           <h3 className="text-lg font-medium text-gray-900 mb-4">Süre ve Fiyatlandırma</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            {serviceData.meetingType !== '1-1' && (<div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Maksimum Katılımcı
-              </label>
-              <input
-                type="number"
-                name="maxAttendees"
-                value={serviceData.maxAttendees}
-                onChange={handleInputChange}
-                placeholder="50"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>)}
+            {serviceData.meetingType !== '1-1' && (
+              <div key="max-attendees-field">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Maksimum Katılımcı
+                </label>
+                <input
+                  type="number"
+                  name="maxAttendees"
+                  value={serviceData.maxAttendees}
+                  onChange={handleInputChange}
+                  placeholder="50"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">

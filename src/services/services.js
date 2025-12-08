@@ -31,10 +31,33 @@ export default function Services() {
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
   const [selectedPurchasePackageId, setSelectedPurchasePackageId] = useState('');
   const [availableCustomers, setAvailableCustomers] = useState([]);
-
+  const [purchaseDetails, setPurchaseDetails] = useState([]);
+  const [loadingPurchases, setLoadingPurchases] = useState(false);
 
 
   const userId = localStorage.getItem('userId')
+
+  // Add this function to fetch purchase details
+  const fetchPurchaseDetails = async () => {
+    try {
+      setLoadingPurchases(true);
+      const response = await axios.get(
+        `${SERVER_URL}/api/expert/${userId}/packages/purchases/details`
+      );
+      setPurchaseDetails(response.data.purchases || []);
+    } catch (error) {
+      console.error('Error fetching purchase details:', error);
+    } finally {
+      setLoadingPurchases(false);
+    }
+  };
+
+  // Add useEffect to fetch on component mount and when packages change
+  useEffect(() => {
+    if (userId && activeTab === 'paketler') {
+      fetchPurchaseDetails();
+    }
+  }, [userId, activeTab, packages]); // Re-fetch when packages change
 
   // Fetch services from API
   const fetchServices = async () => {
@@ -587,7 +610,7 @@ export default function Services() {
       {activeTab === 'paketler' && (
         <>
           {/* Purchased Packages Table */}
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">Satın Alınan Paketler</h3>
               <button
@@ -666,7 +689,106 @@ export default function Services() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </div> */}
+          {/* Purchased Packages Table */}
+
+          {loadingPurchases ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Satın Alınan Paketler</h3>
+                <button
+                  onClick={() => {
+                    setShowPurchaseModal(true);
+                    fetchCustomers();
+                  }}
+                  className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600"
+                >
+                  Add Purchase entry
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Müşteri Adı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        E-Posta
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Telefon
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Paket Adı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Satın Alma Tarihi
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Paket Kullanımı
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Durum
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {purchaseDetails && purchaseDetails.length > 0 ? (
+                      purchaseDetails.map((purchase, index) => (
+                        <tr key={`${purchase.order.id}-${index}`} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {purchase.customer.fullName}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{purchase.customer.email}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{purchase.customer.phone}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">{purchase.packageTitle}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {new Date(purchase.purchaseDate).toLocaleDateString('tr-TR')}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              <span className="font-medium text-primary-600">{purchase.completedSessions}</span>
+                              <span className="text-gray-500"> / {purchase.totalSessions}</span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${purchase.order.paymentStatus === 'paid'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                              {purchase.order.paymentStatus === 'paid' ? 'Ödendi' : 'Beklemede'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                          Henüz satın alınan paket bulunmamaktadır.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
           {/* Package Templates */}
           <div className="space-y-6">

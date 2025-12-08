@@ -11,10 +11,10 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
     date: event.date || '',
     time: event.time || '',
     duration: event.duration || '',
-    status : event.status || 'pending',
+    status: event.status || 'pending',
     location: event.location || '',
     platform: event.platform || '',
-    serviceType : event.serviceType || '',
+    serviceType: event.serviceType || '',
     eventType: event.eventType || 'online',
     meetingType: event.meetingType || '',
     price: event.price || '',
@@ -35,7 +35,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase())
+    client.email.toLowerCase().includes(clientSearchTerm.toLowerCase()) || availableClients
   );
 
   const handleInputChange = (e) => {
@@ -418,55 +418,53 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                     </div>
                   )}
 
-                  {/* Dropdown */}
-                  {(clientSearchTerm || formData.selectedClients.length === 0) && (
-                    <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
-                      {filteredClients.length > 0 ? (
-                        <>
-                          {filteredClients.map((client) => (
-                            <div
-                              key={client.id}
-                              onClick={() => handleClientSelect(client.id)}
-                              className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${formData.selectedClients.some(c => c.id === client.id)
-                                ? 'bg-primary-50 text-primary-700'
-                                : ''
-                                }`}
-                            >
-                              <div className="flex items-center">
-                                <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
-                                  <span className="text-primary-600 text-sm font-medium">
-                                    {client.name.split(' ').map(n => n[0]).join('')}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="text-sm font-medium text-gray-900">{client.name}</p>
-                                  <p className="text-xs text-gray-500">{client.email}</p>
-                                </div>
-                                {formData.selectedClients.some(c => c.id === client.id) && (
-                                  <span className="ml-auto text-primary-600">✓</span>
-                                )}
+                  {/*Cuatomers Dropdown */}
+                  <div className="border border-gray-300 rounded-lg max-h-48 overflow-y-auto">
+                    {filteredClients.length > 0 ? (
+                      <>
+                        {filteredClients.map((client) => (
+                          <div
+                            key={client.id}
+                            onClick={() => handleClientSelect(client.id)}
+                            className={`px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${formData.selectedClients.some(c => c.id === client.id)
+                              ? 'bg-primary-50 text-primary-700'
+                              : ''
+                              }`}
+                          >
+                            <div className="flex items-center">
+                              <div className="h-8 w-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                                <span className="text-primary-600 text-sm font-medium">
+                                  {client.name.split(' ').map(n => n[0]).join('')}
+                                </span>
                               </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">{client.name}</p>
+                                <p className="text-xs text-gray-500">{client.email}</p>
+                              </div>
+                              {formData.selectedClients.some(c => c.id === client.id) && (
+                                <span className="ml-auto text-primary-600">✓</span>
+                              )}
                             </div>
-                          ))}
-                        </>
-                      ) : (
-                        <div className="px-4 py-3 text-gray-500 text-sm">
-                          Aradığınız kriterlere uygun danışan bulunamadı.
-                        </div>
-                      )}
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <div className="px-4 py-3 text-gray-500 text-sm">
+                        Aradığınız kriterlere uygun danışan bulunamadı.
+                      </div>
+                    )}
 
-                      {/* Add Client Option */}
-                      <div
-                        onClick={() => setShowAddClientModal(true)}
-                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-200 bg-gray-25"
-                      >
-                        <div className="flex items-center text-primary-600">
-                          <span className="mr-2">+</span>
-                          <span className="text-sm font-medium">Danışan Ekle</span>
-                        </div>
+                    {/* Add Client Option */}
+                    <div
+                      onClick={() => setShowAddClientModal(true)}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-t border-gray-200 bg-gray-25"
+                    >
+                      <div className="flex items-center text-primary-600">
+                        <span className="mr-2">+</span>
+                        <span className="text-sm font-medium">Danışan Ekle</span>
                       </div>
                     </div>
-                  )}
+                  </div>
 
                   {formData.isOfflineEvent && formData.selectedClients.length === 0 && (
                     <p className="text-red-500 text-sm mt-1">En az bir danışan seçmelisiniz.</p>
@@ -488,7 +486,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           </div>
 
           {/* Files - Read Only */}
-          <div className="bg-gray-50 rounded-xl p-6">
+          {/* <div className="bg-gray-50 rounded-xl p-6">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Dosyalar</h4>
             <div className="space-y-3">
               {event.files && event.files.length > 0 ? (
@@ -574,7 +572,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
               )}
               <p className="text-xs text-gray-500 mt-3 italic">* Dosyalar müşteri siparişi sırasında yüklenir</p>
             </div>
-          </div>
+          </div> */}
 
           {/* Actions */}
           <div className="flex justify-between">

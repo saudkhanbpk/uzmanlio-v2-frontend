@@ -109,7 +109,7 @@ export const CreateEvent = () => {
       console.log("No customersPackageDetails found in user data");
       setCustomerPackageMap([]);
     }
-  }, [user]);
+  }, []);
 
   const handlePaymentSettingsConfirm = (settings) => {
     setCustomerPaymentSettings(settings);
