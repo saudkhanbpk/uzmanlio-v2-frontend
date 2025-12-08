@@ -182,12 +182,18 @@ export const customerService = {
   // Add customer note
   async addCustomerNote(userId, customerId, noteData) {
     try {
+      // Check if noteData is FormData (for file uploads) or regular object
+      const isFormData = noteData instanceof FormData;
+
+      const headers = {};
+      if (!isFormData) {
+        headers['Content-Type'] = 'application/json';
+      }
+
       const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(noteData),
+        headers: headers,
+        body: isFormData ? noteData : JSON.stringify(noteData),
       });
 
       if (!response.ok) {
