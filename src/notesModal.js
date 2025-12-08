@@ -22,110 +22,18 @@ export default function NotesModal({ customer, onClose }) {
     try {
       setLoading(true);
       setError(null);
-      const notesData = await customerService.getCustomerNotes(userId, customer.id);
+      const notesData = await customerService.getCustomerNotes(userId, customer._id || customer.id);
       setNotes(notesData.notes || []);
     } catch (err) {
       setError('Notlar yüklenirken bir hata oluştu.');
       console.error('Error loading customer notes:', err);
-      // Fallback to mock data
-      setNotes([
-        {
-          id: 1,
-          content: 'Web sitesi tasarımı için inspirasyon siteleri listesi ekliyorum. Modern ve minimalist tasarım tercih ediyorum.',
-          author: 'customer',
-          authorName: customer.name || `${customer.name} ${customer.surname}`,
-          createdAt: '2024-07-28T14:30:00',
-          files: [
-            {
-              name: 'inspirasyon_siteler.pdf',
-              type: 'pdf',
-              size: '2.3 MB',
-              url: '#'
-            }
-          ]
-        },
-        {
-          id: 2,
-          content: 'Müşteri portföyündeki referans çalışmaları beğendim. Benzer stil ile devam edebiliriz.',
-          author: 'expert',
-          authorName: 'Platform Kullanıcısı',
-          createdAt: '2024-07-27T16:45:00',
-          files: []
-        }
-      ]);
+      setNotes([]);
     } finally {
       setLoading(false);
     }
   };
 
-  // Mock customer notes and files data (sorted by newest first)
-  const customerNotes = [
-    {
-      id: 1,
-      content: 'Web sitesi tasarımı için inspirasyon siteleri listesi ekliyorum. Modern ve minimalist tasarım tercih ediyorum.',
-      author: 'customer',
-      authorName: customer.name,
-      date: '2024-07-28',
-      time: '14:30',
-      files: [
-        {
-          name: 'inspirasyon_siteler.pdf',
-          type: 'pdf',
-          size: '2.3 MB',
-          url: '#'
-        }
-      ]
-    },
-    {
-      id: 2,
-      content: 'Müşteri portföyündeki referans çalışmaları beğendim. Benzer stil ile devam edebiliriz.',
-      author: 'platform',
-      authorName: 'Platform Kullanıcısı',
-      date: '2024-07-27',
-      time: '16:45',
-      files: []
-    },
-    {
-      id: 3,
-      content: 'Proje için logo dosyalarımı ekliyorum. PNG ve SVG formatlarında mevcut.',
-      author: 'customer',
-      authorName: customer.name,
-      date: '2024-07-26',
-      time: '09:15',
-      files: [
-        {
-          name: 'logo.png',
-          type: 'image',
-          size: '500 KB',
-          url: '#'
-        },
-        {
-          name: 'logo.svg',
-          type: 'image',
-          size: '25 KB',
-          url: '#'
-        }
-      ]
-    },
-    {
-      id: 4,
-      content: 'İlk toplantımız çok verimli geçti. İhtiyaçlarım detaylı bir şekilde anlaşıldı.',
-      author: 'customer',
-      authorName: customer.name,
-      date: '2024-07-25',
-      time: '11:00',
-      files: []
-    },
-    {
-      id: 5,
-      content: 'Müşteri ile görüştük. Proje kapsamı ve timeline konusunda anlaştık. Gelecek hafta başlıyoruz.',
-      author: 'platform',
-      authorName: 'Platform Kullanıcısı',
-      date: '2024-07-24',
-      time: '13:30',
-      files: []
-    }
-  ];
+
 
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
@@ -142,30 +50,39 @@ export default function NotesModal({ customer, onClose }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (newNote.trim() || uploadedFile) {
-      const newNoteData = {
-        id: Date.now(),
-        content: newNote,
-        author: 'platform',
-        authorName: 'Platform Kullanıcısı',
-        date: new Date().toISOString().split('T')[0],
-        time: new Date().toTimeString().split(' ')[0].substring(0, 5),
-        files: uploadedFile ? [{
-          name: uploadedFile.name,
-          type: uploadedFile.type.startsWith('image/') ? 'image' : 'document',
-          size: `${(uploadedFile.size / 1024).toFixed(1)} KB`,
-          url: '#'
-        }] : []
-      };
-      
-      console.log('Yeni not eklendi:', newNoteData);
-      
+    if (!newNote.trim() && !uploadedFile) return;
+
+    try {
+      setAddingNote(true);
+      setError(null);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('content', newNote);
+      formData.append('author', 'expert');
+      formData.append('authorName', 'Platform Kullanıcısı'); // TODO: Get from user profile
+
+      if (uploadedFile) {
+        formData.append('file', uploadedFile);
+      }
+
+      // Add note via API
+      await customerService.addCustomerNote(userId, customer._id || customer.id, formData);
+
+      // Reload notes
+      await loadCustomerNotes();
+
       // Reset form
       setNewNote('');
       setUploadedFile(null);
       setFilePreview('');
+    } catch (err) {
+      setError('Not eklenirken bir hata oluştu.');
+      console.error('Error adding note:', err);
+    } finally {
+      setAddingNote(false);
     }
   };
 
@@ -175,16 +92,17 @@ export default function NotesModal({ customer, onClose }) {
     return '📎';
   };
 
-  const formatDateTime = (date, time) => {
-    const dateObj = new Date(date);
+  const formatDateTime = (dateString) => {
+    const dateObj = new Date(dateString);
     const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
-    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 
-                   'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
-    
+    const months = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+      'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
     const dayName = days[dateObj.getDay()];
     const day = dateObj.getDate();
     const month = months[dateObj.getMonth()];
-    
+    const time = dateObj.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+
     return `${day} ${month} ${dayName} ${time}`;
   };
 
@@ -195,7 +113,7 @@ export default function NotesModal({ customer, onClose }) {
         <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={onClose}></div>
 
         <div className="inline-block w-full max-w-4xl p-0 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl max-h-screen">
-          
+
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b border-gray-200">
             <div className="flex items-center space-x-3">
@@ -214,60 +132,78 @@ export default function NotesModal({ customer, onClose }) {
 
           {/* Notes Display Area */}
           <div className="p-6 max-h-96 overflow-y-auto border-b border-gray-200">
-            <div className="space-y-4">
-              {customerNotes.map((note) => (
-                <div key={note.id} className={`flex ${note.author === 'platform' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
-                    note.author === 'platform' 
-                      ? 'bg-primary-600 text-white' 
-                      : 'bg-gray-100 text-gray-900'
-                  }`}>
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="text-xs font-medium">
-                        {note.author === 'platform' ? '👨‍💼 Siz' : '👤 Müşteri'}
-                      </span>
-                      <span className={`text-xs ${
-                        note.author === 'platform' ? 'text-primary-100' : 'text-gray-500'
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+              </div>
+            ) : error ? (
+              <div className="text-center py-8">
+                <p className="text-red-600">{error}</p>
+                <button
+                  onClick={loadCustomerNotes}
+                  className="mt-2 text-sm text-blue-600 hover:underline"
+                >
+                  Tekrar Dene
+                </button>
+              </div>
+            ) : notes.length === 0 ? (
+              <div className="text-center py-8 text-gray-500">
+                <p>Henüz not eklenmemiş.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {notes.map((note) => (
+                  <div key={note.id || note._id} className={`flex ${note.author === 'expert' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${note.author === 'expert'
+                        ? 'bg-green-600 text-white'
+                        : 'bg-gray-100 text-gray-900'
                       }`}>
-                        {formatDateTime(note.date, note.time)}
-                      </span>
-                    </div>
-                    
-                    <p className="text-sm">{note.content}</p>
-                    
-                    {/* Files */}
-                    {note.files.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {note.files.map((file, index) => (
-                          <div key={index} className={`flex items-center space-x-2 p-2 rounded ${
-                            note.author === 'platform' ? 'bg-primary-700' : 'bg-white border'
+                      <div className="flex items-center space-x-2 mb-1">
+                        <span className="text-xs font-medium">
+                          {note.author === 'expert' ? '👨‍💼 Siz' : '👤 Müşteri'}
+                        </span>
+                        <span className={`text-xs ${note.author === 'expert' ? 'text-green-100' : 'text-gray-500'
                           }`}>
-                            <span className="text-sm">{getFileIcon(file.type)}</span>
-                            <div className="flex-1">
-                              <p className={`text-xs font-medium ${
-                                note.author === 'platform' ? 'text-white' : 'text-gray-900'
-                              }`}>
-                                {file.name}
-                              </p>
-                              <p className={`text-xs ${
-                                note.author === 'platform' ? 'text-primary-100' : 'text-gray-500'
-                              }`}>
-                                {file.size}
-                              </p>
-                            </div>
-                            <button className={`text-xs underline ${
-                              note.author === 'platform' ? 'text-primary-100' : 'text-blue-600'
-                            }`}>
-                              İndir
-                            </button>
-                          </div>
-                        ))}
+                          {formatDateTime(note.createdAt)}
+                        </span>
                       </div>
-                    )}
+
+                      <p className="text-sm">{note.content}</p>
+
+                      {/* Files */}
+                      {note.files && note.files.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {note.files.map((file, index) => (
+                            <div key={index} className={`flex items-center space-x-2 p-2 rounded ${note.author === 'expert' ? 'bg-green-700' : 'bg-white border'
+                              }`}>
+                              <span className="text-sm">{getFileIcon(file.type)}</span>
+                              <div className="flex-1">
+                                <p className={`text-xs font-medium ${note.author === 'expert' ? 'text-white' : 'text-gray-900'
+                                  }`}>
+                                  {file.name}
+                                </p>
+                                <p className={`text-xs ${note.author === 'expert' ? 'text-green-100' : 'text-gray-500'
+                                  }`}>
+                                  {file.size}
+                                </p>
+                              </div>
+                              <a
+                                href={file.url}
+                                download={file.name}
+                                className={`text-xs underline ${note.author === 'expert' ? 'text-green-100' : 'text-blue-600'
+                                  }`}
+                              >
+                                İndir
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Add Note Form */}
@@ -296,7 +232,7 @@ export default function NotesModal({ customer, onClose }) {
                     className="hidden"
                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
                   />
-                  <label 
+                  <label
                     htmlFor="file-upload"
                     className="inline-flex items-center px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
                   >
@@ -310,7 +246,7 @@ export default function NotesModal({ customer, onClose }) {
                   <div className="flex items-center space-x-2 px-3 py-2 bg-gray-100 rounded-lg">
                     <span className="text-sm">{getFileIcon(uploadedFile.type.startsWith('image/') ? 'image' : 'document')}</span>
                     <span className="text-sm text-gray-700">{uploadedFile.name}</span>
-                    <button 
+                    <button
                       type="button"
                       onClick={() => {
                         setUploadedFile(null);
@@ -342,10 +278,10 @@ export default function NotesModal({ customer, onClose }) {
                 </button>
                 <button
                   type="submit"
-                  disabled={!newNote.trim() && !uploadedFile}
-                  className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  disabled={!newNote.trim() && !uploadedFile || addingNote}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
-                  Not Ekle
+                  {addingNote ? 'Ekleniyor...' : 'Not Ekle'}
                 </button>
               </div>
             </form>
