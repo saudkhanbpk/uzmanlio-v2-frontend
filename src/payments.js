@@ -1,83 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { fetchEarningsStats, fetchMonthlyRevenue, fetchPaymentOrders } from "./services/paymentService";
 
 // Payments Component
 export default function Payments() {
   const [showTransferTooltip, setShowTransferTooltip] = useState({});
   const [showRefundTooltip, setShowRefundTooltip] = useState({});
-  //Mock payments
-  const payments = [
-    {
-      id: 1,
-      customerName: 'Ayşe Demir',
-      amount: 899,
-      service: 'Modern Web Geliştirme Danışmanlığı',
-      date: '2024-06-20',
-      paymentDate: '2024-06-21',
-      status: 'completed',
-      method: 'Kredi Kartı'
-    },
-    {
-      id: 2,
-      customerName: 'Mehmet Kaya',
-      amount: 199,
-      service: 'SEO Danışmanlığı',
-      date: '2024-06-18',
-      paymentDate: '2024-06-19',
-      status: 'pending',
-      method: 'Banka Transferi'
-    },
-    {
-      id: 3,
-      customerName: 'Fatma Özkan',
-      amount: 599,
-      service: 'Dijital Pazarlama Workshop',
-      date: '2024-06-15',
-      paymentDate: '2024-06-16',
-      status: 'refunded',
-      method: 'Kredi Kartı'
-    },
-    {
-      id: 4,
-      customerName: 'Ali Yılmaz',
-      amount: 299,
-      service: 'React Geliştirme Danışmanlığı',
-      date: '2024-06-10',
-      paymentDate: '2024-06-11',
-      status: 'completed',
-      method: 'Kredi Kartı'
-    },
-    {
-      id: 5,
-      customerName: 'Zeynep Kaya',
-      amount: 450,
-      service: 'E-ticaret Danışmanlığı',
-      date: '2024-05-25',
-      paymentDate: '2024-05-26',
-      status: 'pending',
-      method: 'Banka Transferi'
-    }
-  ];
 
-  // Monthly earnings data for chart
-  const monthlyEarnings = [
-    { month: 'Ocak', earnings: 3250 },
-    { month: 'Şubat', earnings: 4100 },
-    { month: 'Mart', earnings: 2800 },
-    { month: 'Nisan', earnings: 5200 },
-    { month: 'Mayıs', earnings: 4750 },
-    { month: 'Haziran', earnings: 6300 }
-  ];
+  // State for real data
+  const [stats, setStats] = useState({
+    totalRevenue: 0,
+    completedCount: 0,
+    pendingCount: 0,
+    refundedCount: 0
+  });
+  const [monthlyEarnings, setMonthlyEarnings] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const maxEarnings = Math.max(...monthlyEarnings.map(item => item.earnings));
+  // Get userId from localStorage
+  const userId = localStorage.getItem('userId');
+
+  // Fetch data on component mount
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!userId) {
+        setError('User ID not found');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+
+        // Fetch all data in parallel
+        const [statsResponse, monthlyResponse, ordersResponse] = await Promise.all([
+          fetchEarningsStats(userId),
+          fetchMonthlyRevenue(userId),
+          fetchPaymentOrders(userId)
+        ]);
+
+        // Update state with fetched data
+        if (statsResponse.success) {
+          setStats(statsResponse.data);
+        }
+
+        if (monthlyResponse.success) {
+          setMonthlyEarnings(monthlyResponse.data);
+        }
+
+        if (ordersResponse.success) {
+          setPayments(ordersResponse.data);
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching payment data:', err);
+        setError('Failed to load payment data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
+
+  // Calculate max earnings, ensuring we handle the case where all earnings are 0
+  const maxEarnings = monthlyEarnings.length > 0
+    ? Math.max(...monthlyEarnings.map(item => item.earnings), 1)
+    : 1;
 
   const getStatusBadge = (status) => {
     const statusConfig = {
       completed: { text: 'Tamamlandı', color: 'bg-green-100 text-green-800' },
+      paid: { text: 'Tamamlandı', color: 'bg-green-100 text-green-800' },
       pending: { text: 'Bekleyen', color: 'bg-yellow-100 text-yellow-800' },
-      refunded: { text: 'İade Edildi', color: 'bg-red-100 text-red-800' }
+      refunded: { text: 'İade Edildi', color: 'bg-red-100 text-red-800' },
+      returned: { text: 'İade Edildi', color: 'bg-red-100 text-red-800' }
     };
 
-    const config = statusConfig[status];
+    const config = statusConfig[status] || { text: status, color: 'bg-gray-100 text-gray-800' };
     return (
       <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${config.color}`}>
         {config.text}
@@ -111,6 +113,35 @@ export default function Payments() {
     setShowRefundTooltip(prev => ({ ...prev, [id]: false }));
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('tr-TR');
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Yükleniyor...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -130,7 +161,7 @@ export default function Payments() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Toplam Gelir</p>
-              <p className="text-2xl font-bold text-gray-900">₺{payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-gray-900">₺{stats.totalRevenue.toLocaleString('tr-TR')}</p>
             </div>
           </div>
         </div>
@@ -141,7 +172,7 @@ export default function Payments() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Tamamlanan</p>
-              <p className="text-2xl font-bold text-gray-900">{payments.filter(p => p.status === 'completed').length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.completedCount}</p>
             </div>
           </div>
         </div>
@@ -152,7 +183,7 @@ export default function Payments() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Bekleyen</p>
-              <p className="text-2xl font-bold text-gray-900">{payments.filter(p => p.status === 'pending').length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pendingCount}</p>
             </div>
           </div>
         </div>
@@ -163,7 +194,7 @@ export default function Payments() {
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">İade Edildi</p>
-              <p className="text-2xl font-bold text-gray-900">{payments.filter(p => p.status === 'refunded').length}</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.refundedCount}</p>
             </div>
           </div>
         </div>
@@ -173,25 +204,38 @@ export default function Payments() {
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
         <h3 className="text-lg font-medium text-gray-900 mb-6">Aylık Kazançlar</h3>
         <div className="space-y-4">
-          {monthlyEarnings.map((item, index) => (
-            <div key={index} className="flex items-center space-x-4">
-              <div className="w-16 text-sm font-medium text-gray-700">
-                {item.month}
-              </div>
-              <div className="flex-1 relative">
-                <div className="w-full bg-gray-200 rounded-full h-8 relative overflow-hidden">
-                  <div
-                    className="bg-gradient-to-r from-primary-500 to-primary-600 h-8 rounded-full transition-all duration-500 flex items-center justify-end pr-3"
-                    style={{ width: `${(item.earnings / maxEarnings) * 100}%` }}
-                  >
-                    <span className="text-white text-sm font-medium">
-                      ₺{item.earnings.toLocaleString()}
-                    </span>
+          {monthlyEarnings.map((item, index) => {
+            // Calculate width percentage - if earnings is 0, width should be 0%
+            const widthPercentage = item.earnings > 0 && maxEarnings > 0
+              ? (item.earnings / maxEarnings) * 100
+              : 0;
+
+            return (
+              <div key={index} className="flex items-center space-x-4">
+                <div className="w-16 text-sm font-medium text-gray-700">
+                  {item.month}
+                </div>
+                <div className="flex-1 relative">
+                  <div className="w-full bg-gray-200 rounded-full h-8 relative overflow-hidden">
+                    {item.earnings > 0 ? (
+                      <div
+                        className="bg-gradient-to-r from-primary-500 to-primary-600 h-8 rounded-full transition-all duration-500 flex items-center justify-end pr-3"
+                        style={{ width: `${widthPercentage}%` }}
+                      >
+                        <span className="text-white text-sm font-medium">
+                          ₺{item.earnings.toLocaleString('tr-TR')}
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="h-8 flex items-center justify-center">
+                        <span className="text-gray-500 text-sm">₺0</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -217,6 +261,9 @@ export default function Payments() {
                   Ödeme Yöntemi
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Kaynak
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Tarih
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -231,80 +278,93 @@ export default function Payments() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {payments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{payment.customerName}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{payment.service}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">₺{payment.amount.toLocaleString()}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{payment.method}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{payment.date}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{payment.paymentDate}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(payment.status)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      {payment.status === 'pending' && (
-                        <>
-                          {/* Approve Button with Tooltip */}
-                          <div className="relative">
-                            <button
-                              onClick={() => handleApprove(payment.id)}
-                              onMouseEnter={() => showTransferTooltipHandler(payment.id)}
-                              onMouseLeave={() => hideTransferTooltipHandler(payment.id)}
-                              className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
-                            >
-                              ✓
-                            </button>
-                            {showTransferTooltip[payment.id] && (
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
-                                Hesaba Transfer Et
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-800"></div>
-                              </div>
-                            )}
-                          </div>
+              {payments.length > 0 ? (
+                payments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">{payment.customerName}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{payment.service}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm font-medium text-gray-900">₺{payment.amount.toLocaleString('tr-TR')}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{payment.method || 'N/A'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">
+                        {payment.orderSource === 'BookingPage' ? 'Rezervasyon Sayfası' : 'Manuel Kayıt'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{formatDate(payment.date)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{formatDate(payment.paymentDate)}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getStatusBadge(payment.status)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center space-x-2">
+                        {payment.status === 'pending' && (
+                          <>
+                            {/* Approve Button with Tooltip */}
+                            <div className="relative">
+                              <button
+                                onClick={() => handleApprove(payment.id)}
+                                onMouseEnter={() => showTransferTooltipHandler(payment.id)}
+                                onMouseLeave={() => hideTransferTooltipHandler(payment.id)}
+                                className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                              >
+                                ✓
+                              </button>
+                              {showTransferTooltip[payment.id] && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
+                                  Hesaba Transfer Et
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-800"></div>
+                                </div>
+                              )}
+                            </div>
 
-                          {/* Refund Button with Tooltip */}
-                          <div className="relative">
-                            <button
-                              onClick={() => handleRefund(payment.id)}
-                              onMouseEnter={() => showRefundTooltipHandler(payment.id)}
-                              onMouseLeave={() => hideRefundTooltipHandler(payment.id)}
-                              className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
-                            >
-                              ✗
-                            </button>
-                            {showRefundTooltip[payment.id] && (
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
-                                İade Et
-                                <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-800"></div>
-                              </div>
-                            )}
-                          </div>
-                        </>
-                      )}
-                      {payment.status === 'completed' && (
-                        <span className="text-sm text-green-600 font-medium">Tamamlandı</span>
-                      )}
-                      {payment.status === 'refunded' && (
-                        <span className="text-sm text-red-600 font-medium">İade Edildi</span>
-                      )}
-                    </div>
+                            {/* Refund Button with Tooltip */}
+                            <div className="relative">
+                              <button
+                                onClick={() => handleRefund(payment.id)}
+                                onMouseEnter={() => showRefundTooltipHandler(payment.id)}
+                                onMouseLeave={() => hideRefundTooltipHandler(payment.id)}
+                                className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                              >
+                                ✗
+                              </button>
+                              {showRefundTooltip[payment.id] && (
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
+                                  İade Et
+                                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-2 border-transparent border-t-gray-800"></div>
+                                </div>
+                              )}
+                            </div>
+                          </>
+                        )}
+                        {(payment.status === 'completed' || payment.status === 'paid') && (
+                          <span className="text-sm text-green-600 font-medium">Tamamlandı</span>
+                        )}
+                        {(payment.status === 'refunded' || payment.status === 'returned') && (
+                          <span className="text-sm text-red-600 font-medium">İade Edildi</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="9" className="px-6 py-8 text-center text-gray-500">
+                    Henüz ödeme kaydı bulunmamaktadır.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>

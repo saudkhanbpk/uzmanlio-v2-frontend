@@ -771,6 +771,7 @@ export const CreateEvent = () => {
             <input
               type="number"
               name="price"
+              required
               value={eventData.price}
               onChange={handleInputChange}
               placeholder="199"
