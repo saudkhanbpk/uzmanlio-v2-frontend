@@ -22,10 +22,14 @@ export default function LoginPage({ onLogin }) {
     setIsLoading(true); // Start loading
 
     try {
+
       const user = await auth.login(formData);
       setUser(user);
-      console.log("Login successful!", user);
+      // console.log("Login successful!", user);
       onLogin();
+      // const endDate = localStorage.getItem("subscriptionEndDate");
+      // setSubscriptionEndDate(endDate);
+      // setShowSubscriptionModal(true);
       // Optionally redirect user
       // navigate("/dashboard");
     } catch (error) {

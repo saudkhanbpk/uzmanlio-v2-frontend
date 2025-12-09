@@ -92,6 +92,9 @@ const SubscriptionPaymentForm = ({
               icon: "success",
               title: "Success",
               text: "Package Subscribed Successfully",
+            }).then(() => {
+              // Navigate to dashboard after successful subscription
+              window.location.href = '/dashboard';
             });
           } else {
             setCurrentPlan("");
