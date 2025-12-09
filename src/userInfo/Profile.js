@@ -36,6 +36,50 @@ export const Profile = () => {
       taxOffice: "",
     },
   });
+  const [errors, setErrors] = useState({
+    information: { name: "", surname: "", email: "", phone: "" },
+    socialMedia: { website: "", linkedin: "", twitter: "", instagram: "", youtube: "", tiktok: "", facebook: "" },
+    expertPaymentInfo: { owner: "", iban: "", taxNumber: "" },
+  });
+  const validateField = (section, field, value) => {
+    let message = "";
+
+    if (section === "information") {
+      if (field === "name" || field === "surname") {
+        if (!value.trim()) message = "Bu alan boş olamaz.";
+        else if (/\d/.test(value)) message = "Rakam içeremez.";
+      }
+      if (field === "email") {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) message = "Geçerli bir e-posta giriniz.";
+      }
+      if (field === "phone") {
+        const phoneRegex = /^[0-9]{10,15}$/;
+        if (!phoneRegex.test(value)) message = "Telefon 10-15 rakam olmalı.";
+      }
+    }
+
+    if (section === "socialMedia") {
+      if (value && !/^https?:\/\/.+\..+/.test(value)) {
+        message = "Geçerli bir URL olmalı (https://...).";
+      }
+    }
+
+    if (section === "expertPaymentInfo") {
+      if (field === "iban") {
+        const ibanRegex = /^[A-Z]{2}\d{2}[A-Z0-9]{10,30}$/;
+        if (value && !ibanRegex.test(value)) message = "Geçerli IBAN giriniz.";
+      }
+      if (field === "taxNumber") {
+        if (value && !/^\d{8,12}$/.test(value)) message = "Vergi/TCKN 8-12 rakam olmalı.";
+      }
+      if (field === "owner") {
+        if (!value.trim()) message = "Bu alan boş olamaz.";
+      }
+    }
+
+    return message;
+  };
 
   // Fetch Profile
   const getProfile = () => {
@@ -195,14 +239,28 @@ export const Profile = () => {
 
   // Handle input changes
   const handleInputChange = (e, section, field) => {
-    setProfile({
-      ...profile,
+    const value = e.target.value;
+
+    // Update profile data
+    setProfile((prev) => ({
+      ...prev,
       [section]: {
-        ...profile[section],
-        [field]: e.target.value,
+        ...prev[section],
+        [field]: value,
       },
-    });
+    }));
+
+    // Validate this field
+    const errorMsg = validateField(section, field, value);
+    setErrors((prev) => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: errorMsg,
+      },
+    }));
   };
+
 
   // Handle payment type change
   const handlePaymentTypeChange = (e) => {
@@ -267,6 +325,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "name")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.name && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.name}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Soyad</label>
@@ -276,6 +337,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "surname")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.surname && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.surname}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">E-posta</label>
@@ -285,6 +349,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "email")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.email && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.email}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
@@ -294,6 +361,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "phone")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.phone && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.phone}</p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Hakkımda</label>
@@ -303,6 +373,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "about")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.about && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.about}</p>
+            )}
           </div>
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-2">Adres</label>
@@ -312,6 +385,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "information", "address")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.information.address && (
+              <p className="mt-1 text-sm text-red-600">{errors.information.address}</p>
+            )}
           </div>
         </div>
         <div className="mt-6">
@@ -339,6 +415,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "website")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.website && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.website}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -351,6 +430,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "linkedin")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.linkedin && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.linkedin}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -363,6 +445,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "twitter")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.twitter && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.twitter}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -375,6 +460,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "instagram")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.instagram && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.instagram}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -387,6 +475,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "youtube")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.youtube && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.youtube}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -399,6 +490,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "tiktok")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.tiktok && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.tiktok}</p>
+            )}
           </div>
           <div>
             <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
@@ -411,6 +505,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "socialMedia", "facebook")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.socialMedia.facebook && (
+              <p className="mt-1 text-sm text-red-600">{errors.socialMedia.facebook}</p>
+            )}
           </div>
         </div>
         <div className="mt-6">
@@ -440,6 +537,9 @@ export const Profile = () => {
               <option value="bireysel">Bireysel</option>
               <option value="kurumsal">Kurumsal</option>
             </select>
+            {errors.expertPaymentInfo.type && (
+              <p className="mt-1 text-sm text-red-600">{errors.expertPaymentInfo.type}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -451,6 +551,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "expertPaymentInfo", "owner")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.expertPaymentInfo.owner && (
+              <p className="mt-1 text-sm text-red-600">{errors.expertPaymentInfo.owner}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -462,6 +565,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "expertPaymentInfo", "iban")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.expertPaymentInfo.iban && (
+              <p className="mt-1 text-sm text-red-600">{errors.expertPaymentInfo.iban}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -473,6 +579,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "expertPaymentInfo", "taxNumber")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.expertPaymentInfo.taxNumber && (
+              <p className="mt-1 text-sm text-red-600">{errors.expertPaymentInfo.taxNumber}</p>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -484,6 +593,9 @@ export const Profile = () => {
               onChange={(e) => handleInputChange(e, "expertPaymentInfo", "taxOffice")}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
+            {errors.expertPaymentInfo.taxOffice && (
+              <p className="mt-1 text-sm text-red-600">{errors.expertPaymentInfo.taxOffice}</p>
+            )}
           </div>
         </div>
         <div className="mt-6">
