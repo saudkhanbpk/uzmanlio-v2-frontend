@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useUser } from "../context/UserContext";
+import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
+import { useViewMode } from "../contexts/ViewModeContext";
 
 // Event Edit Modal Component
 export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
-  const user = useUser();
+  const userContext = useUser();
+  const { viewMode } = useViewMode();
+  const { getUserById, institutionUsers } = useInstitutionUsers();
+
   const [formData, setFormData] = useState({
     id: event.id,
     title: event.title || '',
@@ -21,17 +26,43 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
     maxAttendees: event.maxAttendees || '',
     category: event.category || '',
     isOfflineEvent: event.isOfflineEvent || false,
-    selectedClients: event.selectedClients || []
+    selectedClients: event.selectedClients || [],
+    // Store the expertId so we know which user's event this is
+    expertId: event.expertId || null
   });
 
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
-  // Mock clients data (in real app, this would come from your backend)
-  console.log("user in Edit model:", user)
-  const availableClients = user.user.customers
-    .map(c => c.customerId)
-    .filter(Boolean);
+  // Determine which customers to show based on view mode
+  // In institution view: use event owner's customers (from context)
+  // In individual view: use logged-in user's customers
+  const availableClients = useMemo(() => {
+    console.log("[EventEditModal] Determining available clients");
+    console.log("[EventEditModal] viewMode:", viewMode);
+    console.log("[EventEditModal] event.expertId:", event.expertId);
+
+    if (viewMode === 'institution' && event.expertId) {
+      // Get the event owner from institution context
+      const eventOwner = getUserById(event.expertId);
+      console.log("[EventEditModal] Event owner from context:", eventOwner?.information?.name);
+
+      if (eventOwner && eventOwner.customers) {
+        const customers = eventOwner.customers
+          .map(c => c.customerId)
+          .filter(Boolean);
+        console.log("[EventEditModal] Event owner's customers count:", customers.length);
+        return customers;
+      }
+      return [];
+    }
+
+    // Default: use logged-in user's customers
+    console.log("[EventEditModal] Using logged-in user's customers");
+    return (userContext.user?.customers || [])
+      .map(c => c.customerId)
+      .filter(Boolean);
+  }, [viewMode, event.expertId, getUserById, userContext.user?.customers]);
 
   const filteredClients = availableClients.filter(client =>
     client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
@@ -110,7 +141,8 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   };
 
   const handleDeleteClick = () => {
-    onDelete(event.id);
+    // Pass the original event object (which has expertId) for proper deletion
+    onDelete(event);
     onClose();
   };
 

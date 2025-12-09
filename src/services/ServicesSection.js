@@ -6,9 +6,16 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
   getPlatformDisplay,
   getDurationDisplay,
   getStatusDisplay,
-  getStatusColor
+  getStatusColor,
+  viewMode  // New prop for view mode
 }) => {
+  // Check if we're in institution view (view-only mode for sub-user data)
+  const isInstitutionView = viewMode === 'institution';
+
   const handleEditService = (service) => {
+    // Don't allow editing in institution view for other users' services
+    if (isInstitutionView && service.isViewOnly) return;
+
     setSelectedService({
       ...service,
       iconBg: service.iconBg || '',
@@ -18,6 +25,9 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
   };
 
   const handleDeleteService = async (service) => {
+    // Don't allow deleting in institution view for other users' services
+    if (isInstitutionView && service.isViewOnly) return;
+
     const result = await Swal.fire({
       title: 'Hizmeti Sil',
       html: `<strong>"${service.title}"</strong> hizmetini silmek istediğinizden emin misiniz?<br/>Bu işlem geri alınamaz.`,
@@ -73,23 +83,41 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
               <div style={{ backgroundColor: service.iconBg }} className={`p-3 rounded-full`}>
                 <span className="text-2xl">{service.icon || 'n/a'}</span>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEditService(service)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  title="Düzenle"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleDeleteService(service)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Sil"
-                >
-                  🗑️
-                </button>
-              </div>
+              {/* Only show edit/delete buttons if NOT in institution view */}
+              {!isInstitutionView && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEditService(service)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Düzenle"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeleteService(service)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    title="Sil"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              )}
+              {/* Show view-only badge for sub-user services in institution view */}
+              {isInstitutionView && service.isViewOnly && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  Sadece Görüntüle
+                </span>
+              )}
             </div>
+
+            {/* Show expert name in institution view */}
+            {isInstitutionView && service.expertName && (
+              <div className="mb-2">
+                <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
+                  👤 {service.expertName}
+                </span>
+              </div>
+            )}
 
             {/* Hizmet Başlığı */}
             <h4 className="text-lg font-semibold text-gray-900 mb-2">{service.title}</h4>

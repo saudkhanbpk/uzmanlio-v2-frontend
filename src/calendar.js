@@ -3,15 +3,31 @@ import { useExpertData } from "./hooks/useExpertData";
 import Swal from "sweetalert2";
 import { useSearchParams } from "react-router-dom";
 import { profileService } from "./services/ProfileServices";
-// import { useUser } from "./context/UserContext";
+import { useUser } from "./context/UserContext";
+import { useViewMode } from "./contexts/ViewModeContext";
+import { useInstitutionUsers } from "./contexts/InstitutionUsersContext";
+import { ViewModeSwitcher } from "./components/ViewModeSwitcher";
 
 
 // Calendar Component
 export const Calendar = () => {
-  // const { user } = useUser(); // Get user from Context
-  // console.log("user from context", user)
-  let userId = localStorage.getItem('userId') 
-  console.log("user from local storage", userId)
+  const { user } = useUser();
+  let loggedInUserId = localStorage.getItem('userId');
+  console.log("user from local storage", loggedInUserId);
+
+  // View mode for institution/individual
+  const { viewMode, setViewMode } = useViewMode();
+  const { institutionUsers, fetchInstitutionUsers } = useInstitutionUsers();
+
+  // Check if user is admin (only admins can see institution view)
+  const isAdmin = user?.subscription?.isAdmin === true;
+  const canAccessInstitutionView = isAdmin;
+
+  // Selected user for institution view (whose calendar to display)
+  const [selectedUserId, setSelectedUserId] = useState(loggedInUserId);
+
+  // Get the active userId (either selected user in institution view or logged-in user)
+  const activeUserId = viewMode === 'institution' && selectedUserId ? selectedUserId : loggedInUserId;
 
   const {
     availability,
@@ -63,30 +79,78 @@ export const Calendar = () => {
 
   // Load calendar data on component mount
 
+  // Fetch institution users when in institution view
   useEffect(() => {
-    // const userId = localStorage.getItem('userId') // Mock user ID for development
-    loadExpertProfile(userId).catch(console.error);
-    // keep your original debug call
-    profileService.getProfile(userId)
+    if (viewMode === 'institution' && canAccessInstitutionView && institutionUsers.length === 0) {
+      console.log("[Calendar] Fetching institution users...");
+      fetchInstitutionUsers(loggedInUserId, user?.subscription);
+    }
+  }, [viewMode, canAccessInstitutionView, institutionUsers.length]);
+
+  // Load calendar data for the active user
+  useEffect(() => {
+    console.log("[Calendar] Loading data for user:", activeUserId, "viewMode:", viewMode);
+
+    // In institution view, try to use cached data from context first
+    if (viewMode === 'institution' && institutionUsers.length > 0) {
+      const cachedUser = institutionUsers.find(u => u._id === activeUserId);
+      if (cachedUser) {
+        console.log("[Calendar] ✅ Using ALL cached data from context for:", cachedUser.information?.name);
+
+        // Use cached events from context
+        if (cachedUser.events && Array.isArray(cachedUser.events)) {
+          const mapped = cachedUser.events.map(evt => ({
+            id: evt.id || evt._id,
+            title: evt.title,
+            date: evt.date,
+            time: evt.time || '',
+            status: evt.status === 'approved' ? 'confirmed' : (evt.status || 'pending'),
+            type: evt.meetingType || '1-1',
+          }));
+          setFetchedEvents(mapped);
+          console.log("[Calendar] Events from cache:", mapped.length);
+        } else {
+          setFetchedEvents([]);
+        }
+
+        // Use cached availability from context - NO API CALL!
+        if (cachedUser.availability) {
+          console.log("[Calendar] ✅ Using cached availability - NO API call");
+          setAlwaysAvailable(cachedUser.availability.alwaysAvailable || false);
+          setSelectedSlots(new Set(cachedUser.availability.selectedSlots || []));
+        } else {
+          console.log("[Calendar] No availability in cache, resetting");
+          setAlwaysAvailable(false);
+          setSelectedSlots(new Set());
+        }
+
+        return; // Don't make ANY API calls - all data from cache!
+      }
+    }
+
+    // Individual view or no cached data - make API calls
+    console.log("[Calendar] ⏳ Making API call for user data...");
+    loadExpertProfile(activeUserId).catch(console.error);
+    profileService.getProfile(activeUserId)
       .then(data => {
-        // keep original console.debug line (you had it)
         if (data && data.events && Array.isArray(data.events)) {
-          console.log('Fetched profile:', data.events[0]);
-          // Map events minimally into format used for display (id,title,date,time,status,type)
+          console.log('[Calendar] Fetched events via API:', data.events.length);
           const mapped = data.events.map(evt => ({
             id: evt.id || evt._id,
             title: evt.title,
-            date: evt.date,       // expecting 'YYYY-MM-DD'
-            time: evt.time || '', // expecting e.g. '16:45'
+            date: evt.date,
+            time: evt.time || '',
             status: evt.status === 'approved' ? 'confirmed' : (evt.status || 'pending'),
-            type: evt.meetingType || evt.meetingType || '1-1',
+            type: evt.meetingType || '1-1',
           }));
           setFetchedEvents(mapped);
+        } else {
+          setFetchedEvents([]);
         }
       })
       .catch(console.error);
     loadCalendarProviders();
-  }, [loadExpertProfile]);
+  }, [loadExpertProfile, activeUserId, viewMode, institutionUsers]); // Re-run when activeUserId changes
 
   // Sync local state with context data
   useEffect(() => {
@@ -227,40 +291,40 @@ export const Calendar = () => {
   };
 
 
-const handleSaveAvailability = async () => {
-  try {
-    setIsSaving(true);
+  const handleSaveAvailability = async () => {
+    try {
+      setIsSaving(true);
 
-    const availabilityData = {
-      alwaysAvailable,
-      selectedSlots: Array.from(selectedSlots)
-    };
+      const availabilityData = {
+        alwaysAvailable,
+        selectedSlots: Array.from(selectedSlots)
+      };
 
-    await updateAvailability(userId, availabilityData);
+      await updateAvailability(activeUserId, availabilityData);
 
-    // ✅ SUCCESS SweetAlert
-    Swal.fire({
-      icon: "success",
-      title: "Başarılı!",
-      text: "Müsaitlik ayarları başarıyla kaydedildi!",
-      timer: 1800,
-      showConfirmButton: false
-    });
+      // ✅ SUCCESS SweetAlert
+      Swal.fire({
+        icon: "success",
+        title: "Başarılı!",
+        text: "Müsaitlik ayarları başarıyla kaydedildi!",
+        timer: 1800,
+        showConfirmButton: false
+      });
 
-  } catch (error) {
-    console.error("Failed to save availability:", error);
+    } catch (error) {
+      console.error("Failed to save availability:", error);
 
-    // ❌ ERROR SweetAlert
-    Swal.fire({
-      icon: "error",
-      title: "Hata!",
-      text: "Müsaitlik ayarları kaydedilirken bir hata oluştu."
-    });
+      // ❌ ERROR SweetAlert
+      Swal.fire({
+        icon: "error",
+        title: "Hata!",
+        text: "Müsaitlik ayarları kaydedilirken bir hata oluştu."
+      });
 
-  } finally {
-    setIsSaving(false);
-  }
-};
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleResetAvailability = async () => {
     try {
@@ -277,7 +341,7 @@ const handleSaveAvailability = async () => {
         selectedSlots: []
       };
 
-      await updateAvailability(userId, availabilityData);
+      await updateAvailability(activeUserId, availabilityData);
 
       // Show success message
       alert('Müsaitlik ayarları sıfırlandı!');
@@ -376,36 +440,75 @@ const handleSaveAvailability = async () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Takvim</h1>
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <div className="flex items-center space-x-4">
-          {/* Calendar Connect Buttons */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => connectCalendar('google')}
-              disabled={calendarLoading}
-              className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
-            >
-              <img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyUzYuNDggMjIgMTIgMjJzMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJaTTEwIDZIMTRWOEgxMFY2Wk02IDEwSDE4VjE4SDZWMTBaTTggMTJWMTZIMTJWMTJIOFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
-                alt="Google Calendar"
-                className="w-4 h-4"
-              />
-              <span>{calendarLoading ? 'Bağlanıyor...' : 'Google Calendar'}</span>
-            </button>
-            <button
-              onClick={() => connectCalendar('microsoft')}
-              disabled={calendarLoading}
-              className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
-            >
-              <img
-                src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgNFYyMEgxOEw5IDEyTDE4IDRIM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
-                alt="Outlook Calendar"
-                className="w-4 h-4"
-              />
-              <span>{calendarLoading ? 'Bağlanıyor...' : 'Outlook'}</span>
-            </button>
-          </div>
+          <h1 className="text-2xl font-bold text-gray-900">Takvim</h1>
+
+          {/* User Selector - Only show in institution view */}
+          {viewMode === 'institution' && institutionUsers.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Kullanıcı:</span>
+              <select
+                value={selectedUserId || ''}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+              >
+                {institutionUsers.map(u => (
+                  <option key={u._id} value={u._id}>
+                    {u.information?.name} {u.information?.surname}
+                    {u._id === loggedInUserId ? ' (Sen)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {/* View Mode Switcher - Only show for admins */}
+          {canAccessInstitutionView && (
+            <ViewModeSwitcher
+              currentMode={viewMode}
+              onModeChange={(mode) => {
+                setViewMode(mode);
+                // Reset to logged-in user when switching to individual view
+                if (mode === 'individual') {
+                  setSelectedUserId(loggedInUserId);
+                }
+              }}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {/* Calendar Connect Buttons - Hide in institution view */}
+          {viewMode !== 'institution' && (
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => connectCalendar('google')}
+                disabled={calendarLoading}
+                className="flex items-center space-x-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <img
+                  src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyUzYuNDggMjIgMTIgMjJzMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJaTTEwIDZIMTRWOEgxMFY2Wk02IDEwSDE4VjE4SDZWMTBaTTggMTJWMTZIMTJWMTJIOFoiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
+                  alt="Google Calendar"
+                  className="w-4 h-4"
+                />
+                <span>{calendarLoading ? 'Bağlanıyor...' : 'Google Calendar'}</span>
+              </button>
+              <button
+                onClick={() => connectCalendar('microsoft')}
+                disabled={calendarLoading}
+                className="flex items-center space-x-2 px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <img
+                  src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIj4KPHBhdGggZD0iTTMgNFYyMEgxOEw5IDEyTDE4IDRIM1oiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPg=="
+                  alt="Outlook Calendar"
+                  className="w-4 h-4"
+                />
+                <span>{calendarLoading ? 'Bağlanıyor...' : 'Outlook'}</span>
+              </button>
+            </div>
+          )}
 
           {/* Calendar Error Display */}
           {calendarError && (
@@ -433,6 +536,24 @@ const handleSaveAvailability = async () => {
           </div>
         </div>
       </div>
+
+      {/* Show which user's calendar is being viewed in institution view */}
+      {viewMode === 'institution' && selectedUserId && selectedUserId !== loggedInUserId && (
+        <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-primary-600">👤</span>
+            <span className="text-primary-800 font-medium">
+              {institutionUsers.find(u => u._id === selectedUserId)?.information?.name || 'Seçili'} kullanıcısının takvimini görüntülüyorsunuz
+            </span>
+          </div>
+          <button
+            onClick={() => setSelectedUserId(loggedInUserId)}
+            className="text-sm text-primary-600 hover:text-primary-800 underline"
+          >
+            Kendi takvimime dön
+          </button>
+        </div>
+      )}
 
       {/* Calendar View */}
       <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -602,8 +723,8 @@ const handleSaveAvailability = async () => {
                           <div
                             key={time}
                             className={`h-6 rounded border ${first.status === 'confirmed'
-                                ? 'bg-green-100 border-green-300'
-                                : 'bg-yellow-100 border-yellow-300'
+                              ? 'bg-green-100 border-green-300'
+                              : 'bg-yellow-100 border-yellow-300'
                               }`}
                           >
                             <div className="text-xs p-1 text-gray-700 truncate">
@@ -774,6 +895,6 @@ const handleSaveAvailability = async () => {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };

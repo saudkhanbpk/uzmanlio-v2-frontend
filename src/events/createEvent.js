@@ -786,6 +786,7 @@ export const CreateEvent = () => {
           <button
             type="button"
             onClick={() => setShowPaymentModal(true)}
+            required
             disabled={eventData.selectedClients.length === 0}
             className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-primary-500 hover:text-primary-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >

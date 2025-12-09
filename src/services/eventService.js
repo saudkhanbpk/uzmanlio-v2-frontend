@@ -4,7 +4,8 @@ const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const eventService = {
   // Get all events for a user
-  async getEvents(userId) {
+  async getEvents(userId, viewMode) {
+    console.log("View Mode:", viewMode)
     try {
       const response = await fetch(`${API_BASE_URL}/${userId}/events`);
       if (!response.ok) {

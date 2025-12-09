@@ -224,17 +224,17 @@ export default function Dashboard({ onLogout }) {
                     <span className="text-xs text-gray-500">Randevu URL'niz:</span>
                     <div className="flex items-center space-x-2">
                       <a
-                        href={`https://uzmanlio.com/${user?.information.name + user?.information.surname}`}
+                        href={`https://uzmanlio.com/${user?.information?.name + user?.information?.surname}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors cursor-pointer"
                         title="URL'yi yeni sekmede aç"
                       >
-                        uzmanlio.com/{user?.information.name + user?.information.surname}
+                        uzmanlio.com/{user?.information?.name + user?.information?.surname}
                       </a>
                       <button
                         onClick={() => {
-                          navigator.clipboard.writeText(`https://uzmanlio.com/${user?.information.name + user?.information.surname}`);
+                          navigator.clipboard.writeText(`https://uzmanlio.com/${user?.information?.name + user?.information?.surname}`);
                           alert('URL panoya kopyalandı!');
                         }}
                         className="text-gray-400 hover:text-primary-600 transition-colors"

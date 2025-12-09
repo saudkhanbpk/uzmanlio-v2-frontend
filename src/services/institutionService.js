@@ -1,0 +1,105 @@
+import axios from 'axios';
+const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+
+/**
+ * Institution Service
+ * Handles API calls for institution-wide data aggregation
+ */
+export const institutionService = {
+    /**
+     * Get all events from institution (admin + all sub-users)
+     */
+    getInstitutionEvents: async (userId, user) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/events`,
+                {
+                    headers: {
+                        'user-context': JSON.stringify(user)
+                    }
+                }
+            );
+            return response.data.events || [];
+        } catch (error) {
+            console.error('Error fetching institution events:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get all services from institution
+     */
+    getInstitutionServices: async (userId) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/services`
+            );
+            return response.data.services || [];
+        } catch (error) {
+            console.error('Error fetching institution services:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get all packages from institution
+     */
+    getInstitutionPackages: async (userId) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/packages`
+            );
+            return response.data.packages || [];
+        } catch (error) {
+            console.error('Error fetching institution packages:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get all customers from institution
+     */
+    getInstitutionCustomers: async (userId) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/customers`
+            );
+            return response.data.customers || [];
+        } catch (error) {
+            console.error('Error fetching institution customers:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get all orders/payments from institution
+     */
+    getInstitutionOrders: async (userId) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/orders`
+            );
+            return response.data.orders || [];
+        } catch (error) {
+            console.error('Error fetching institution orders:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Get institution statistics
+     */
+    getInstitutionStats: async (userId) => {
+        try {
+            const response = await axios.get(
+                `${SERVER_URL}/api/expert/${userId}/institution/stats`
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching institution stats:', error);
+            throw error;
+        }
+    }
+};
+
+export default institutionService;

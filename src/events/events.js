@@ -2,31 +2,93 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { eventService } from "../services/eventService";
 import { EventEditModal } from "./EventEditModal";
+import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
+import { useViewMode } from "../contexts/ViewModeContext";
+import { useUser } from "../context/UserContext";
+import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
+
 // Events Component
 export const Events = () => {
+  const { viewMode, setViewMode, canAccessInstitutionView } = useViewMode();
   const [activeTab, setActiveTab] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const userContext = useUser();
+  const user = userContext.user;
+  const userSubscription = userContext.user?.subscription;
 
-  const userId = localStorage.getItem('userId') // Mock user ID for development
-  const user = localStorage.getItem('user')
-  // Load events on component mount
+  // Use the InstitutionUsers context for caching
+  const {
+    institutionUsers,
+    fetchInstitutionUsers,
+    getAllEvents,
+    isLoaded: institutionDataLoaded,
+    loading: institutionLoading
+  } = useInstitutionUsers();
+
+  const userId = localStorage.getItem('userId');
+
+  // Load events on component mount and when view mode changes
   useEffect(() => {
-    loadEvents(userId);
-  }, []);
+    console.log("[Events] useEffect triggered - viewMode:", viewMode, "userId:", userId);
+    loadEvents();
+  }, [viewMode, userId]);
 
-  const loadEvents = async (userId) => {
+  const loadEvents = async () => {
     try {
       setLoading(true);
       setError(null);
-      const eventsData = await eventService.getEvents(userId);
-      setEvents(eventsData);
+
+      let eventsData = [];
+
+      // Check if we're in institution view mode
+      if (viewMode === 'institution' && canAccessInstitutionView) {
+        console.log("[Events] Institution view mode detected");
+        console.log("[Events] Checking institutionUsers in context:", institutionUsers);
+        console.log("[Events] Number of users in context:", institutionUsers?.length || 0);
+
+        // Check if context already has users data
+        if (institutionUsers && institutionUsers.length > 0) {
+          console.log("[Events] ✅ Using cached data from InstitutionUsersContext");
+
+          // Get events from all users in context
+          eventsData = getAllEvents();
+          console.log("[Events] Events extracted from context:", eventsData.length);
+        } else {
+          console.log("[Events] ⏳ No cached data - Making API call to fetch institution users...");
+
+          // Make API call to fetch all institution users
+          const fetchedUsers = await fetchInstitutionUsers(userId, userSubscription);
+          console.log("[Events] API Response - Fetched users:", fetchedUsers?.length || 0);
+
+          // Extract events directly from fetched users (don't rely on context state which hasn't updated yet)
+          if (fetchedUsers && fetchedUsers.length > 0) {
+            eventsData = fetchedUsers.flatMap(user => {
+              console.log(`[Events] User ${user.information?.name}: ${user.events?.length || 0} events`);
+              return (user.events || []).map(event => ({
+                ...event,
+                expertId: user._id,
+                expertName: `${user.information?.name || ''} ${user.information?.surname || ''}`.trim()
+              }));
+            });
+            console.log("[Events] Events extracted from fetched users:", eventsData.length);
+          }
+        }
+      } else {
+        // Individual view - fetch only own events
+        console.log("[Events] Individual view mode - fetching own events");
+        eventsData = await eventService.getEvents(userId);
+        console.log("[Events] Own events fetched:", eventsData?.length || 0);
+      }
+
+      console.log("[Events] Final events to display:", eventsData);
+      setEvents(eventsData || []);
     } catch (err) {
       setError('Etkinlikler yüklenirken bir hata oluştu.');
-      console.error('Error loading events:', err);
+      console.error('[Events] Error loading events:', err);
     } finally {
       setLoading(false);
     }
@@ -67,10 +129,16 @@ export const Events = () => {
     );
   };
 
+  // Helper to get the correct user ID for API calls (owner's ID, not current user)
+  const getEventOwnerId = (event) => {
+    return event.expertId || event.userId || userId;
+  };
+
   const handleApprove = async (event) => {
     try {
       const eventId = event.id;
-      await eventService.updateEventStatus(userId, eventId, 'approved');
+      const ownerId = getEventOwnerId(event);
+      await eventService.updateEventStatus(ownerId, eventId, 'approved');
       await loadEvents(userId); // Reload events to reflect changes
     } catch (err) {
       alert('Etkinlik onaylanırken bir hata oluştu.');
@@ -78,9 +146,10 @@ export const Events = () => {
     }
   };
 
-  const handleReject = async (eventId) => {
+  const handleReject = async (event) => {
     try {
-      await eventService.updateEventStatus(userId, eventId, 'cancelled');
+      const ownerId = getEventOwnerId(event);
+      await eventService.updateEventStatus(ownerId, event.id, 'cancelled');
       await loadEvents(userId); // Reload events to reflect changes
     } catch (err) {
       alert('Etkinlik reddedilirken bir hata oluştu.');
@@ -98,10 +167,11 @@ export const Events = () => {
     setShowEditModal(true);
   };
 
-  const handleDelete = async (eventId) => {
+  const handleDelete = async (event) => {
     if (window.confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
       try {
-        await eventService.deleteEvent(userId, eventId);
+        const ownerId = getEventOwnerId(event);
+        await eventService.deleteEvent(ownerId, event.id);
         await loadEvents(userId); // Reload events to reflect changes
       } catch (err) {
         alert('Etkinlik silinirken bir hata oluştu.');
@@ -112,7 +182,8 @@ export const Events = () => {
 
   const handleEventUpdate = async (updatedEvent) => {
     try {
-      await eventService.updateEvent(userId, updatedEvent.id, updatedEvent);
+      const ownerId = getEventOwnerId(updatedEvent);
+      await eventService.updateEvent(ownerId, updatedEvent.id, updatedEvent);
       await loadEvents(userId); // Reload events to reflect changes
       setShowEditModal(false);
     } catch (err) {
@@ -126,12 +197,19 @@ export const Events = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Etkinlikler</h1>
-        <Link
-          to="/dashboard/etkinlikler/olustur"
-          className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          + Yeni Etkinlik
-        </Link>
+        <div className="flex items-center space-x-4">
+          <ViewModeSwitcher
+            currentMode={viewMode}
+            onModeChange={setViewMode}
+            isAdmin={canAccessInstitutionView}
+          />
+          <Link
+            to="/dashboard/etkinlikler/olustur"
+            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+          >
+            + Yeni Etkinlik
+          </Link>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -198,6 +276,12 @@ export const Events = () => {
                   <div className="flex-1">
                     <div className="flex items-center space-x-3">
                       <h4 className="text-lg font-medium text-gray-900">{event.title}</h4>
+                      {/* Show expert name in institution view */}
+                      {viewMode === 'institution' && event.expertName && (
+                        <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-800">
+                          👤 {event.expertName}
+                        </span>
+                      )}
                       <span className={`px-2 py-1 text-xs rounded-full ${event.eventType === 'online' ? 'bg-blue-100 text-blue-800' :
                         event.eventType === 'offline' ? 'bg-green-100 text-green-800' :
                           'bg-primary-100 text-primary-800'
@@ -245,7 +329,7 @@ export const Events = () => {
                             ✓
                           </button>
                           <button
-                            onClick={() => handleReject(event.id)}
+                            onClick={() => handleReject(event)}
                             className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
                             title="Reddet"
                           >
@@ -271,6 +355,7 @@ export const Events = () => {
                       <button
                         onClick={() => handleEdit(event)}
                         className="text-gray-400 hover:text-gray-600 p-1"
+                        title="Düzenle"
                       >
                         ⚙️
                       </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -7,6 +7,9 @@ import PackageSection from "./PackageSection";
 import { useUser } from "../context/UserContext";
 import { AddCustomerModal } from "../customers/AddCustomerModal";
 import { createPurchaseEntry } from "./purchaseService";
+import { useViewMode } from "../contexts/ViewModeContext";
+import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
+import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
 
 
 
@@ -34,8 +37,15 @@ export default function Services() {
   const [purchaseDetails, setPurchaseDetails] = useState([]);
   const [loadingPurchases, setLoadingPurchases] = useState(false);
 
+  // View mode for institution/individual
+  const { viewMode, setViewMode } = useViewMode();
+  const { institutionUsers, fetchInstitutionUsers, getAllServices, getAllPackages } = useInstitutionUsers();
 
-  const userId = localStorage.getItem('userId')
+  // Check if user is admin (only admins can see institution view)
+  const isAdmin = user?.subscription?.isAdmin === true;
+  const canAccessInstitutionView = isAdmin;
+
+  const userId = localStorage.getItem('userId');
 
   // Add this function to fetch purchase details
   const fetchPurchaseDetails = async () => {
@@ -90,35 +100,80 @@ export default function Services() {
   //If the services is Available in the context , Get It From there , else Fetch From the Backend
   useEffect(() => {
     if (!user) return; // wait until user is loaded
-    if (user.services) {
-      setServices(user.services);
-    } else {
-      fetchServices();
-    }
+    loadData();
+  }, [user, viewMode]);  // run when user updates or viewMode changes
 
-    if (user.packages) {
-      setPackages(user.packages);
+  // Load data based on view mode
+  const loadData = async () => {
+    console.log("[Services] loadData called - viewMode:", viewMode, "isAdmin:", isAdmin);
+
+    if (viewMode === 'institution' && canAccessInstitutionView) {
+      console.log("[Services] Loading institution data...");
+      // Check if institution users are already cached
+      if (institutionUsers && institutionUsers.length > 0) {
+        console.log("[Services] ✅ Using cached institution data");
+        setServices(getAllServices());
+        setPackages(getAllPackages());
+      } else {
+        console.log("[Services] ⏳ Fetching institution users...");
+        const fetchedUsers = await fetchInstitutionUsers(userId, user?.subscription);
+        if (fetchedUsers && fetchedUsers.length > 0) {
+          // Extract services and packages from fetched users
+          const allServices = fetchedUsers.flatMap(u =>
+            (u.services || []).map(s => ({
+              ...s,
+              expertId: u._id,
+              expertName: `${u.information?.name || ''} ${u.information?.surname || ''}`.trim(),
+              isViewOnly: u._id !== userId // View-only if not the current user's data
+            }))
+          );
+          const allPackages = fetchedUsers.flatMap(u =>
+            (u.packages || []).map(p => ({
+              ...p,
+              expertId: u._id,
+              expertName: `${u.information?.name || ''} ${u.information?.surname || ''}`.trim(),
+              isViewOnly: u._id !== userId // View-only if not the current user's data
+            }))
+          );
+          console.log("[Services] Loaded", allServices.length, "services and", allPackages.length, "packages");
+          setServices(allServices);
+          setPackages(allPackages);
+        }
+      }
     } else {
-      fetchPackages();
+      // Individual view - use own data
+      console.log("[Services] Loading individual data...");
+      if (user?.services) {
+        setServices(user.services);
+      } else {
+        fetchServices();
+      }
+      if (user?.packages) {
+        setPackages(user.packages);
+      } else {
+        fetchPackages();
+      }
     }
-  }, [user]);  // run when user updates
+  };
 
   // Reload data when component mounts or when switching tabs
   useEffect(() => {
     // Reload services when on hizmetler tab
-    if (activeTab === 'hizmetler') {
+    if (activeTab === 'hizmetler' && viewMode !== 'institution') {
       fetchServices();
     }
     // Reload packages when on paketler tab
-    if (activeTab === 'paketler') {
+    if (activeTab === 'paketler' && viewMode !== 'institution') {
       fetchPackages();
     }
   }, [activeTab]); // run when tab changes
 
   // Also reload when component first mounts (when navigating back to this page)
   useEffect(() => {
-    fetchServices();
-    fetchPackages();
+    if (viewMode !== 'institution') {
+      fetchServices();
+      fetchPackages();
+    }
   }, []); // run once on mount
 
 
@@ -480,7 +535,7 @@ export default function Services() {
               : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            Hizmetlerim
+            {viewMode === 'institution' ? 'Tüm Hizmetler' : 'Hizmetlerim'}
           </button>
           <button
             onClick={() => setActiveTab('paketler')}
@@ -489,25 +544,39 @@ export default function Services() {
               : 'text-gray-500 hover:text-gray-700'
               }`}
           >
-            Paketler
+            {viewMode === 'institution' ? 'Tüm Paketler' : 'Paketler'}
           </button>
         </div>
 
-        {activeTab === 'hizmetler' ? (
-          <Link
-            to="/dashboard/hizmet/olustur"
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            + Ekle
-          </Link>
-        ) : (
-          <Link
-            to="/dashboard/packages/create"
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            + Ekle
-          </Link>
-        )}
+        <div className="flex items-center space-x-4">
+          {/* View Mode Switcher - Only show for admins */}
+          {canAccessInstitutionView && (
+            <ViewModeSwitcher
+              currentMode={viewMode}
+              onModeChange={setViewMode}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          {/* Add buttons - Only show in individual view (not in institution view-only mode) */}
+          {viewMode !== 'institution' && (
+            activeTab === 'hizmetler' ? (
+              <Link
+                to="/dashboard/hizmet/olustur"
+                className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                + Ekle
+              </Link>
+            ) : (
+              <Link
+                to="/dashboard/packages/create"
+                className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+              >
+                + Ekle
+              </Link>
+            )
+          )}
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -551,6 +620,7 @@ export default function Services() {
                 getDurationDisplay={getDurationDisplay}
                 getStatusDisplay={getStatusDisplay}
                 getStatusColor={getStatusColor}
+                viewMode={viewMode}
               />
 
               {/* Inactive Services */}
@@ -571,6 +641,7 @@ export default function Services() {
                 getDurationDisplay={getDurationDisplay}
                 getStatusColor={getStatusColor}
                 getStatusDisplay={getStatusDisplay}
+                viewMode={viewMode}
               />
 
               {/* On Hold Services */}
@@ -591,6 +662,7 @@ export default function Services() {
                 getDurationDisplay={getDurationDisplay}
                 getStatusColor={getStatusColor}
                 getStatusDisplay={getStatusDisplay}
+                viewMode={viewMode}
               />
 
               {/* Empty state if no services at all */}
@@ -820,7 +892,7 @@ export default function Services() {
               getDurationDisplay={getDurationDisplay}
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
-
+              viewMode={viewMode}
             />
 
             {/* Inactive Packages */}
@@ -840,6 +912,7 @@ export default function Services() {
               getDurationDisplay={getDurationDisplay}
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
+              viewMode={viewMode}
             />
 
             {/* On Hold Packages */}
@@ -859,6 +932,7 @@ export default function Services() {
               getDurationDisplay={getDurationDisplay}
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
+              viewMode={viewMode}
             />
 
             {/* Empty state if no packages at all */}

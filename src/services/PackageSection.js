@@ -2,15 +2,24 @@
 import React from 'react';
 import axios from 'axios';
 import Swal from 'sweetalert2';
-const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackages, setSelectedPackage, setEditPackageModal, packages, packageSearchTerm, getCategoryDisplay, getChannelDisplay, getDurationDisplay, getStatusColor, getStatusDisplay, }) => {
+const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackages, setSelectedPackage, setEditPackageModal, packages, packageSearchTerm, getCategoryDisplay, getChannelDisplay, getDurationDisplay, getStatusColor, getStatusDisplay, viewMode }) => {
+  // Check if we're in institution view (view-only mode for sub-user data)
+  const isInstitutionView = viewMode === 'institution';
+
   // Handle edit package
   const handleEditPackage = (packageItem) => {
+    // Don't allow editing in institution view for other users' packages
+    if (isInstitutionView && packageItem.isViewOnly) return;
+
     setSelectedPackage({ ...packageItem });
     setEditPackageModal(true);
   };
 
   // Handle delete package
   const handleDeletePackage = async (packageItem) => {
+    // Don't allow deleting in institution view for other users' packages
+    if (isInstitutionView && packageItem.isViewOnly) return;
+
     const result = await Swal.fire({
       title: 'Paketi Sil',
       html: `<strong>"${packageItem.title}"</strong> paketini silmek istediğinizden emin misiniz?<br/>Bu işlem geri alınamaz.`,
@@ -63,23 +72,41 @@ const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackage
               <div style={{ backgroundColor: packageItem.iconBg }} className={`p-3 rounded-full ${packageItem.iconBg}`}>
                 <span className="text-2xl">{packageItem.icon || '📦'}</span>
               </div>
-              <div className="flex space-x-2">
-                <button
-                  onClick={() => handleEditPackage(packageItem)}
-                  className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                  title="Düzenle"
-                >
-                  ✏️
-                </button>
-                <button
-                  onClick={() => handleDeletePackage(packageItem)}
-                  className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                  title="Sil"
-                >
-                  🗑️
-                </button>
-              </div>
+              {/* Only show edit/delete buttons if NOT in institution view */}
+              {!isInstitutionView && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleEditPackage(packageItem)}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                    title="Düzenle"
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => handleDeletePackage(packageItem)}
+                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                    title="Sil"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              )}
+              {/* Show view-only badge for sub-user packages in institution view */}
+              {isInstitutionView && packageItem.isViewOnly && (
+                <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">
+                  Sadece Görüntüle
+                </span>
+              )}
             </div>
+
+            {/* Show expert name in institution view */}
+            {isInstitutionView && packageItem.expertName && (
+              <div className="mb-2">
+                <span className="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full">
+                  👤 {packageItem.expertName}
+                </span>
+              </div>
+            )}
 
             {/* Paket Adı */}
             <h4 className="text-lg font-semibold text-gray-900 mb-2">{packageItem.title}</h4>

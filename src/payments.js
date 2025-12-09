@@ -1,8 +1,20 @@
 import { useState, useEffect } from "react";
 import { fetchEarningsStats, fetchMonthlyRevenue, fetchPaymentOrders } from "./services/paymentService";
+import { useUser } from "./context/UserContext";
+import { useViewMode } from "./contexts/ViewModeContext";
+import { useInstitutionUsers } from "./contexts/InstitutionUsersContext";
+import { ViewModeSwitcher } from "./components/ViewModeSwitcher";
 
 // Payments Component
 export default function Payments() {
+  const { user } = useUser();
+  const { viewMode, setViewMode } = useViewMode();
+  const { institutionUsers, fetchInstitutionUsers } = useInstitutionUsers();
+
+  // Check if user is admin (only admins can see institution view)
+  const isAdmin = user?.subscription?.isAdmin === true;
+  const canAccessInstitutionView = isAdmin;
+
   const [showTransferTooltip, setShowTransferTooltip] = useState({});
   const [showRefundTooltip, setShowRefundTooltip] = useState({});
 
@@ -19,12 +31,26 @@ export default function Payments() {
   const [error, setError] = useState(null);
 
   // Get userId from localStorage
-  const userId = localStorage.getItem('userId');
+  const loggedInUserId = localStorage.getItem('userId');
 
-  // Fetch data on component mount
+  // Selected user for institution view (whose payments to display)
+  const [selectedUserId, setSelectedUserId] = useState(loggedInUserId);
+
+  // Get the active userId (either selected user in institution view or logged-in user)
+  const activeUserId = viewMode === 'institution' && selectedUserId ? selectedUserId : loggedInUserId;
+
+  // Fetch institution users when in institution view
+  useEffect(() => {
+    if (viewMode === 'institution' && canAccessInstitutionView && institutionUsers.length === 0) {
+      console.log("[Payments] Fetching institution users...");
+      fetchInstitutionUsers(loggedInUserId, user?.subscription);
+    }
+  }, [viewMode, canAccessInstitutionView, institutionUsers.length]);
+
+  // Fetch data when activeUserId changes
   useEffect(() => {
     const fetchData = async () => {
-      if (!userId) {
+      if (!activeUserId) {
         setError('User ID not found');
         setLoading(false);
         return;
@@ -32,12 +58,13 @@ export default function Payments() {
 
       try {
         setLoading(true);
+        console.log("[Payments] Fetching data for user:", activeUserId);
 
-        // Fetch all data in parallel
+        // Fetch all data in parallel for the active user
         const [statsResponse, monthlyResponse, ordersResponse] = await Promise.all([
-          fetchEarningsStats(userId),
-          fetchMonthlyRevenue(userId),
-          fetchPaymentOrders(userId)
+          fetchEarningsStats(activeUserId),
+          fetchMonthlyRevenue(activeUserId),
+          fetchPaymentOrders(activeUserId)
         ]);
 
         // Update state with fetched data
@@ -54,6 +81,7 @@ export default function Payments() {
         }
 
         setError(null);
+        console.log("[Payments] Data loaded for user:", activeUserId);
       } catch (err) {
         console.error('Error fetching payment data:', err);
         setError('Failed to load payment data');
@@ -63,7 +91,7 @@ export default function Payments() {
     };
 
     fetchData();
-  }, [userId]);
+  }, [activeUserId]); // Re-fetch when activeUserId changes
 
   // Calculate max earnings, ensuring we handle the case where all earnings are 0
   const maxEarnings = monthlyEarnings.length > 0
@@ -145,12 +173,69 @@ export default function Payments() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-gray-900">Ödemeler</h1>
-        <button className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
-          Rapor İndir
-        </button>
+      <div className="flex justify-between items-center flex-wrap gap-4">
+        <div className="flex items-center space-x-4">
+          <h1 className="text-2xl font-bold text-gray-900">Ödemeler</h1>
+
+          {/* User Selector - Only show in institution view */}
+          {viewMode === 'institution' && institutionUsers.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600">Kullanıcı:</span>
+              <select
+                value={selectedUserId || ''}
+                onChange={(e) => setSelectedUserId(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+              >
+                {institutionUsers.map(u => (
+                  <option key={u._id} value={u._id}>
+                    {u.information?.name} {u.information?.surname}
+                    {u._id === loggedInUserId ? ' (Sen)' : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-4">
+          {/* View Mode Switcher - Only show for admins */}
+          {canAccessInstitutionView && (
+            <ViewModeSwitcher
+              currentMode={viewMode}
+              onModeChange={(mode) => {
+                setViewMode(mode);
+                // Reset to logged-in user when switching to individual view
+                if (mode === 'individual') {
+                  setSelectedUserId(loggedInUserId);
+                }
+              }}
+              isAdmin={isAdmin}
+            />
+          )}
+
+          <button className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+            Rapor İndir
+          </button>
+        </div>
       </div>
+
+      {/* Show which user's payments are being viewed in institution view */}
+      {viewMode === 'institution' && selectedUserId && selectedUserId !== loggedInUserId && (
+        <div className="bg-primary-50 border border-primary-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="text-primary-600">👤</span>
+            <span className="text-primary-800 font-medium">
+              {institutionUsers.find(u => u._id === selectedUserId)?.information?.name || 'Seçili'} kullanıcısının ödemelerini görüntülüyorsunuz
+            </span>
+          </div>
+          <button
+            onClick={() => setSelectedUserId(loggedInUserId)}
+            className="text-sm text-primary-600 hover:text-primary-800 underline"
+          >
+            Kendi ödemelerime dön
+          </button>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

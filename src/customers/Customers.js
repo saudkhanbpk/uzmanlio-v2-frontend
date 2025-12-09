@@ -2,9 +2,21 @@ import { useState, useEffect, useRef } from "react";
 import { AddCustomerModal } from "./AddCustomerModal";
 import NotesModal from "../notesModal";
 import { customerService } from "../services/customerService";
+import { useUser } from "../context/UserContext";
+import { useViewMode } from "../contexts/ViewModeContext";
+import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
+import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
 
 // Customers Component
 export default function Customers() {
+  const { user } = useUser();
+  const { viewMode, setViewMode } = useViewMode();
+  const { institutionUsers, fetchInstitutionUsers, getAllCustomers } = useInstitutionUsers();
+
+  // Check if user is admin (only admins can see institution view)
+  const isAdmin = user?.subscription?.isAdmin === true;
+  const canAccessInstitutionView = isAdmin;
+
   const [customers, setCustomers] = useState([]);
   console.log("Customers :", customers)
   const [showAddModal, setShowAddModal] = useState(false);
@@ -19,11 +31,57 @@ export default function Customers() {
 
   const userId = localStorage.getItem('userId') // Mock user ID for development
 
-  // Load customers on component mount
+  // Fetch institution users when in institution view
   useEffect(() => {
-    loadCustomers();
+    if (viewMode === 'institution' && canAccessInstitutionView && institutionUsers.length === 0) {
+      console.log("[Customers] Fetching institution users...");
+      fetchInstitutionUsers(userId, user?.subscription);
+    }
+  }, [viewMode, canAccessInstitutionView, institutionUsers.length]);
+
+  // Load customers based on view mode
+  useEffect(() => {
+    if (viewMode === 'institution' && canAccessInstitutionView) {
+      loadInstitutionCustomers();
+    } else {
+      loadCustomers();
+    }
     loadStats();
-  }, []);
+  }, [viewMode, institutionUsers]);
+
+  // Load all customers from institution context (cached)
+  const loadInstitutionCustomers = () => {
+    console.log("[Customers] Loading institution customers from cache...");
+    setLoading(true);
+
+    if (institutionUsers.length > 0) {
+      // Get all customers from all sub-users with expertId and expertName
+      const allCustomers = [];
+      institutionUsers.forEach(subUser => {
+        if (subUser.customers && Array.isArray(subUser.customers)) {
+          subUser.customers.forEach(customer => {
+            // Handle both populated and non-populated customer data
+            const customerData = customer.customerId || customer;
+            allCustomers.push({
+              ...customerData,
+              _id: customerData._id || customerData.id,
+              id: customerData._id || customerData.id,
+              expertId: subUser._id,
+              expertName: `${subUser.information?.name || ''} ${subUser.information?.surname || ''}`.trim(),
+            });
+          });
+        }
+      });
+
+      console.log("[Customers] ✅ Loaded", allCustomers.length, "customers from cache");
+      setCustomers(allCustomers);
+      setLoading(false);
+    } else {
+      console.log("[Customers] No institution users cached yet");
+      setCustomers([]);
+      setLoading(false);
+    }
+  };
 
   const loadCustomers = async (filters = {}) => {
     try {
@@ -98,7 +156,39 @@ export default function Customers() {
 
   {/* // ... (in the JSX) */ }
 
+  // Calculate stats from loaded customers (for institution view)
+  const calculateStatsFromCustomers = (customersList) => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    return {
+      total: customersList.length,
+      active: customersList.filter(c => c.status === 'active').length,
+      inactive: customersList.filter(c => c.status === 'inactive').length,
+      totalRevenue: customersList.reduce((sum, c) => sum + (c.totalSpent || 0), 0),
+      newCustomersThisMonth: customersList.filter(c => {
+        const createdDate = new Date(c.createdAt || c.created_at);
+        return createdDate >= startOfMonth;
+      }).length
+    };
+  };
+
+  // Update stats when customers change (for institution view)
+  useEffect(() => {
+    if (viewMode === 'institution' && customers.length > 0) {
+      const calculatedStats = calculateStatsFromCustomers(customers);
+      setStats(calculatedStats);
+      console.log("[Customers] Stats calculated from cached data:", calculatedStats);
+    }
+  }, [customers, viewMode]);
+
   const loadStats = async () => {
+    // In institution view, stats are calculated from cached customers
+    if (viewMode === 'institution') {
+      console.log("[Customers] Stats will be calculated from cached customers");
+      return;
+    }
+
     try {
       const statsData = await customerService.getCustomerStats(userId);
       setStats(statsData);
@@ -128,12 +218,24 @@ export default function Customers() {
     }
   };
 
-  const deleteCustomer = async (customerId) => {
+  const deleteCustomer = async (customer) => {
     if (window.confirm('Bu danışanı silmek istediğinizden emin misiniz?')) {
       try {
-        await customerService.deleteCustomer(userId, customerId);
-        await loadCustomers(); // Reload customers to reflect changes
-        await loadStats(); // Reload stats
+        // In institution view, use customer's expertId; otherwise use logged-in userId
+        const targetUserId = customer.expertId || userId;
+        const customerId = customer._id || customer.id || customer;
+
+        console.log("[Customers] Deleting customer:", customerId, "from expert:", targetUserId);
+        await customerService.deleteCustomer(targetUserId, customerId);
+
+        // Reload customers based on view mode
+        if (viewMode === 'institution') {
+          // Refresh institution data to reflect changes
+          await fetchInstitutionUsers(userId, user?.subscription);
+        } else {
+          await loadCustomers();
+        }
+        await loadStats();
       } catch (err) {
         alert('Danışan silinirken bir hata oluştu.');
         console.error('Error deleting customer:', err);
@@ -237,9 +339,26 @@ export default function Customers() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Danışanlar</h1>
-          <p className="text-gray-600 mt-1">Danışanlarınızı yönetin ve iletişim bilgilerini takip edin</p>
+        <div className="flex items-center space-x-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {viewMode === 'institution' ? 'Tüm Danışanlar' : 'Danışanlar'}
+            </h1>
+            <p className="text-gray-600 mt-1">
+              {viewMode === 'institution'
+                ? 'Tüm alt kullanıcıların danışanlarını görüntüleyin ve yönetin'
+                : 'Danışanlarınızı yönetin ve iletişim bilgilerini takip edin'}
+            </p>
+          </div>
+
+          {/* View Mode Switcher - Only show for admins */}
+          {canAccessInstitutionView && (
+            <ViewModeSwitcher
+              currentMode={viewMode}
+              onModeChange={setViewMode}
+              isAdmin={isAdmin}
+            />
+          )}
         </div>
 
         {/* Search and Filters */}
@@ -257,70 +376,76 @@ export default function Customers() {
             </div>
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          >
-            <option value="all">Tüm Durumlar</option>
-            <option value="active">Aktif</option>
-            <option value="inactive">Pasif</option>
-            <option value="prospect">Potansiyel</option>
-            <option value="blocked">Engelli</option>
-          </select>
-        </div>
-
-        <div className="flex items-center space-x-3">
-          {/* Download Button */}
-          <button
-            onClick={handleDownloadList}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-          >
-            📥 İndir
-          </button>
-
-
-
-          {/* Bulk Upload Button with Info Icon Inside */}
-          <div className="relative">
-            <button
-              onClick={handleUploadClick}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2"
+          {/* Status Filter - Hide in institution view */}
+          {viewMode !== 'institution' && (
+            <select
+              value={statusFilter}
+              onChange={(e) => handleStatusFilter(e.target.value)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
-              <span>📤 Toplu Yükle</span>
-              <div
-                onMouseEnter={(e) => { e.stopPropagation(); setShowUploadTooltip(true); }}
-                onMouseLeave={(e) => { e.stopPropagation(); setShowUploadTooltip(false); }}
-                className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-blue-200 transition-colors"
-              >
-                i
-              </div>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            {showUploadTooltip && (
-              <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg z-10 max-w-xs">
-                <div className="whitespace-normal">
-                  Danışan listesini indirerek aynı formatta doldurduktan sonra toplu şekilde listenizi güncelleyebilirsiniz.
-                </div>
-                <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-800"></div>
-              </div>
-            )}
-          </div>
-
-          {/* Add Customer Button */}
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-          >
-            + Danışan Ekle
-          </button>
+              <option value="all">Tüm Durumlar</option>
+              <option value="active">Aktif</option>
+              <option value="inactive">Pasif</option>
+              <option value="prospect">Potansiyel</option>
+              <option value="blocked">Engelli</option>
+            </select>
+          )}
         </div>
+
+        {/* Action Buttons - Hide in institution view */}
+        {viewMode !== 'institution' && (
+          <div className="flex items-center space-x-3">
+            {/* Download Button */}
+            <button
+              onClick={handleDownloadList}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              📥 İndir
+            </button>
+
+
+
+            {/* Bulk Upload Button with Info Icon Inside */}
+            <div className="relative">
+              <button
+                onClick={handleUploadClick}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer flex items-center space-x-2"
+              >
+                <span>📤 Toplu Yükle</span>
+                <div
+                  onMouseEnter={(e) => { e.stopPropagation(); setShowUploadTooltip(true); }}
+                  onMouseLeave={(e) => { e.stopPropagation(); setShowUploadTooltip(false); }}
+                  className="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold hover:bg-blue-200 transition-colors"
+                >
+                  i
+                </div>
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+              {showUploadTooltip && (
+                <div className="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-800 text-white text-sm rounded-lg z-10 max-w-xs">
+                  <div className="whitespace-normal">
+                    Danışan listesini indirerek aynı formatta doldurduktan sonra toplu şekilde listenizi güncelleyebilirsiniz.
+                  </div>
+                  <div className="absolute top-full right-4 border-4 border-transparent border-t-gray-800"></div>
+                </div>
+              )}
+            </div>
+
+            {/* Add Customer Button */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            >
+              + Danışan Ekle
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Loading State */}
@@ -473,6 +598,12 @@ export default function Customers() {
                             {customer.category && (
                               <div className="text-xs text-gray-500">{customer.category}</div>
                             )}
+                            {/* Show expert name in institution view */}
+                            {viewMode === 'institution' && customer.expertName && (
+                              <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
+                                👤 {customer.expertName}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
@@ -524,7 +655,7 @@ export default function Customers() {
                             📝
                           </button>
                           <button
-                            onClick={() => deleteCustomer(customer._id)}
+                            onClick={() => deleteCustomer(customer)}
                             className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors"
                             title="Danışanı Sil"
                           >
