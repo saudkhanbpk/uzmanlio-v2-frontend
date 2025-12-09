@@ -60,7 +60,8 @@ export default function NotesModal({ customer, onClose }) {
 
       // Create FormData for file upload
       const formData = new FormData();
-      formData.append('content', newNote);
+      // formData.append('content', newNote);
+      formData.append('content', newNote.trim() || "Dosya yüklendi");
       formData.append('author', 'expert');
       formData.append('authorName', 'Platform Kullanıcısı'); // TODO: Get from user profile
 
@@ -112,7 +113,7 @@ export default function NotesModal({ customer, onClose }) {
         {/* Background overlay */}
         <div className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-75" onClick={onClose}></div>
 
-        <div className="inline-block w-full max-w-4xl p-0 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl max-h-screen">
+        <div className="inline-block w-full max-w-4xl p-0 my-8 overflow-y-auto text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl max-h-screen">
 
           {/* Header */}
           <div className="flex justify-between items-center p-6 border-b border-gray-200">
