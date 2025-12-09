@@ -20,7 +20,9 @@ const SubscriptionPaymentForm = ({
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    mode: "onChange",   // 🔥 realtime validation enabled
+  });
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   const userId = localStorage.getItem('userId');
@@ -147,13 +149,22 @@ const SubscriptionPaymentForm = ({
             <label>Card Holder Name :</label>
             <input
               className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              {...register("cardHolderName", { required: true })}
+              {...register("cardHolderName", {
+                required: "Card holder name is required",
+                pattern: {
+                  value: /^[A-Za-z\s]+$/,
+                  message: "Only alphabets allowed",
+                },
+                minLength: {
+                  value: 3,
+                  message: "Name must be at least 3 characters",
+                },
+              })}
             />
             {errors.cardHolderName && (
-              <p className="text-red-500 text-sm mt-1">
-                Kart Hamili Adı gereklidir
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.cardHolderName.message}</p>
             )}
+
           </div>
         </div>
 
@@ -161,11 +172,19 @@ const SubscriptionPaymentForm = ({
           <label>Card Number :</label>
           <input
             className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-            {...register("cardNumber", { required: true })}
+            maxLength={16}
+            {...register("cardNumber", {
+              required: "Card number is required",
+              pattern: {
+                value: /^[0-9]{16}$/,
+                message: "Card number must be 16 digits",
+              },
+            })}
           />
           {errors.cardNumber && (
-            <p className="text-red-500 text-sm mt-1">Card Number is required</p>
+            <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>
           )}
+
         </div>
 
         <div className="mb-4 mt-4 w-full gap-3 flex justify-between items-center">
@@ -174,24 +193,33 @@ const SubscriptionPaymentForm = ({
             <input
               type="month"
               className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              {...register("cardExpiry", { required: true })}
+              {...register("cardExpiry", {
+                required: "Expiry date is required",
+              })}
             />
             {errors.cardExpiry && (
-              <p className="text-red-500 text-sm mt-1">
-                Expiry Date is required
-              </p>
+              <p className="text-red-500 text-sm mt-1">{errors.cardExpiry.message}</p>
             )}
+
           </div>
 
           <div className="flex flex-col w-full">
             <label>CVV :</label>
             <input
               className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              {...register("cardCvv", { required: true })}
+              maxLength={3}
+              {...register("cardCvv", {
+                required: "CVV is required",
+                pattern: {
+                  value: /^[0-9]{3}$/,
+                  message: "CVV must be 3 digits",
+                },
+              })}
             />
             {errors.cardCvv && (
-              <p className="text-red-500 text-sm mt-1">CVV is required</p>
+              <p className="text-red-500 text-sm mt-1">{errors.cardCvv.message}</p>
             )}
+
           </div>
         </div>
 
