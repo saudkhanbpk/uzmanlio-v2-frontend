@@ -34,6 +34,7 @@ const SubscriptionPaymentForm = ({
     institutional: 750,
     seatPrice: 100,
   };
+
   const yearlyPrices = {
     individual: 3500,
     institutional: 7500,
@@ -62,16 +63,16 @@ const SubscriptionPaymentForm = ({
 
       if (response.status === 200) {
         const user = response.data.user;
-        console.log("User after subscription:", response.data.user)
+        console.log("User after subscription:", response.data.user);
+
         const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
 
         if (currentSubscription && currentSubscription.endDate) {
           const endTs = new Date(currentSubscription.endDate).getTime();
+
           if (!Number.isNaN(endTs) && endTs > Date.now()) {
-            const planFromBackendRaw =
-              currentSubscription.plantype ?? currentSubscription.Plantype ?? "";
-            const durationFromBackendRaw =
-              currentSubscription.duration ?? currentSubscription.Duration ?? "";
+            const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? "";
+            const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? "";
 
             const planFromBackend = String(planFromBackendRaw).toLowerCase();
             const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
@@ -122,10 +123,7 @@ const SubscriptionPaymentForm = ({
       Swal.fire({
         icon: "error",
         title: "Hata",
-        text:
-          error?.response?.data?.message ||
-          error.message ||
-          "Abonelik işlemi sırasında bir hata oluştu",
+        text: error?.response?.data?.message || error.message || "Abonelik işlemi sırasında bir hata oluştu",
       });
     } finally {
       setNewsubscriptionModel(false);
@@ -133,220 +131,254 @@ const SubscriptionPaymentForm = ({
   };
 
   return (
-    <div className="w-full flex align-center justify-center p-4 bg-white rounded-lg shadow-md max-h-[80vh] overflow-y-auto">
-      <form
-        className="w-full flex flex-col align-center justify-center"
-        onSubmit={handleSubmit(onSubmit)}
-      >
-        <h2 className="w-full text-center text-2xl font-semibold mb-6">
-          Abonelik Ödeme Formu
-        </h2>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="sticky top-0 bg-gradient-to-r from-emerald-600 to-green-600 text-white p-6 rounded-t-lg">
+          <h2 className="text-2xl font-bold">Abonelik Ödeme Formu</h2>
+        </div>
 
-        {/* Card Information Section */}
-        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
-          <h3 className="text-lg font-medium mb-4">💳 Kart Bilgileri</h3>
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Card Information Section */}
+          <div className="bg-emerald-50 rounded-lg p-5 space-y-4 border border-emerald-200">
+            <div className="flex items-center gap-2 text-lg font-semibold text-emerald-800 mb-4">
+              <span className="text-2xl">💳</span>
+              <span>Kart Bilgileri</span>
+            </div>
 
-          <div className="mb-4 w-full flex gap-5 justify-between items-center">
-            <div className="flex flex-col w-full">
-              <label>Kart Sahibi Adı :</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kart Sahibi Adı <span className="text-red-500">*</span>
+              </label>
               <input
-                className="p-2 rounded-md bg-white border-gray-200 border"
+                type="text"
                 {...register("cardHolderName", {
-                  required: "Kart sahibi adı gerekli",
-                  pattern: {
-                    value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
-                    message: "Sadece harf kullanılabilir",
-                  },
-                  minLength: {
-                    value: 3,
-                    message: "En az 3 karakter olmalı",
-                  },
+                  required: "Kart sahibi adı zorunludur",
                 })}
+                className="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                placeholder="Ad Soyad"
               />
               {errors.cardHolderName && (
                 <p className="text-red-500 text-sm mt-1">{errors.cardHolderName.message}</p>
               )}
             </div>
-          </div>
 
-          <div className="flex flex-col w-full mb-4">
-            <label>Kart Numarası :</label>
-            <input
-              className="p-2 rounded-md bg-white border-gray-200 border"
-              maxLength={16}
-              placeholder="1234 5678 9012 3456"
-              {...register("cardNumber", {
-                required: "Kart numarası gerekli",
-                pattern: {
-                  value: /^[0-9]{16}$/,
-                  message: "Kart numarası 16 haneli olmalı",
-                },
-              })}
-            />
-            {errors.cardNumber && (
-              <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>
-            )}
-          </div>
-
-          <div className="mb-4 w-full gap-3 flex justify-between items-center">
-            <div className="flex flex-col w-full">
-              <label>Son Kullanım :</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kart Numarası <span className="text-red-500">*</span>
+              </label>
               <input
-                type="month"
-                className="p-2 rounded-md bg-white border-gray-200 border"
-                {...register("cardExpiry", {
-                  required: "Son kullanım tarihi gerekli",
-                })}
-              />
-              {errors.cardExpiry && (
-                <p className="text-red-500 text-sm mt-1">{errors.cardExpiry.message}</p>
-              )}
-            </div>
-
-            <div className="flex flex-col w-full">
-              <label>CVV :</label>
-              <input
-                className="p-2 rounded-md bg-white border-gray-200 border"
-                maxLength={3}
-                placeholder="123"
-                {...register("cardCvv", {
-                  required: "CVV gerekli",
+                type="text"
+                {...register("cardNumber", {
+                  required: "Kart numarası zorunludur",
                   pattern: {
-                    value: /^[0-9]{3}$/,
-                    message: "CVV 3 haneli olmalı",
+                    value: /^[0-9]{16}$/,
+                    message: "Geçerli bir kart numarası giriniz (16 hane)",
                   },
                 })}
+                className="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                placeholder="1234 5678 9012 3456"
+                maxLength="16"
               />
-              {errors.cardCvv && (
-                <p className="text-red-500 text-sm mt-1">{errors.cardCvv.message}</p>
+              {errors.cardNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>
               )}
             </div>
-          </div>
-        </div>
 
-        {/* Billing Information Toggle */}
-        <div className="mb-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Son Kullanım <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register("cardExpiry", {
+                    required: "Son kullanım tarihi zorunludur",
+                    pattern: {
+                      value: /^(0[1-9]|1[0-2])\/([0-9]{2})$/,
+                      message: "Format: AA/YY",
+                    },
+                  })}
+                  className="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  placeholder="MM/YY"
+                  maxLength="5"
+                />
+                {errors.cardExpiry && (
+                  <p className="text-red-500 text-sm mt-1">{errors.cardExpiry.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  CVV <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  {...register("cardCvv", {
+                    required: "CVV zorunludur",
+                    pattern: {
+                      value: /^[0-9]{3,4}$/,
+                      message: "3-4 haneli CVV giriniz",
+                    },
+                  })}
+                  className="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
+                  placeholder="123"
+                  maxLength="4"
+                />
+                {errors.cardCvv && (
+                  <p className="text-red-500 text-sm mt-1">{errors.cardCvv.message}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Billing Information Toggle */}
           <button
             type="button"
             onClick={() => setShowBillingInfo(!showBillingInfo)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+            className="flex items-center gap-2 text-emerald-600 hover:text-emerald-800 font-medium transition"
           >
-            {showBillingInfo ? "▼" : "▶"} Fatura Bilgileri (Opsiyonel)
+            <span className="text-sm">{showBillingInfo ? "▼" : "▶"}</span>
+            <span>Fatura Bilgileri (Opsiyonel)</span>
           </button>
-        </div>
 
-        {/* Billing Information Section */}
-        {showBillingInfo && (
-          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <h3 className="text-lg font-medium mb-4">🧾 Fatura Bilgileri</h3>
+          {/* Billing Information Section */}
+          {showBillingInfo && (
+            <div className="bg-green-50 rounded-lg p-5 space-y-4 border border-green-200">
+              <div className="flex items-center gap-2 text-lg font-semibold text-green-800 mb-4">
+                <span className="text-2xl">🧾</span>
+                <span>Fatura Bilgileri</span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Şirket Adı</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Şirket Adı
+                </label>
                 <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="Şirket veya kişi adı"
+                  type="text"
                   {...register("companyName")}
+                  className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="Şirket adını giriniz"
                 />
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Vergi Numarası / TC Kimlik</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vergi Numarası / TC Kimlik
+                </label>
                 <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="10 veya 11 haneli"
-                  maxLength={11}
+                  type="text"
                   {...register("taxNumber", {
                     pattern: {
                       value: /^[0-9]{10,11}$/,
-                      message: "Vergi numarası 10 veya 11 haneli olmalı",
+                      message: "Geçerli bir vergi/TC numarası giriniz",
                     },
                   })}
+                  className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="10 veya 11 haneli numara"
                 />
                 {errors.taxNumber && (
                   <p className="text-red-500 text-sm mt-1">{errors.taxNumber.message}</p>
                 )}
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Vergi Dairesi</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Vergi Dairesi
+                </label>
                 <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="Vergi dairesi adı"
+                  type="text"
                   {...register("taxOffice")}
+                  className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="Vergi dairesi adı"
                 />
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Telefon</label>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Telefon
+                </label>
                 <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="0512 345 6789"
-                  {...register("phoneNumber")}
+                  type="tel"
+                  {...register("phone")}
+                  className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                  placeholder="5XX XXX XX XX"
                 />
               </div>
 
-              <div className="flex flex-col col-span-2">
-                <label className="text-sm text-gray-600 mb-1">Adres</label>
-                <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="Fatura adresi"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Adres
+                </label>
+                <textarea
                   {...register("address")}
+                  rows="3"
+                  className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition resize-none"
+                  placeholder="Fatura adresi"
                 />
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">Şehir</label>
-                <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="İstanbul"
-                  {...register("city")}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Şehir
+                  </label>
+                  <input
+                    type="text"
+                    {...register("city")}
+                    className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    placeholder="Şehir"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    İlçe
+                  </label>
+                  <input
+                    type="text"
+                    {...register("district")}
+                    className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                    placeholder="İlçe"
+                  />
+                </div>
               </div>
 
-              <div className="flex flex-col">
-                <label className="text-sm text-gray-600 mb-1">İlçe</label>
-                <input
-                  className="p-2 rounded-md bg-white border-gray-200 border"
-                  placeholder="Kadıköy"
-                  {...register("district")}
-                />
+              <div className="bg-green-100 border-l-4 border-green-500 p-4 rounded">
+                <p className="text-sm text-green-800 flex items-start gap-2">
+                  <span className="text-lg">💡</span>
+                  <span>Fatura bilgileri, abonelik faturanız için kullanılacaktır.</span>
+                </p>
               </div>
             </div>
+          )}
 
-            <p className="text-xs text-gray-500 mt-3">
-              💡 Fatura bilgileri, abonelik faturanız için kullanılacaktır.
+          {/* Price Summary */}
+          <div className="bg-gradient-to-r from-emerald-50 to-green-100 rounded-lg p-5 border-2 border-emerald-300">
+            <p className="text-xl font-bold text-emerald-800">
+              Toplam Tutar: ₺{price?.toLocaleString('tr-TR') || price}
             </p>
           </div>
-        )}
 
-        {/* Price Summary */}
-        <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-100">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Toplam Tutar:</span>
-            <span className="text-2xl font-bold text-green-600">₺{price?.toLocaleString('tr-TR') || price}</span>
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+            >
+              {isSubmitting ? "İşleniyor..." : "Ödemeyi Tamamla"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setNewsubscriptionModel(false)}
+              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition"
+            >
+              İptal
+            </button>
           </div>
-        </div>
-
-        <div className="flex flex-row w-full mb-2 gap-3">
-          <button
-            className="w-[100%] rounded-xl py-3 px-3 bg-green-500 hover:bg-green-600 text-white font-medium cursor-pointer transition-colors"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "İşleniyor..." : "Ödemeyi Tamamla"}
-          </button>
-
-          <button
-            type="button"
-            className="w-[100%] rounded-xl py-3 px-3 bg-gray-300 hover:bg-gray-400 cursor-pointer transition-colors"
-            disabled={isSubmitting}
-            onClick={() => setNewsubscriptionModel(false)}
-          >
-            İptal
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };

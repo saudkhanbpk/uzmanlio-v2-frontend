@@ -58,24 +58,19 @@ export default function NotesModal({ customer, onClose }) {
       setAddingNote(true);
       setError(null);
 
-      // Create FormData for file upload
       const formData = new FormData();
-      // formData.append('content', newNote);
       formData.append('content', newNote.trim() || "Dosya yüklendi");
       formData.append('author', 'expert');
-      formData.append('authorName', 'Platform Kullanıcısı'); // TODO: Get from user profile
+      formData.append('authorName', 'Platform Kullanıcısı');
 
       if (uploadedFile) {
         formData.append('file', uploadedFile);
       }
 
-      // Add note via API
       await customerService.addCustomerNote(userId, customer._id || customer.id, formData);
 
-      // Reload notes
       await loadCustomerNotes();
 
-      // Reset form
       setNewNote('');
       setUploadedFile(null);
       setFilePreview('');
@@ -86,6 +81,7 @@ export default function NotesModal({ customer, onClose }) {
       setAddingNote(false);
     }
   };
+
 
   const getFileIcon = (type) => {
     if (type === 'image') return '🖼️';
@@ -153,152 +149,67 @@ export default function NotesModal({ customer, onClose }) {
               </div>
             ) : (
               <div className="space-y-6">
-                {/* Expert Notes Section */}
-                {notes.filter(note => note.author === 'expert').length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <span className="mr-2">👨‍💼</span> Uzman Notları
-                    </h4>
-                    <div className="space-y-3">
-                      {notes.filter(note => note.author === 'expert').map((note) => (
-                        <div key={note.id || note._id} className="flex justify-end">
-                          <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-green-100 text-gray-900">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-xs font-medium">👨‍💼 Siz</span>
-                              <span className="text-xs text-gray-600">
-                                {formatDateTime(note.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-sm">{note.content}</p>
-                            {/* Files */}
-                            {note.files && note.files.length > 0 && (
-                              <div className="mt-3 space-y-2">
-                                {note.files.map((file, index) => (
-                                  <div key={index} className="flex items-center space-x-2 p-2 rounded bg-green-200">
-                                    <span className="text-sm">{getFileIcon(file.type)}</span>
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium text-gray-900">
-                                        {file.name}
-                                      </p>
-                                      <p className="text-xs text-gray-600">
-                                        {file.size}
-                                      </p>
-                                    </div>
-                                    <a
-                                      href={file.url}
-                                      download={file.name}
-                                      className="text-xs underline text-blue-600"
-                                    >
-                                      İndir
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {notes
+                  .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+                  .map((note) => {
+                    const isExpert = note.author === 'expert';
+                    const isSystem = note.author !== 'expert' && note.author !== 'customer';
 
-                {/* Customer Notes Section */}
-                {notes.filter(note => note.author === 'customer').length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <span className="mr-2">👤</span> Müşteri Notları
-                    </h4>
-                    <div className="space-y-3">
-                      {notes.filter(note => note.author === 'customer').map((note) => (
-                        <div key={note.id || note._id} className="flex justify-start">
-                          <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-gray-100 text-gray-900">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-xs font-medium">👤 Müşteri</span>
-                              <span className="text-xs text-gray-500">
-                                {formatDateTime(note.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-sm">{note.content}</p>
-                            {/* Files */}
-                            {note.files && note.files.length > 0 && (
-                              <div className="mt-3 space-y-2">
-                                {note.files.map((file, index) => (
-                                  <div key={index} className="flex items-center space-x-2 p-2 rounded bg-white border">
-                                    <span className="text-sm">{getFileIcon(file.type)}</span>
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium text-gray-900">
-                                        {file.name}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {file.size}
-                                      </p>
-                                    </div>
-                                    <a
-                                      href={file.url}
-                                      download={file.name}
-                                      className="text-xs underline text-blue-600"
-                                    >
-                                      İndir
-                                    </a>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                    return (
+                      <div
+                        key={note.id || note._id}
+                        className={`flex ${isExpert ? 'justify-end' : isSystem ? 'justify-center' : 'justify-start'}`}
+                      >
+                        <div
+                          className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${isExpert
+                              ? 'bg-green-100 text-gray-900 rounded-tr-none'
+                              : isSystem
+                                ? 'bg-blue-50 text-gray-900 border border-blue-200'
+                                : 'bg-gray-100 text-gray-900 rounded-tl-none'
+                            }`}
+                        >
+                          <div className="flex items-center space-x-2 mb-1 justify-between gap-2">
+                            <span className="text-xs font-medium">
+                              {isExpert ? '👨‍💼 Siz' : isSystem ? '⚙️ Sistem' : '👤 Müşteri'}
+                            </span>
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {formatDateTime(note.createdAt)}
+                            </span>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
 
-                {/* System Notes or Other Notes */}
-                {notes.filter(note => note.author !== 'expert' && note.author !== 'customer').length > 0 && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-700 mb-3 flex items-center">
-                      <span className="mr-2">⚙️</span> Sistem Notları
-                    </h4>
-                    <div className="space-y-3">
-                      {notes.filter(note => note.author !== 'expert' && note.author !== 'customer').map((note) => (
-                        <div key={note.id || note._id} className="flex justify-center">
-                          <div className="max-w-xs lg:max-w-md px-4 py-3 rounded-lg bg-blue-50 text-gray-900 border border-blue-200">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-xs font-medium">⚙️ Sistem</span>
-                              <span className="text-xs text-gray-500">
-                                {formatDateTime(note.createdAt)}
-                              </span>
-                            </div>
-                            <p className="text-sm">{note.content}</p>
-                            {/* Files */}
-                            {note.files && note.files.length > 0 && (
-                              <div className="mt-3 space-y-2">
-                                {note.files.map((file, index) => (
-                                  <div key={index} className="flex items-center space-x-2 p-2 rounded bg-white border">
-                                    <span className="text-sm">{getFileIcon(file.type)}</span>
-                                    <div className="flex-1">
-                                      <p className="text-xs font-medium text-gray-900">
-                                        {file.name}
-                                      </p>
-                                      <p className="text-xs text-gray-500">
-                                        {file.size}
-                                      </p>
-                                    </div>
-                                    <a
-                                      href={file.url}
-                                      download={file.name}
-                                      className="text-xs underline text-blue-600"
-                                    >
-                                      İndir
-                                    </a>
+                          <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+
+                          {/* Files */}
+                          {note.files && note.files.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              {note.files.map((file, index) => (
+                                <div key={index} className="flex items-center space-x-2 p-2 rounded bg-white bg-opacity-60 border border-gray-200">
+                                  <span className="text-sm">{getFileIcon(file.type)}</span>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-xs font-medium text-gray-900 truncate">
+                                      {file.name}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      {(file.size / 1024).toFixed(1)} KB
+                                    </p>
                                   </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                                  <a
+                                    href={`${process.env.REACT_APP_BACKEND_URL}${file.url}`}
+                                    download={file.name}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs underline text-blue-600 whitespace-nowrap ml-2"
+                                  >
+                                    İndir
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                      </div>
+                    );
+                  })}
               </div>
             )}
           </div>
