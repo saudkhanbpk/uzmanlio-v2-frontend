@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -21,13 +21,14 @@ const SubscriptionPaymentForm = ({
     reset,
     formState: { errors, isSubmitting },
   } = useForm({
-    mode: "onChange",   // 🔥 realtime validation enabled
+    mode: "onChange",
   });
+
+  const [showBillingInfo, setShowBillingInfo] = useState(false);
 
   const backendUrl = process.env.REACT_APP_BACKEND_URL;
   const userId = localStorage.getItem('userId');
 
-  // Local price configs (same as Settings.js)
   const monthlyPrices = {
     individual: 350,
     institutional: 750,
@@ -39,15 +40,14 @@ const SubscriptionPaymentForm = ({
     seatPrice: 100,
   };
 
-  // ✅ Main Submit Function
   const onSubmit = async (formData) => {
     const normalizedPlan = (subscriptionType || currentPlan || "").toLowerCase();
     const normalizedDuration = (billingPeriod || "monthly").toLowerCase();
 
     const data = {
       ...formData,
-      plantype: normalizedPlan, // match backend model
-      duration: normalizedDuration, // match backend model
+      plantype: normalizedPlan,
+      duration: normalizedDuration,
       price: price ?? 0,
       selectedSeats,
     };
@@ -76,7 +76,6 @@ const SubscriptionPaymentForm = ({
             const planFromBackend = String(planFromBackendRaw).toLowerCase();
             const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
 
-            // ✅ Update frontend states to reflect the newly active plan
             setCurrentPlan(planFromBackend);
             setBackendDuration(durationFromBackend);
             setBillingPeriod(durationFromBackend);
@@ -92,10 +91,9 @@ const SubscriptionPaymentForm = ({
 
             Swal.fire({
               icon: "success",
-              title: "Success",
-              text: "Package Subscribed Successfully",
+              title: "Başarılı",
+              text: "Abonelik başarıyla oluşturuldu. Faturanız e-posta ile gönderilecektir.",
             }).then(() => {
-              // Navigate to dashboard after successful subscription
               window.location.href = '/dashboard';
             });
           } else {
@@ -103,8 +101,8 @@ const SubscriptionPaymentForm = ({
             setBackendDuration("");
             Swal.fire({
               icon: "info",
-              title: "Subscription expired",
-              text: "Your subscription is expired or invalid.",
+              title: "Abonelik Süresi Dolmuş",
+              text: "Aboneliğiniz geçersiz veya süresi dolmuş.",
             });
           }
         } else {
@@ -112,8 +110,8 @@ const SubscriptionPaymentForm = ({
           setBackendDuration("");
           Swal.fire({
             icon: "info",
-            title: "No subscription found",
-            text: "Could not find active subscription data.",
+            title: "Abonelik Bulunamadı",
+            text: "Aktif abonelik verisi bulunamadı.",
           });
         }
       }
@@ -123,11 +121,11 @@ const SubscriptionPaymentForm = ({
       console.error(error);
       Swal.fire({
         icon: "error",
-        title: "Error",
+        title: "Hata",
         text:
           error?.response?.data?.message ||
           error.message ||
-          "Something went wrong while processing your subscription",
+          "Abonelik işlemi sırasında bir hata oluştu",
       });
     } finally {
       setNewsubscriptionModel(false);
@@ -135,110 +133,217 @@ const SubscriptionPaymentForm = ({
   };
 
   return (
-    <div className="w-full flex align-center justify-center p-4 bg-white rounded-lg shadow-md">
+    <div className="w-full flex align-center justify-center p-4 bg-white rounded-lg shadow-md max-h-[80vh] overflow-y-auto">
       <form
         className="w-full flex flex-col align-center justify-center"
         onSubmit={handleSubmit(onSubmit)}
       >
-        <h2 className="w-full text-center text-2xl font-semibold mb-8">
-          Subscription Payment Form
+        <h2 className="w-full text-center text-2xl font-semibold mb-6">
+          Abonelik Ödeme Formu
         </h2>
 
-        <div className="mb-4 w-full flex gap-5 justify-between items-center">
-          <div className="flex flex-col w-full">
-            <label>Card Holder Name :</label>
+        {/* Card Information Section */}
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+          <h3 className="text-lg font-medium mb-4">💳 Kart Bilgileri</h3>
+
+          <div className="mb-4 w-full flex gap-5 justify-between items-center">
+            <div className="flex flex-col w-full">
+              <label>Kart Sahibi Adı :</label>
+              <input
+                className="p-2 rounded-md bg-white border-gray-200 border"
+                {...register("cardHolderName", {
+                  required: "Kart sahibi adı gerekli",
+                  pattern: {
+                    value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                    message: "Sadece harf kullanılabilir",
+                  },
+                  minLength: {
+                    value: 3,
+                    message: "En az 3 karakter olmalı",
+                  },
+                })}
+              />
+              {errors.cardHolderName && (
+                <p className="text-red-500 text-sm mt-1">{errors.cardHolderName.message}</p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col w-full mb-4">
+            <label>Kart Numarası :</label>
             <input
-              className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              {...register("cardHolderName", {
-                required: "Card holder name is required",
+              className="p-2 rounded-md bg-white border-gray-200 border"
+              maxLength={16}
+              placeholder="1234 5678 9012 3456"
+              {...register("cardNumber", {
+                required: "Kart numarası gerekli",
                 pattern: {
-                  value: /^[A-Za-z\s]+$/,
-                  message: "Only alphabets allowed",
-                },
-                minLength: {
-                  value: 3,
-                  message: "Name must be at least 3 characters",
+                  value: /^[0-9]{16}$/,
+                  message: "Kart numarası 16 haneli olmalı",
                 },
               })}
             />
-            {errors.cardHolderName && (
-              <p className="text-red-500 text-sm mt-1">{errors.cardHolderName.message}</p>
+            {errors.cardNumber && (
+              <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>
             )}
+          </div>
 
+          <div className="mb-4 w-full gap-3 flex justify-between items-center">
+            <div className="flex flex-col w-full">
+              <label>Son Kullanım :</label>
+              <input
+                type="month"
+                className="p-2 rounded-md bg-white border-gray-200 border"
+                {...register("cardExpiry", {
+                  required: "Son kullanım tarihi gerekli",
+                })}
+              />
+              {errors.cardExpiry && (
+                <p className="text-red-500 text-sm mt-1">{errors.cardExpiry.message}</p>
+              )}
+            </div>
+
+            <div className="flex flex-col w-full">
+              <label>CVV :</label>
+              <input
+                className="p-2 rounded-md bg-white border-gray-200 border"
+                maxLength={3}
+                placeholder="123"
+                {...register("cardCvv", {
+                  required: "CVV gerekli",
+                  pattern: {
+                    value: /^[0-9]{3}$/,
+                    message: "CVV 3 haneli olmalı",
+                  },
+                })}
+              />
+              {errors.cardCvv && (
+                <p className="text-red-500 text-sm mt-1">{errors.cardCvv.message}</p>
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="flex flex-col w-full mb-2">
-          <label>Card Number :</label>
-          <input
-            className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-            maxLength={16}
-            {...register("cardNumber", {
-              required: "Card number is required",
-              pattern: {
-                value: /^[0-9]{16}$/,
-                message: "Card number must be 16 digits",
-              },
-            })}
-          />
-          {errors.cardNumber && (
-            <p className="text-red-500 text-sm mt-1">{errors.cardNumber.message}</p>
-          )}
-
-        </div>
-
-        <div className="mb-4 mt-4 w-full gap-3 flex justify-between items-center">
-          <div className="flex flex-col w-full">
-            <label>Expiry Date :</label>
-            <input
-              type="month"
-              className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              {...register("cardExpiry", {
-                required: "Expiry date is required",
-              })}
-            />
-            {errors.cardExpiry && (
-              <p className="text-red-500 text-sm mt-1">{errors.cardExpiry.message}</p>
-            )}
-
-          </div>
-
-          <div className="flex flex-col w-full">
-            <label>CVV :</label>
-            <input
-              className="p-2 rounded-md bg-gray-100 border-gray-200 border"
-              maxLength={3}
-              {...register("cardCvv", {
-                required: "CVV is required",
-                pattern: {
-                  value: /^[0-9]{3}$/,
-                  message: "CVV must be 3 digits",
-                },
-              })}
-            />
-            {errors.cardCvv && (
-              <p className="text-red-500 text-sm mt-1">{errors.cardCvv.message}</p>
-            )}
-
-          </div>
-        </div>
-
-        <div className="flex flex-row w-full mb-2">
+        {/* Billing Information Toggle */}
+        <div className="mb-4">
           <button
-            className="w-[100%] mx-5 rounded-xl py-3 px-3 mt-3 bg-green-400 hover:bg-green-500 cursor-pointer"
+            type="button"
+            onClick={() => setShowBillingInfo(!showBillingInfo)}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium"
+          >
+            {showBillingInfo ? "▼" : "▶"} Fatura Bilgileri (Opsiyonel)
+          </button>
+        </div>
+
+        {/* Billing Information Section */}
+        {showBillingInfo && (
+          <div className="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <h3 className="text-lg font-medium mb-4">🧾 Fatura Bilgileri</h3>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">Şirket Adı</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="Şirket veya kişi adı"
+                  {...register("companyName")}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">Vergi Numarası / TC Kimlik</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="10 veya 11 haneli"
+                  maxLength={11}
+                  {...register("taxNumber", {
+                    pattern: {
+                      value: /^[0-9]{10,11}$/,
+                      message: "Vergi numarası 10 veya 11 haneli olmalı",
+                    },
+                  })}
+                />
+                {errors.taxNumber && (
+                  <p className="text-red-500 text-sm mt-1">{errors.taxNumber.message}</p>
+                )}
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">Vergi Dairesi</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="Vergi dairesi adı"
+                  {...register("taxOffice")}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">Telefon</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="0512 345 6789"
+                  {...register("phoneNumber")}
+                />
+              </div>
+
+              <div className="flex flex-col col-span-2">
+                <label className="text-sm text-gray-600 mb-1">Adres</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="Fatura adresi"
+                  {...register("address")}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">Şehir</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="İstanbul"
+                  {...register("city")}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-sm text-gray-600 mb-1">İlçe</label>
+                <input
+                  className="p-2 rounded-md bg-white border-gray-200 border"
+                  placeholder="Kadıköy"
+                  {...register("district")}
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500 mt-3">
+              💡 Fatura bilgileri, abonelik faturanız için kullanılacaktır.
+            </p>
+          </div>
+        )}
+
+        {/* Price Summary */}
+        <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-100">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Toplam Tutar:</span>
+            <span className="text-2xl font-bold text-green-600">₺{price?.toLocaleString('tr-TR') || price}</span>
+          </div>
+        </div>
+
+        <div className="flex flex-row w-full mb-2 gap-3">
+          <button
+            className="w-[100%] rounded-xl py-3 px-3 bg-green-500 hover:bg-green-600 text-white font-medium cursor-pointer transition-colors"
             type="submit"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Processing Payment..." : "Proceed"}
+            {isSubmitting ? "İşleniyor..." : "Ödemeyi Tamamla"}
           </button>
 
           <button
             type="button"
-            className="w-[100%] mx-5 rounded-xl py-3 px-3 mt-3 bg-gray-300 hover:bg-gray-400 cursor-pointer"
+            className="w-[100%] rounded-xl py-3 px-3 bg-gray-300 hover:bg-gray-400 cursor-pointer transition-colors"
             disabled={isSubmitting}
             onClick={() => setNewsubscriptionModel(false)}
           >
-            Cancel
+            İptal
           </button>
         </div>
       </form>
