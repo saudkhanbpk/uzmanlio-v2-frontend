@@ -246,8 +246,17 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="Şirket veya kişi adı"
-                  {...register("companyName")}
+                  {...register("companyName", {
+                    minLength: {
+                      value: 3,
+                      message: "Şirket adı en az 3 karakter olmalı",
+                    },
+                  })}
+
                 />
+                {errors.companyName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.companyName.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col">
@@ -273,8 +282,16 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="Vergi dairesi adı"
-                  {...register("taxOffice")}
+                  {...register("taxOffice", {
+                    minLength: {
+                      value: 2,
+                      message: "Vergi dairesi adı çok kısa",
+                    },
+                  })}
                 />
+                {errors.taxOffice && (
+                  <p className="text-red-500 text-sm mt-1">{errors.taxOffice.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col">
@@ -282,8 +299,17 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="0512 345 6789"
-                  {...register("phoneNumber")}
+                  {...register("phoneNumber", {
+                    pattern: {
+                      value: /^[0-9\s()+-]{10,15}$/,
+                      message: "Telefon formatı geçersiz",
+                    },
+                  })}
+
                 />
+                {errors.phoneNumber && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col col-span-2">
@@ -291,8 +317,17 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="Fatura adresi"
-                  {...register("address")}
+                  {...register("address", {
+                    minLength: {
+                      value: 5,
+                      message: "Adres çok kısa",
+                    },
+                  })}
+
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col">
@@ -300,8 +335,21 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="İstanbul"
-                  {...register("city")}
+                  {...register("city", {
+                    minLength: {
+                      value: 2,
+                      message: "Şehir adı çok kısa",
+                    },
+                    pattern: {
+                      value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                      message: "Şehir sadece harf içerebilir",
+                    },
+                  })}
+
                 />
+                {errors.city && (
+                  <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
+                )}
               </div>
 
               <div className="flex flex-col">
@@ -309,8 +357,21 @@ const SubscriptionPaymentForm = ({
                 <input
                   className="p-2 rounded-md bg-white border-gray-200 border"
                   placeholder="Kadıköy"
-                  {...register("district")}
+                  {...register("district", {
+                    minLength: {
+                      value: 2,
+                      message: "İlçe adı çok kısa",
+                    },
+                    pattern: {
+                      value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                      message: "İlçe sadece harf içerebilir",
+                    },
+                  })}
+
                 />
+                 {errors.district && (
+                  <p className="text-red-500 text-sm mt-1">{errors.district.message}</p>
+                )}
               </div>
             </div>
 
