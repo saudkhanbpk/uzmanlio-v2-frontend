@@ -154,6 +154,14 @@ const SubscriptionPaymentForm = ({
                 type="text"
                 {...register("cardHolderName", {
                   required: "Kart sahibi adı zorunludur",
+                  minLength: {
+                    value: 3,
+                    message: "Ad en az 3 karakter olmalıdır",
+                  },
+                  pattern: {
+                    value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                    message: "Sadece harf girebilirsiniz",
+                  },
                 })}
                 className="w-full px-4 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition"
                 placeholder="Ad Soyad"
@@ -256,10 +264,18 @@ const SubscriptionPaymentForm = ({
                 </label>
                 <input
                   type="text"
-                  {...register("companyName")}
+                  {...register("companyName", {
+                    minLength: {
+                      value: 3,
+                      message: "Şirket adı en az 3 karakter olmalıdır",
+                    },
+                  })}
                   className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="Şirket adını giriniz"
                 />
+                {errors.companyName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.companyName.message}</p>
+                )}
               </div>
 
               <div>
@@ -271,11 +287,12 @@ const SubscriptionPaymentForm = ({
                   {...register("taxNumber", {
                     pattern: {
                       value: /^[0-9]{10,11}$/,
-                      message: "Geçerli bir vergi/TC numarası giriniz",
+                      message: "Geçerli bir vergi/TC numarası giriniz (10-11 hane)",
                     },
                   })}
                   className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="10 veya 11 haneli numara"
+                  maxLength="11"
                 />
                 {errors.taxNumber && (
                   <p className="text-red-500 text-sm mt-1">{errors.taxNumber.message}</p>
@@ -288,10 +305,18 @@ const SubscriptionPaymentForm = ({
                 </label>
                 <input
                   type="text"
-                  {...register("taxOffice")}
+                  {...register("taxOffice", {
+                    minLength: {
+                      value: 2,
+                      message: "Vergi dairesi adı en az 2 karakter olmalıdır",
+                    },
+                  })}
                   className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="Vergi dairesi adı"
                 />
+                {errors.taxOffice && (
+                  <p className="text-red-500 text-sm mt-1">{errors.taxOffice.message}</p>
+                )}
               </div>
 
               <div>
@@ -300,10 +325,18 @@ const SubscriptionPaymentForm = ({
                 </label>
                 <input
                   type="tel"
-                  {...register("phone")}
+                  {...register("phone", {
+                    pattern: {
+                      value: /^[0-9\s()+-]{10,15}$/,
+                      message: "Geçerli bir telefon numarası giriniz",
+                    },
+                  })}
                   className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                   placeholder="5XX XXX XX XX"
                 />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
+                )}
               </div>
 
               <div>
@@ -311,11 +344,19 @@ const SubscriptionPaymentForm = ({
                   Adres
                 </label>
                 <textarea
-                  {...register("address")}
+                  {...register("address", {
+                    minLength: {
+                      value: 10,
+                      message: "Adres en az 10 karakter olmalıdır",
+                    },
+                  })}
                   rows="3"
                   className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition resize-none"
                   placeholder="Fatura adresi"
                 />
+                {errors.address && (
+                  <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -325,10 +366,22 @@ const SubscriptionPaymentForm = ({
                   </label>
                   <input
                     type="text"
-                    {...register("city")}
+                    {...register("city", {
+                      minLength: {
+                        value: 2,
+                        message: "Şehir adı en az 2 karakter olmalıdır",
+                      },
+                      pattern: {
+                        value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                        message: "Şehir adı sadece harf içerebilir",
+                      },
+                    })}
                     className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                     placeholder="Şehir"
                   />
+                  {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
+                  )}
                 </div>
 
                 <div>
@@ -337,10 +390,22 @@ const SubscriptionPaymentForm = ({
                   </label>
                   <input
                     type="text"
-                    {...register("district")}
+                    {...register("district", {
+                      minLength: {
+                        value: 2,
+                        message: "İlçe adı en az 2 karakter olmalıdır",
+                      },
+                      pattern: {
+                        value: /^[A-Za-zğüşıöçĞÜŞIÖÇ\s]+$/,
+                        message: "İlçe adı sadece harf içerebilir",
+                      },
+                    })}
                     className="w-full px-4 py-2 border border-green-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
                     placeholder="İlçe"
                   />
+                  {errors.district && (
+                    <p className="text-red-500 text-sm mt-1">{errors.district.message}</p>
+                  )}
                 </div>
               </div>
 

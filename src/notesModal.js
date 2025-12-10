@@ -223,11 +223,12 @@ export default function NotesModal({ customer, onClose }) {
                 </label>
                 <textarea
                   value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
+                  onChange={handleNoteChange}
                   rows={3}
                   placeholder="Notunuzu buraya yazın..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none ${noteError ? 'border-red-500' : 'border-gray-300'}`}
                 />
+                {noteError && <p className="text-red-500 text-sm mt-1">{noteError}</p>}
               </div>
 
               {/* File Upload */}

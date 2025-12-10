@@ -47,11 +47,64 @@ export const CreatePackage = () => {
     selectedClients: []
   });
 
+  // Validation errors
+  const [titleError, setTitleError] = useState('');
+  const [descriptionError, setDescriptionError] = useState('');
+  const [locationError, setLocationError] = useState('');
+
+  // Validation functions
+  const validateTextOnly = (value) => {
+    const textOnlyRegex = /^[a-zA-ZğüşıöçĞÜŞİÖÇ\s]*$/;
+    return textOnlyRegex.test(value);
+  };
+
+  // Input change handlers with validation
+  const handleTitleChange = (e) => {
+    const value = e.target.value;
+    setPackageData(prev => ({ ...prev, title: value }));
+
+    if (!validateTextOnly(value)) {
+      setTitleError('Paket adı sadece harflerden oluşmalıdır.');
+    } else {
+      setTitleError('');
+    }
+  };
+
+  const handleDescriptionChange = (e) => {
+    const value = e.target.value;
+    setPackageData(prev => ({ ...prev, description: value }));
+
+    if (!validateTextOnly(value)) {
+      setDescriptionError('Açıklama sadece harflerden oluşmalıdır.');
+    } else {
+      setDescriptionError('');
+    }
+  };
+
+  const handleLocationChange = (e) => {
+    const value = e.target.value;
+    setPackageData(prev => ({ ...prev, location: value }));
+
+    if (!validateTextOnly(value)) {
+      setLocationError('Konum sadece harflerden oluşmalıdır.');
+    } else {
+      setLocationError('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Validation
+    if (titleError || descriptionError || locationError) {
+      Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı!',
+        text: 'Lütfen tüm alanları doğru şekilde doldurun.',
+      });
+      return;
+    }
+
     if (packageData.isOfflineEvent && packageData.selectedClients.length === 0) {
       Swal.fire({
         icon: 'warning',
@@ -237,11 +290,12 @@ export const CreatePackage = () => {
                 type="text"
                 name="title"
                 value={packageData.title}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                onChange={handleTitleChange}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${titleError ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Paket adı"
                 required
               />
+              {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
             </div>
 
             <div className="md:col-span-2">
@@ -251,12 +305,13 @@ export const CreatePackage = () => {
               <textarea
                 name="description"
                 value={packageData.description}
-                onChange={handleInputChange}
+                onChange={handleDescriptionChange}
                 rows="4"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${descriptionError ? 'border-red-500' : 'border-gray-300'}`}
                 placeholder="Paket açıklaması"
                 required
               />
+              {descriptionError && <p className="text-red-500 text-sm mt-1">{descriptionError}</p>}
             </div>
             {/* Icon */}
             <div className="md:col-span-2 flex flex-wrap gap-4 items-center">
@@ -405,11 +460,12 @@ export const CreatePackage = () => {
                   type="text"
                   name="location"
                   value={packageData.location}
-                  onChange={handleInputChange}
+                  onChange={handleLocationChange}
                   placeholder="Etkinlik konumu (adres)"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${locationError ? 'border-red-500' : 'border-gray-300'}`}
                   required={packageData.eventType !== 'hybrid'}
                 />
+                {locationError && <p className="text-red-500 text-sm mt-1">{locationError}</p>}
               </div>
             )}
 
