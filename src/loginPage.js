@@ -13,7 +13,24 @@ export default function LoginPage({ onLogin }) {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [subscriptionEndDate, setSubscriptionEndDate] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const { setUser, loading, error } = useUser(); // Get user from Context
+
+  // Validation functions
+  const validateEmail = (value) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(value);
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    if (value && !validateEmail(value)) {
+      setEmailError('Geçerli bir e-posta adresi giriniz.');
+    } else {
+      setEmailError('');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault(); // prevent page reload
@@ -102,10 +119,11 @@ export default function LoginPage({ onLogin }) {
                 type="email"
                 placeholder="E-posta adresi"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all"
+                onChange={handleEmailChange}
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all ${emailError ? 'border-red-500' : 'border-gray-300'}`}
                 required
               />
+              {emailError && <p className="text-red-500 text-sm mt-1">{emailError}</p>}
             </div>
 
             <div className="relative">

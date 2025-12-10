@@ -38,12 +38,78 @@ export default function SignupPage() {
   const [step, setStep] = useState(1);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [nameError, setNameError] = useState('');
+  const [surnameError, setSurnameError] = useState('');
+  const [cardHolderNameError, setCardHolderNameError] = useState('');
 
   // Pricing
   const monthlyPrices = { individual: 500, institutional: 650, seatPrice: 100 };
   const yearlyPrices = { individual: 5000, institutional: 7400, seatPrice: 100 };
 
   const prices = formData.subscription.duration === 'yearly' ? yearlyPrices : monthlyPrices;
+
+  // Validation functions
+  const validateTextOnly = (value) => {
+    const regex = /^[a-zA-ZğüşöçıİĞÜŞÖÇ\s]+$/;
+    return regex.test(value);
+  };
+
+  const handleNameChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      information: {
+        ...prev.information,
+        name: value,
+      },
+    }));
+    if (value && !validateTextOnly(value)) {
+      setNameError('Ad sadece harflerden oluşmalıdır.');
+    } else {
+      setNameError('');
+    }
+    if (errors['information.name']) {
+      setErrors((prev) => ({ ...prev, ['information.name']: '' }));
+    }
+  };
+
+  const handleSurnameChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      information: {
+        ...prev.information,
+        surname: value,
+      },
+    }));
+    if (value && !validateTextOnly(value)) {
+      setSurnameError('Soyad sadece harflerden oluşmalıdır.');
+    } else {
+      setSurnameError('');
+    }
+    if (errors['information.surname']) {
+      setErrors((prev) => ({ ...prev, ['information.surname']: '' }));
+    }
+  };
+
+  const handleCardHolderNameChange = (e) => {
+    const value = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      subscription: {
+        ...prev.subscription,
+        cardHolderName: value,
+      },
+    }));
+    if (value && !validateTextOnly(value)) {
+      setCardHolderNameError('Kart sahibi adı sadece harflerden oluşmalıdır.');
+    } else {
+      setCardHolderNameError('');
+    }
+    if (errors['subscription.cardHolderName']) {
+      setErrors((prev) => ({ ...prev, ['subscription.cardHolderName']: '' }));
+    }
+  };
 
   // Auto-set seats to 2 when switching to institutional
   useEffect(() => {
@@ -271,15 +337,15 @@ export default function SignupPage() {
                       type="text"
                       name="information.name"
                       value={formData.information.name}
-                      onChange={handleInputChange}
+                      onChange={handleNameChange}
                       placeholder="First Name"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.name')
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${(getErrorMessage('information.name') || nameError)
                         ? 'border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-green-600'
                         }`}
                     />
-                    {getErrorMessage('information.name') && (
-                      <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.name')}</p>
+                    {(getErrorMessage('information.name') || nameError) && (
+                      <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.name') || nameError}</p>
                     )}
                   </div>
 
@@ -288,15 +354,15 @@ export default function SignupPage() {
                       type="text"
                       name="information.surname"
                       value={formData.information.surname}
-                      onChange={handleInputChange}
+                      onChange={handleSurnameChange}
                       placeholder="Last Name"
-                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('information.surname')
+                      className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${(getErrorMessage('information.surname') || surnameError)
                         ? 'border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:ring-green-600'
                         }`}
                     />
-                    {getErrorMessage('information.surname') && (
-                      <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.surname')}</p>
+                    {(getErrorMessage('information.surname') || surnameError) && (
+                      <p className="mt-1 text-xs text-red-600">{getErrorMessage('information.surname') || surnameError}</p>
                     )}
                   </div>
                 </div>
@@ -591,16 +657,16 @@ export default function SignupPage() {
                         type="text"
                         name="subscription.cardHolderName"
                         value={formData.subscription.cardHolderName}
-                        onChange={handleInputChange}
+                        onChange={handleCardHolderNameChange}
                         placeholder="Cardholder Name"
-                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${getErrorMessage('subscription.cardHolderName')
+                        className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent outline-none transition-all ${(getErrorMessage('subscription.cardHolderName') || cardHolderNameError)
                           ? 'border-red-500 focus:ring-red-500'
                           : 'border-gray-300 focus:ring-green-600'
                           }`}
                       />
-                      {getErrorMessage('subscription.cardHolderName') && (
+                      {(getErrorMessage('subscription.cardHolderName') || cardHolderNameError) && (
                         <p className="mt-1 text-xs text-red-600">
-                          {getErrorMessage('subscription.cardHolderName')}
+                          {getErrorMessage('subscription.cardHolderName') || cardHolderNameError}
                         </p>
                       )}
                     </div>

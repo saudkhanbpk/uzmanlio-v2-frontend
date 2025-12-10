@@ -40,6 +40,12 @@ export const Adminactions = () => {
   const [logoPreview, setLogoPreview] = useState('');
   const [coverPreview, setCoverPreview] = useState('');
 
+  // Validation errors
+  const [orgNameError, setOrgNameError] = useState('');
+  const [orgBioError, setOrgBioError] = useState('');
+  const [orgAboutError, setOrgAboutError] = useState('');
+  const [inviteNameError, setInviteNameError] = useState('');
+  const [inviteEmailError, setInviteEmailError] = useState('');
 
   // Kullanıcı İşlemleri state
   const [inviteName, setInviteName] = useState('');
@@ -50,6 +56,66 @@ export const Adminactions = () => {
 
   const userId = localStorage.getItem('userId');
 
+  // Validation functions
+  const validateTextOnly = (value) => {
+    const regex = /^[a-zA-ZğüşöçıİĞÜŞÖÇ\s]+$/;
+    return regex.test(value);
+  };
+
+  const validateEmail = (value) => {
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regex.test(value);
+  };
+
+  const handleOrgNameChange = (e) => {
+    const value = e.target.value;
+    setOrgName(value);
+    if (value && !validateTextOnly(value)) {
+      setOrgNameError('Kurum adı sadece harflerden oluşmalıdır.');
+    } else {
+      setOrgNameError('');
+    }
+  };
+
+  const handleOrgBioChange = (e) => {
+    const value = e.target.value;
+    setOrgBio(value);
+    if (value && !validateTextOnly(value)) {
+      setOrgBioError('Bio sadece harflerden oluşmalıdır.');
+    } else {
+      setOrgBioError('');
+    }
+  };
+
+  const handleOrgAboutChange = (e) => {
+    const value = e.target.value;
+    setOrgAbout(value);
+    if (value && !validateTextOnly(value)) {
+      setOrgAboutError('Hakkında yazısı sadece harflerden oluşmalıdır.');
+    } else {
+      setOrgAboutError('');
+    }
+  };
+
+  const handleInviteNameChange = (e) => {
+    const value = e.target.value;
+    setInviteName(value);
+    if (value && !validateTextOnly(value)) {
+      setInviteNameError('Ad sadece harflerden oluşmalıdır.');
+    } else {
+      setInviteNameError('');
+    }
+  };
+
+  const handleInviteEmailChange = (e) => {
+    const value = e.target.value;
+    setInviteEmail(value);
+    if (value && !validateEmail(value)) {
+      setInviteEmailError('Geçerli bir e-posta adresi giriniz.');
+    } else {
+      setInviteEmailError('');
+    }
+  };
 
   useEffect(() => {
     console.log("User User User:", user)
@@ -122,6 +188,18 @@ export const Adminactions = () => {
 
   const handleSaveOrganization = async (e) => {
     e.preventDefault();
+
+    // Check for validation errors
+    if (orgNameError || orgBioError || orgAboutError) {
+      setError('Lütfen geçerli bilgiler giriniz.');
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Geçersiz Bilgi',
+        text: 'Lütfen geçerli kurum bilgileri giriniz.',
+        confirmButtonText: 'Tamam',
+      });
+      return;
+    }
 
     try {
       setLoading(true);
@@ -320,20 +398,25 @@ export const Adminactions = () => {
               <input
                 type="text"
                 value={orgName}
-                onChange={(e) => setOrgName(e.target.value)}
+                // onChange={(e) => setOrgName(e.target.value)}
+                onChange={handleOrgNameChange}
                 placeholder="Örn. Korvo Bilişim A.Ş."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
+              {orgNameError && <p className="text-red-500 text-sm mt-1">{orgNameError}</p>}
+              
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bio (Kısa Açıklama)</label>
               <input
                 type="text"
                 value={orgBio}
-                onChange={(e) => setOrgBio(e.target.value)}
+                onChange={handleOrgBioChange}
+                
                 placeholder="Kısa tanım ekleyin..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${orgBioError ? 'border-red-500' : 'border-gray-300'}`}
               />
+              {orgBioError && <p className="text-red-500 text-sm mt-1">{orgBioError}</p>}
             </div>
           </div>
 
@@ -388,22 +471,28 @@ export const Adminactions = () => {
           <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
             <h3 className="text-lg font-medium text-gray-900 mb-4">Takıma Kullanıcı Davet Et</h3>
             <form onSubmit={handleInvite} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <input
-                type="text"
-                value={inviteName}
-                onChange={(e) => setInviteName(e.target.value)}
-                placeholder="Ad Soyad"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                required
-              />
-              <input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="E-Posta Adresi"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                required
-              />
+              <div>
+                <input
+                  type="text"
+                  value={inviteName}
+                  onChange={handleInviteNameChange}
+                  placeholder="Ad Soyad"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${inviteNameError ? 'border-red-500' : 'border-gray-300'}`}
+                  required
+                />
+                {inviteNameError && <p className="text-red-500 text-sm mt-1">{inviteNameError}</p>}
+              </div>
+              <div>
+                <input
+                  type="email"
+                  value={inviteEmail}
+                  onChange={handleInviteEmailChange}
+                  placeholder="E-Posta Adresi"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${inviteEmailError ? 'border-red-500' : 'border-gray-300'}`}
+                  required
+                />
+                {inviteEmailError && <p className="text-red-500 text-sm mt-1">{inviteEmailError}</p>}
+              </div>
               <button
                 type="submit"
                 disabled={loading}
