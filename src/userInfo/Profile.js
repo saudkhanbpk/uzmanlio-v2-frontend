@@ -2,6 +2,7 @@ import axios from "axios";
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useUser } from "../context/UserContext";
+import { profileService } from "../services/ProfileServices";
 
 export const Profile = () => {
   const { user, loading, error } = useUser(); // Get user from Context
@@ -82,11 +83,15 @@ export const Profile = () => {
   };
 
   // Fetch Profile
-  const getProfile = () => {
+  const getProfile = async () => {
     try {
-      // const res = await axios.get(`${SERVER_URL}/api/expert/${userId}`);
       if (!user) {
         console.log("User Not Available")
+        const userId = localStorage.getItem('userId');
+        if (userId) {
+          const user = await profileService.getProfile(userId);
+          console.log("user from profile.js:", user)
+        }
         return;
       }
       const res = user

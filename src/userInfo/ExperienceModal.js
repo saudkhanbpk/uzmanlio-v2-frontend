@@ -5,14 +5,14 @@ import { useExpertData } from "../hooks/useExpertData";
 export const ExperienceModal = ({ onClose, experience }) => {
   const { addExperience, loading } = useExpertData();
   const [formData, setFormData] = useState({
-    title: experience.title || "",
-    company: experience.company || "",
-    location: experience.location || "",
-    startDate: experience.start || "",
-    endDate: experience.end || "",
-    current: experience.stillWork || false,
-    description: experience.description || "",
-    skills: experience.skills || ""
+    title: experience?.title || "",
+    company: experience?.company || "",
+    location: experience?.location || "",
+    startDate: experience?.start || "",
+    endDate: experience?.end || "",
+    current: experience?.stillWork || false,
+    description: experience?.description || "",
+    skills: experience?.skills || ""
   });
   const [error, setError] = useState('');
   console.log("Experience:", experience)
