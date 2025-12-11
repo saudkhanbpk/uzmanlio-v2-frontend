@@ -6,6 +6,7 @@ import { log10 } from "chart.js/helpers";
 import { useUser } from "../context/UserContext";
 import PaymentDeductionModal from "./paymentDeductionmodel";
 import RepetitionModal from "./repetitionModel";
+import Swal from "sweetalert2";
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
@@ -292,6 +293,18 @@ export const CreateEvent = () => {
         console.error("❌ Selected service not found for ID:", eventData.serviceId);
         setError("Service not found. Please select a valid one.");
         setLoading(false);
+        return;
+      }
+
+      if (Object.keys(customerPaymentSettings).length === 0) {
+        console.error("❌ No payment settings found");
+        // setError("Please configure payment settings for all clients.");
+        setLoading(false);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Please configure payment settings for all clients.',
+        });
         return;
       }
 
@@ -796,10 +809,16 @@ export const CreateEvent = () => {
             }
           </button>
 
-          {Object.keys(customerPaymentSettings).length > 0 && (
+          {Object.keys(customerPaymentSettings).length > 0 ? (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
                 ✓ {Object.keys(customerPaymentSettings).length} danışan için ödeme ayarları yapılandırıldı
+              </p>
+            </div>
+          ) : eventData.selectedClients.length > 0 && (
+            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-800">
+                ⚠️ Lütfen ödeme kesinti yöntemini seçin
               </p>
             </div>
           )}
