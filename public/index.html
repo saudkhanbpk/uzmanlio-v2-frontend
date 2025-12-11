@@ -7,6 +7,23 @@
         <meta name="description" content="A product Ozmanlio" />
 
         <title>Expert Section</title>
+
+        <!-- Google Analytics 4 -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=%REACT_APP_GA4_MEASUREMENT_ID%"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            
+            // Check if GA4 ID is set (not the placeholder)
+            var ga4Id = '%REACT_APP_GA4_MEASUREMENT_ID%';
+            if (ga4Id && !ga4Id.includes('REACT_APP_GA4')) {
+                gtag('config', ga4Id, {
+                    send_page_view: true,
+                    anonymize_ip: true
+                });
+            }
+        </script>
     </head>
     <body>
         <div id="root"></div>
