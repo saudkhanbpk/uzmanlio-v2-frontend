@@ -3,12 +3,14 @@ import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
 import { profileService } from "../services/ProfileServices";
 import { useUser } from "../context/UserContext";
+import { fetchEarningsStats } from "../services/paymentService";
 
 // Dashboard Home Component
 export const DashboardHome = () => {
   const [fetchedEvents, setFetchedEvents] = useState([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState([]);
   const [recentEvents, setRecentEvents] = useState([]);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const { user, loading, error } = useUser(); // Get user from Context
 
   // useEffect(() => {
@@ -73,7 +75,7 @@ export const DashboardHome = () => {
         time: evt.time || "",
         service: evt.serviceName || "Hizmet",
       }));
-      console.log("Upcomming Appointments:", upcoming);
+    console.log("Upcomming Appointments:", upcoming);
     setUpcomingAppointments(upcoming);
 
     // Recent events (last 3)
@@ -89,6 +91,26 @@ export const DashboardHome = () => {
     setRecentEvents(recent);
 
   }, [user]); // Re-run when user changes
+
+  // Fetch total revenue from earnings stats
+  useEffect(() => {
+    const fetchRevenue = async () => {
+      const userId = localStorage.getItem('userId');
+      if (!userId) return;
+
+      try {
+        const response = await fetchEarningsStats(userId);
+        if (response.success) {
+          setTotalRevenue(response.data.totalRevenue || 0);
+        }
+      } catch (err) {
+        console.error('Error fetching earnings stats:', err);
+      }
+    };
+
+    fetchRevenue();
+  }, []);
+
   // console.log("User From Context:", user)
   const customerscount = user?.customers?.length
   const completedEvents = user?.events?.map((event) => {
@@ -96,10 +118,10 @@ export const DashboardHome = () => {
   }) || 0;
 
   const stats = [
-    { name: 'Toplam Gelir', value: '₺42,890', change: '+12.5%', trend: 'up' },
+    { name: 'Toplam Gelir', value: `₺${totalRevenue.toLocaleString('tr-TR')}`, change: '+12.5%', trend: 'up' },
     { name: 'Aktif Müşteriler', value: customerscount, change: '+8.2%', trend: 'up' },
     { name: 'Bu Ay Satış', value: '156', change: '+23.1%', trend: 'up' },
-    { name: 'Tamamlanan Etkinlikler', value: completedEvents>0?completedEvents:0, change: '+5.4%', trend: 'up' },
+    { name: 'Tamamlanan Etkinlikler', value: completedEvents > 0 ? completedEvents : 0, change: '+5.4%', trend: 'up' },
   ];
 
   const [showVacationModal, setShowVacationModal] = useState(false);
@@ -108,7 +130,7 @@ export const DashboardHome = () => {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Hoş geldiniz, Ahmet!</h1>
+        <h1 className="text-3xl font-bold mb-2">Hoş geldiniz, {user?.information?.name + " " + user?.information?.surname}!</h1>
         <p className="text-primary-100 text-lg">İşiniz harika gözüküyor. İşte son durumunuz.</p>
       </div>
 

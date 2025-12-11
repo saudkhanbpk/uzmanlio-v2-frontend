@@ -18,7 +18,7 @@ import EmailVerificationModal from './EmailVerificationModal';
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
     // Check if user was previously authenticated (in a real app, you'd check localStorage/sessionStorage or a cookie)
-    const authenticated = localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId');
+    const authenticated = localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId') !== null;
     const subscriptionExpired = localStorage.getItem('subscriptionExpired') === 'true';
 
     // If subscription is expired, don't consider user as authenticated for dashboard access

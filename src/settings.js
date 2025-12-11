@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import SubscriptionPaymentForm from "./SubscriptionPaymentForm";
 import Swal from "sweetalert2";
 import axios from "../node_modules/axios/index";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Settings Component
 export const Settings = () => {
@@ -15,10 +17,11 @@ export const Settings = () => {
   const [subscriptionType, setSubscriptionType] = useState("")
   const [price, setPrice] = useState(0);
   const [isAdmin, setIsAdmin] = useState()
+  const navigate = useNavigate();
 
 
   // IMPORTANT: keep this the same user id or replace dynamically
-  const userId = localStorage.getItem('userId') ;
+  const userId = localStorage.getItem('userId');
 
   // Pricing (lowercase keys)
   const monthlyPrices = {
@@ -61,8 +64,24 @@ export const Settings = () => {
     return baseYearly + additionalYearlySeats;
   };
 
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('user');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('subscriptionExpired');
+    localStorage.removeItem('subscriptionEndDate');
+    sessionStorage.removeItem('verificationSkipped');
+  };
+
   // Fetch user profile and subscription from backend (uses lowercase keys)
   useEffect(() => {
+    if (!userId) {
+      handleLogout();
+      navigate('/login');
+      return;
+    }
     async function fetchUserProfile() {
       try {
         const response = await axios.get(
@@ -74,7 +93,7 @@ export const Settings = () => {
         const user = response.data;
         // Accept subscription under either 'subscription' or 'Subscription' (some backends differ)
         const currentSubscription = user.subscription
-        setIsAdmin(user.subscription.isAdmin === true?true:false)
+        setIsAdmin(user.subscription.isAdmin === true ? true : false)
 
         if (currentSubscription && currentSubscription.endDate) {
           // Only treat as active if endDate is in future
@@ -168,252 +187,252 @@ export const Settings = () => {
     <div className="space-y-6">
       {/* Header */}
       <h1 className="text-2xl font-bold text-gray-900">Hesap Ayarları</h1>
-      <div className={`${isAdmin?"block":"hidden"}`}>
-      {/* Subscription Plans */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900 mb-6">Aboneliklerim</h3>
+      <div className={`${isAdmin ? "block" : "hidden"}`}>
+        {/* Subscription Plans */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-6">Aboneliklerim</h3>
 
-        {/* Billing Period Toggle */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-gray-100 p-1 rounded-lg flex">
-            <button
-              onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'monthly'
-                ? 'bg-white text-primary-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-                }`}
-            >
-              Aylık
-            </button>
-            <button
-              onClick={() => setBillingPeriod('yearly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'yearly'
-                ? 'bg-white text-primary-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-                }`}
-            >
-              Yıllık
-            </button>
-          </div>
-        </div>
-
-        {/* Plans */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Bireysel Plan */}
-          <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('individual')
-            ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
-            : 'border-gray-200 cursor-pointer hover:border-gray-300'
-            }`}>
-            {isActivePlan('individual') && (
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
-                  Mevcut Plan
-                </span>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">Bireysel</h4>
-              <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('individual').toLocaleString()}</span>
-                <span className="text-sm text-gray-600 ml-1">
-                  {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
-                </span>
-              </div>
-
-              {billingPeriod === 'yearly' && (
-                <div className="mt-2">
-                  <div className="text-sm text-gray-500">
-                    Yıllık Toplam: ₺{(yearlyPrices.individual ?? yearlyPrices.individual).toLocaleString()}
-                  </div>
-                </div>
-              )}
+          {/* Billing Period Toggle */}
+          <div className="flex justify-center mb-8">
+            <div className="bg-gray-100 p-1 rounded-lg flex">
+              <button
+                onClick={() => setBillingPeriod('monthly')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'monthly'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
+              >
+                Aylık
+              </button>
+              <button
+                onClick={() => setBillingPeriod('yearly')}
+                className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${billingPeriod === 'yearly'
+                  ? 'bg-white text-primary-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+                  }`}
+              >
+                Yıllık
+              </button>
             </div>
-
-            <ul className="space-y-3 mb-6 flex-grow">
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Sınırsız Danışan</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Online Randevu</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Randevu Hatırlatıcı</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span>
-              </li>
-              <li className="flex items-center">
-                <span className="text-primary-600 mr-2">✓</span>
-                <span className="text-sm text-gray-700">1 Ana Kullanıcı</span>
-              </li>
-            </ul>
-
-            <button
-              onClick={() => {
-                // Keep current billingPeriod (monthly or yearly) - don't force monthly
-                handlePlanClick('individual');
-                setSubscriptionType("individual")
-                setPrice(getCurrentPrice('individual'))
-              }}
-              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('individual')
-                ? 'bg-primary-600 text-white cursor-default'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              disabled={isActivePlan('individual')}
-            >
-              {isActivePlan('individual') ? 'Mevcut Plan' : 'Planı Seç'}
-            </button>
           </div>
 
-          {/* Institutional Plan */}
-          <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('institutional')
-            ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
-            : 'border-gray-200 cursor-pointer hover:border-gray-300'
-            }`}>
-            {isActivePlan('institutional') && (
-              <div className="absolute top-4 right-4">
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
-                  Mevcut Plan
-                </span>
-              </div>
-            )}
-
-            <div className="mb-4">
-              <h4 className="text-xl font-semibold text-gray-900">Kurumsal</h4>
-              <div className="mt-2 flex items-baseline">
-                <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice().toLocaleString()}</span>
-                <span className="text-sm text-gray-600 ml-1">
-                  {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
-                </span>
-              </div>
-
-              {billingPeriod === 'yearly' && (
-                <div className="mt-2">
-                  <div className="text-sm text-gray-500">
-                    Yıllık Toplam: ₺{getKurumsalYearlyTotal().toLocaleString()}
-                  </div>
+          {/* Plans */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Bireysel Plan */}
+            <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('individual')
+              ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
+              : 'border-gray-200 cursor-pointer hover:border-gray-300'
+              }`}>
+              {isActivePlan('individual') && (
+                <div className="absolute top-4 right-4">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
+                    Mevcut Plan
+                  </span>
                 </div>
               )}
-            </div>
 
-            <ul className="space-y-3 mb-6 flex-grow">
-              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Sınırsız Danışan</span></li>
-              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Online Randevu</span></li>
-              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Randevu Hatırlatıcı</span></li>
-              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span></li>
-              <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Institutional İsim ve Çoklu Kullanıcı</span></li>
-            </ul>
+              <div className="mb-4">
+                <h4 className="text-xl font-semibold text-gray-900">Bireysel</h4>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-bold text-gray-900">₺{getCurrentPrice('individual').toLocaleString()}</span>
+                  <span className="text-sm text-gray-600 ml-1">
+                    {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
+                  </span>
+                </div>
 
-            {/* Seat Selection - Show for Institutional plan */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Kullanıcı Sayısı Seç
-              </label>
-              <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg bg-gray-50">
-                <div className="flex items-center space-x-4">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
-                    disabled={selectedSeats <= 2}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
-                  >
-                    −
-                  </button>
-
-                  <div className="text-center min-w-[120px]">
-                    <div className="text-2xl font-bold text-gray-900">{selectedSeats}</div>
+                {billingPeriod === 'yearly' && (
+                  <div className="mt-2">
                     <div className="text-sm text-gray-500">
-                      {selectedSeats === 1 ? 'Kullanıcı' : 'Kullanıcı'}
+                      Yıllık Toplam: ₺{(yearlyPrices.individual ?? yearlyPrices.individual).toLocaleString()}
                     </div>
                   </div>
+                )}
+              </div>
 
-                  <button
-                    type="button"
-                    onClick={() => setSelectedSeats(Math.min(20, selectedSeats + 1))}
-                    disabled={selectedSeats >= 20}
-                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats >= 20
-                      ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                      : 'bg-primary-600 text-white hover:bg-primary-700'
-                      }`}
-                  >
-                    +
-                  </button>
+              <ul className="space-y-3 mb-6 flex-grow">
+                <li className="flex items-center">
+                  <span className="text-primary-600 mr-2">✓</span>
+                  <span className="text-sm text-gray-700">Sınırsız Danışan</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="text-primary-600 mr-2">✓</span>
+                  <span className="text-sm text-gray-700">Online Randevu</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="text-primary-600 mr-2">✓</span>
+                  <span className="text-sm text-gray-700">Randevu Hatırlatıcı</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="text-primary-600 mr-2">✓</span>
+                  <span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span>
+                </li>
+                <li className="flex items-center">
+                  <span className="text-primary-600 mr-2">✓</span>
+                  <span className="text-sm text-gray-700">1 Ana Kullanıcı</span>
+                </li>
+              </ul>
+
+              <button
+                onClick={() => {
+                  // Keep current billingPeriod (monthly or yearly) - don't force monthly
+                  handlePlanClick('individual');
+                  setSubscriptionType("individual")
+                  setPrice(getCurrentPrice('individual'))
+                }}
+                className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('individual')
+                  ? 'bg-primary-600 text-white cursor-default'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                disabled={isActivePlan('individual')}
+              >
+                {isActivePlan('individual') ? 'Mevcut Plan' : 'Planı Seç'}
+              </button>
+            </div>
+
+            {/* Institutional Plan */}
+            <div className={`border rounded-xl p-6 relative flex flex-col ${isActivePlan('institutional')
+              ? 'border-primary-500 ring-2 ring-primary-500 ring-opacity-20 bg-primary-50'
+              : 'border-gray-200 cursor-pointer hover:border-gray-300'
+              }`}>
+              {isActivePlan('institutional') && (
+                <div className="absolute top-4 right-4">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
+                    Mevcut Plan
+                  </span>
+                </div>
+              )}
+
+              <div className="mb-4">
+                <h4 className="text-xl font-semibold text-gray-900">Kurumsal</h4>
+                <div className="mt-2 flex items-baseline">
+                  <span className="text-3xl font-bold text-gray-900">₺{getTotalKurumsalPrice().toLocaleString()}</span>
+                  <span className="text-sm text-gray-600 ml-1">
+                    {billingPeriod === 'monthly' ? '/ay' : '/yıl'}
+                  </span>
                 </div>
 
-                <div className="text-right">
-                  <div className="text-sm text-gray-600">Ek Maliyet</div>
-                  <div className="font-semibold text-gray-900">
-                    {selectedSeats > 1 ? (
-                      `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/yıl'}`
-                    ) : (
-                      'Dahil'
-                    )}
+                {billingPeriod === 'yearly' && (
+                  <div className="mt-2">
+                    <div className="text-sm text-gray-500">
+                      Yıllık Toplam: ₺{getKurumsalYearlyTotal().toLocaleString()}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <ul className="space-y-3 mb-6 flex-grow">
+                <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Sınırsız Danışan</span></li>
+                <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Online Randevu</span></li>
+                <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Randevu Hatırlatıcı</span></li>
+                <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Kredi Kartı & Havale Online Ödeme</span></li>
+                <li className="flex items-center"><span className="text-primary-600 mr-2">✓</span><span className="text-sm text-gray-700">Institutional İsim ve Çoklu Kullanıcı</span></li>
+              </ul>
+
+              {/* Seat Selection - Show for Institutional plan */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Kullanıcı Sayısı Seç
+                </label>
+                <div className="flex items-center justify-between p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="flex items-center space-x-4">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSeats(Math.max(1, selectedSeats - 1))}
+                      disabled={selectedSeats <= 2}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats <= 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-primary-600 text-white hover:bg-primary-700'
+                        }`}
+                    >
+                      −
+                    </button>
+
+                    <div className="text-center min-w-[120px]">
+                      <div className="text-2xl font-bold text-gray-900">{selectedSeats}</div>
+                      <div className="text-sm text-gray-500">
+                        {selectedSeats === 1 ? 'Kullanıcı' : 'Kullanıcı'}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSeats(Math.min(20, selectedSeats + 1))}
+                      disabled={selectedSeats >= 20}
+                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${selectedSeats >= 20
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-primary-600 text-white hover:bg-primary-700'
+                        }`}
+                    >
+                      +
+                    </button>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="text-sm text-gray-600">Ek Maliyet</div>
+                    <div className="font-semibold text-gray-900">
+                      {selectedSeats > 1 ? (
+                        `+₺${((selectedSeats - 1) * (billingPeriod === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice)).toLocaleString()} ${billingPeriod === 'monthly' ? '/ay' : '/yıl'}`
+                      ) : (
+                        'Dahil'
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => {
-                // Keep current billingPeriod (monthly or yearly) - don't force yearly
-                handlePlanClick('institutional')
-                setSubscriptionType("institutional")
-                setPrice(getTotalKurumsalPrice())
-              }}
-              className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('institutional')
-                ? 'bg-primary-600 text-white cursor-default'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              disabled={isActivePlan('institutional')}
-            >
-              {isActivePlan('institutional') ? 'Mevcut Plan' : 'Planı Seç'}
+              <button
+                onClick={() => {
+                  // Keep current billingPeriod (monthly or yearly) - don't force yearly
+                  handlePlanClick('institutional')
+                  setSubscriptionType("institutional")
+                  setPrice(getTotalKurumsalPrice())
+                }}
+                className={`w-full py-2 px-4 rounded-lg transition-colors mt-auto ${isActivePlan('institutional')
+                  ? 'bg-primary-600 text-white cursor-default'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                disabled={isActivePlan('institutional')}
+              >
+                {isActivePlan('institutional') ? 'Mevcut Plan' : 'Planı Seç'}
+              </button>
+            </div>
+          </div>
+
+          {/* Footnote */}
+          <div className="mt-6 text-left">
+            <p className="text-xs text-gray-500">KDV hariç fiyatlar gösterilmektedir</p>
+          </div>
+        </div>
+
+        {/* Credit Card Information */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900 mb-6">Kredi Kartı Bilgileri</h3>
+
+          {/* Current Credit Card Display */}
+          <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">VISA</span>
+                </div>
+                <div>
+                  <div className="font-medium text-gray-900">**** **** **** 4532</div>
+                  <div className="text-sm text-gray-600">Ahmet Yılmaz • Son kullanma: 12/27</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Aktif</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Change Payment Method Button */}
+          <div className="flex justify-start">
+            <button className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
+              Ödeme Yöntemini Değiştir
             </button>
           </div>
         </div>
-
-        {/* Footnote */}
-        <div className="mt-6 text-left">
-          <p className="text-xs text-gray-500">KDV hariç fiyatlar gösterilmektedir</p>
-        </div>
-      </div>
-
-      {/* Credit Card Information */}
-      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900 mb-6">Kredi Kartı Bilgileri</h3>
-
-        {/* Current Credit Card Display */}
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded flex items-center justify-center">
-                <span className="text-white text-xs font-bold">VISA</span>
-              </div>
-              <div>
-                <div className="font-medium text-gray-900">**** **** **** 4532</div>
-                <div className="text-sm text-gray-600">Ahmet Yılmaz • Son kullanma: 12/27</div>
-              </div>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Aktif</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Change Payment Method Button */}
-        <div className="flex justify-start">
-          <button className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors">
-            Ödeme Yöntemini Değiştir
-          </button>
-        </div>
-      </div>
       </div>
 
       {/* Notification Settings - Moved to end */}

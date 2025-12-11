@@ -203,12 +203,13 @@ export const FormCreate = () => {
                   type="text"
                   name="title"
                   value={formData.title}
-                  onChange={handleTitleChange}
+                  onChange={handleInputChange}
                   placeholder="Form başlığını girin..."
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${titleError ? 'border-red-500' : 'border-gray-300'}`}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent border-gray-300`}
+                  // ${titleError ? 'border-red-500' : 'border-gray-300'}`
                   required
                 />
-                {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>}
+                {/* {titleError && <p className="text-red-500 text-sm mt-1">{titleError}</p>} */}
               </div>
 
               <div>
