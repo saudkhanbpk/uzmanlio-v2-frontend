@@ -22,6 +22,7 @@ import { Marketing } from "../marketing";
 import Reports from "../reports";
 import { Settings } from "../settings";
 import { Adminactions } from "../Adminactions";
+import AdminAnalytics from "./AdminAnalytics";
 import { profileService } from "../services/ProfileServices";
 import { useUser } from "../context/UserContext";
 
@@ -131,6 +132,12 @@ export default function Dashboard({ onLogout }) {
     { name: "Ödemeler", href: "/dashboard/payments", icon: "💳" },
     { name: "Pazarlama", href: "/dashboard/marketing", icon: "📢" },
     { name: "Raporlar", href: "/dashboard/reports", icon: "📊" },
+    {
+      name: "Kurum Analizi",
+      href: "/dashboard/admin-analytics",
+      icon: "📈",
+      disabled: !isAdmin,
+    },
     { name: "Hesap Ayarları", href: "/dashboard/settings", icon: "⚙️" },
   ];
 
@@ -298,6 +305,7 @@ export default function Dashboard({ onLogout }) {
             <Route path="/payments" element={<Payments />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/admin-analytics" element={<AdminAnalytics />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
