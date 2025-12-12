@@ -1,12 +1,19 @@
 // Customer Service - API calls for customer management
-const backendUrl = process.env.REACT_APP_BACKEND_URL
+import { authFetch, getAuthUserId } from './authFetch';
+
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const API_BASE_URL = `${backendUrl}/api/expert`;
-//const API_BASE_URL = '/api/expert`;
 
 export const customerService = {
   // Get all customers for a user
   async getCustomers(userId, filters = {}) {
     try {
+      // Use provided userId or get from token
+      const effectiveUserId = userId || getAuthUserId();
+      if (!effectiveUserId) {
+        throw new Error('User ID not available');
+      }
+
       const queryParams = new URLSearchParams();
 
       if (filters.status && filters.status !== 'all') {
@@ -19,8 +26,8 @@ export const customerService = {
         queryParams.append('search', filters.search);
       }
 
-      const url = `${API_BASE_URL}/${userId}/customers${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-      const response = await fetch(url);
+      const url = `${API_BASE_URL}/${effectiveUserId}/customers${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+      const response = await authFetch(url);
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -37,7 +44,7 @@ export const customerService = {
   // Get single customer by ID
   async getCustomer(userId, customerId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -52,7 +59,7 @@ export const customerService = {
   // Create new customer
   async createCustomer(userId, customerData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +83,7 @@ export const customerService = {
   // Update customer
   async updateCustomer(userId, customerId, customerData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -100,7 +107,7 @@ export const customerService = {
   // Delete customer
   async deleteCustomer(userId, customerId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}`, {
         method: 'DELETE',
       });
 
@@ -119,7 +126,7 @@ export const customerService = {
   // Archive/Unarchive customer
   async archiveCustomer(userId, customerId, isArchived) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/archive`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/archive`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -143,7 +150,7 @@ export const customerService = {
   // Update customer status
   async updateCustomerStatus(userId, customerId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/status`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +174,7 @@ export const customerService = {
   // Get customer notes
   async getCustomerNotes(userId, customerId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -191,7 +198,7 @@ export const customerService = {
         headers['Content-Type'] = 'application/json';
       }
 
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes`, {
         method: 'POST',
         headers, // send headers only if needed
         body: isFormData ? noteData : JSON.stringify(noteData),
@@ -213,7 +220,7 @@ export const customerService = {
   // Update customer note
   async updateCustomerNote(userId, customerId, noteId, noteData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes/${noteId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes/${noteId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -237,7 +244,7 @@ export const customerService = {
   // Delete customer note
   async deleteCustomerNote(userId, customerId, noteId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes/${noteId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/${customerId}/notes/${noteId}`, {
         method: 'DELETE',
       });
 
@@ -256,7 +263,7 @@ export const customerService = {
   // Get customer statistics
   async getCustomerStats(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customersStats`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customersStats`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -272,7 +279,7 @@ export const customerService = {
   // Bulk import customers
   async bulkImportCustomers(userId, customersData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customers/bulk-import`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customers/bulk-import`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -296,7 +303,7 @@ export const customerService = {
   // Export customers
   async exportCustomers(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/customerscsv/export`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/customerscsv/export`);
 
       if (!response.ok) {
         throw new Error("Failed to download CSV");

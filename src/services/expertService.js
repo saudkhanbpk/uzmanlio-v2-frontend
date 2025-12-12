@@ -1,7 +1,10 @@
 // API service for expert information
+import { authFetch, getAuthUserId } from './authFetch';
+
 const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+
 class ExpertService {
-  // Helper method for API calls
+  // Helper method for API calls - now uses authenticated fetch
   async apiCall(endpoint, options = {}) {
     const url = `${SERVER_URL}${endpoint}`;
     const config = {
@@ -13,13 +16,14 @@ class ExpertService {
     };
 
     try {
-      const response = await fetch(url, config);
-      
+      // Use authFetch instead of fetch - automatically adds JWT token
+      const response = await authFetch(url, config);
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
-      
+
       return await response.json();
     } catch (error) {
       console.error(`API call failed for ${endpoint}:`, error);
@@ -41,7 +45,7 @@ class ExpertService {
 
   async updateTitle(userId, titleId, titleData) {
     return this.apiCall(`/api/expert/${userId}/titles/${titleId}`, {
-      method: 'PUT', 
+      method: 'PUT',
       body: JSON.stringify(titleData),
     });
   }
@@ -125,7 +129,7 @@ class ExpertService {
     return this.apiCall(`/api/expert/${userId}/experience`);
   }
 
-  async addExperience(userId, experienceData) {    
+  async addExperience(userId, experienceData) {
     return this.apiCall(`/api/expert/${userId}/experience`, {
       method: 'POST',
       body: JSON.stringify(experienceData),
@@ -275,18 +279,18 @@ class ExpertService {
     const res = this.apiCall(`/api/expert/${userId}/profile`);
     localStorage.removeItem("user")
     localStorage.setItem("user", JSON.stringify(res));
-    console.log("response:",res);
-    return res 
+    console.log("response:", res);
+    return res
   }
 
   async updateExpertProfile(userId, profileData) {
-     const res = this.apiCall(`/api/expert/${userId}/profile`, {
+    const res = this.apiCall(`/api/expert/${userId}/profile`, {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });
     localStorage.removeItem("user")
-     localStorage.setItem("user", JSON.stringify(res));
-    console.log("response:",res);
+    localStorage.setItem("user", JSON.stringify(res));
+    console.log("response:", res);
     return res
   }
 

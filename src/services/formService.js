@@ -1,12 +1,14 @@
 // Form Service - API calls for forms management
-const backendUrl = process.env.REACT_APP_BACKEND_URL
+import { authFetch, getAuthUserId } from './authFetch';
+
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const formService = {
   // Get all forms for a user
   async getForms(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -21,7 +23,7 @@ export const formService = {
   // Get forms by status
   async getFormsByStatus(userId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/status/${status}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/status/${status}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -36,7 +38,7 @@ export const formService = {
   // Get single form by ID
   async getForm(userId, formId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -51,7 +53,7 @@ export const formService = {
   // Create new form
   async createForm(userId, formData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,7 +77,7 @@ export const formService = {
   // Update form
   async updateForm(userId, formId, formData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +101,7 @@ export const formService = {
   // Update form status
   async updateFormStatus(userId, formId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}/status`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +125,7 @@ export const formService = {
   // Delete form
   async deleteForm(userId, formId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}`, {
         method: 'DELETE',
       });
 
@@ -142,7 +144,7 @@ export const formService = {
   // Duplicate form
   async duplicateForm(userId, formId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}/duplicate`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}/duplicate`, {
         method: 'POST',
       });
 
@@ -162,7 +164,7 @@ export const formService = {
   // Get form responses
   async getFormResponses(userId, formId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}/responses`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}/responses`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -177,7 +179,7 @@ export const formService = {
   // Submit form response (public)
   async submitFormResponse(userId, formId, responseData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}/submit`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -201,7 +203,7 @@ export const formService = {
   // Get form analytics
   async getFormAnalytics(userId, formId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/${formId}/analytics`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/${formId}/analytics`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -216,7 +218,7 @@ export const formService = {
   // Get forms statistics
   async getFormsStats(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/forms/stats`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/forms/stats`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

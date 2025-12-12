@@ -1,6 +1,7 @@
-import axios from 'axios';
+// Payment Service - API calls for payment management
+import { authFetch, getAuthUserId } from './authFetch';
 
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
  * Fetch earnings statistics for an expert
@@ -9,8 +10,12 @@ const API_BASE_URL = 'http://localhost:4000/api';
  */
 export const fetchEarningsStats = async (userId) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/expert/${userId}/payments/stats`);
-        return response.data;
+        const effectiveUserId = userId || getAuthUserId();
+        const response = await authFetch(`${API_BASE_URL}/api/expert/${effectiveUserId}/payments/stats`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching earnings stats:', error);
         throw error;
@@ -25,12 +30,16 @@ export const fetchEarningsStats = async (userId) => {
  */
 export const fetchMonthlyRevenue = async (userId, year) => {
     try {
+        const effectiveUserId = userId || getAuthUserId();
         const url = year
-            ? `${API_BASE_URL}/expert/${userId}/payments/monthly-revenue?year=${year}`
-            : `${API_BASE_URL}/expert/${userId}/payments/monthly-revenue`;
+            ? `${API_BASE_URL}/api/expert/${effectiveUserId}/payments/monthly-revenue?year=${year}`
+            : `${API_BASE_URL}/api/expert/${effectiveUserId}/payments/monthly-revenue`;
 
-        const response = await axios.get(url);
-        return response.data;
+        const response = await authFetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching monthly revenue:', error);
         throw error;
@@ -45,6 +54,7 @@ export const fetchMonthlyRevenue = async (userId, year) => {
  */
 export const fetchPaymentOrders = async (userId, filters = {}) => {
     try {
+        const effectiveUserId = userId || getAuthUserId();
         const queryParams = new URLSearchParams();
 
         if (filters.status) queryParams.append('status', filters.status);
@@ -54,11 +64,14 @@ export const fetchPaymentOrders = async (userId, filters = {}) => {
 
         const queryString = queryParams.toString();
         const url = queryString
-            ? `${API_BASE_URL}/expert/${userId}/payments/orders?${queryString}`
-            : `${API_BASE_URL}/expert/${userId}/payments/orders`;
+            ? `${API_BASE_URL}/api/expert/${effectiveUserId}/payments/orders?${queryString}`
+            : `${API_BASE_URL}/api/expert/${effectiveUserId}/payments/orders`;
 
-        const response = await axios.get(url);
-        return response.data;
+        const response = await authFetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching payment orders:', error);
         throw error;

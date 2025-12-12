@@ -1,13 +1,16 @@
 // Event Service - API calls for events management
-const backendUrl = process.env.REACT_APP_BACKEND_URL
+import { authFetch, getAuthUserId } from './authFetch';
+
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const eventService = {
   // Get all events for a user
   async getEvents(userId, viewMode) {
-    console.log("View Mode:", viewMode)
+    console.log("View Mode:", viewMode);
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events`);
+      const effectiveUserId = userId || getAuthUserId();
+      const response = await authFetch(`${API_BASE_URL}/${effectiveUserId}/events`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -22,7 +25,7 @@ export const eventService = {
   // Get events by status
   async getEventsByStatus(userId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events/status/${status}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events/status/${status}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -37,7 +40,7 @@ export const eventService = {
   // Create new event
   async createEvent(userId, eventData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -61,7 +64,7 @@ export const eventService = {
   // Update event
   async updateEvent(userId, eventId, eventData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events/${eventId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -85,7 +88,7 @@ export const eventService = {
   // Update event status
   async updateEventStatus(userId, eventId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events/${eventId}/status`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events/${eventId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +112,7 @@ export const eventService = {
   // Delete event
   async deleteEvent(userId, eventId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events/${eventId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events/${eventId}`, {
         method: 'DELETE',
       });
 
@@ -128,7 +131,7 @@ export const eventService = {
   // Get event statistics
   async getEventStats(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/events/stats`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/events/stats`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -144,7 +147,7 @@ export const eventService = {
   async getServicesAndPackages(userId) {
     try {
       console.log("Fetching services and packages for user:", userId)
-      const response = await fetch(`${API_BASE_URL}/${userId}/profile`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/profile`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

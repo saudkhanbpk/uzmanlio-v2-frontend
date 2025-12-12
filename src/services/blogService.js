@@ -1,12 +1,14 @@
 // Blog Service - API calls for blog management
-const backendUrl = process.env.REACT_APP_BACKEND_URL
+import { authFetch, getAuthUserId } from './authFetch';
+
+const backendUrl = process.env.REACT_APP_BACKEND_URL;
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
 export const blogService = {
   // Get all blogs for a user
   async getBlogs(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -21,7 +23,7 @@ export const blogService = {
   // Get blogs by status
   async getBlogsByStatus(userId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/status/${status}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/status/${status}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -36,7 +38,7 @@ export const blogService = {
   // Get blogs by category
   async getBlogsByCategory(userId, category) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/category/${encodeURIComponent(category)}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/category/${encodeURIComponent(category)}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -51,7 +53,7 @@ export const blogService = {
   // Get single blog by ID
   async getBlog(userId, blogId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -66,7 +68,7 @@ export const blogService = {
   // Get blog by slug (for public view)
   async getBlogBySlug(userId, slug) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/slug/${slug}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/slug/${slug}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -81,7 +83,7 @@ export const blogService = {
   // Create new blog
   async createBlog(userId, blogData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -105,7 +107,7 @@ export const blogService = {
   // Update blog
   async updateBlog(userId, blogId, blogData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +131,7 @@ export const blogService = {
   // Update blog status
   async updateBlogStatus(userId, blogId, status) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/${blogId}/status`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/${blogId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -153,7 +155,7 @@ export const blogService = {
   // Delete blog
   async deleteBlog(userId, blogId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`, {
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/${blogId}`, {
         method: 'DELETE',
       });
 
@@ -172,7 +174,7 @@ export const blogService = {
   // Get blog statistics
   async getBlogStats(userId) {
     try {
-      const response = await fetch(`${API_BASE_URL}/${userId}/blogs/stats`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}/blogs/stats`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -190,7 +192,7 @@ export const blogService = {
       title: formData.title,
       content: formData.content,
       category: formData.category,
-      keywords: typeof formData.keywords === 'string' 
+      keywords: typeof formData.keywords === 'string'
         ? formData.keywords.split(',').map(k => k.trim()).filter(k => k)
         : formData.keywords || [],
       status: formData.status || 'draft',
