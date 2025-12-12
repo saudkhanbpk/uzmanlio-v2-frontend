@@ -42,7 +42,7 @@ export default function Services() {
   const { institutionUsers, fetchInstitutionUsers, getAllServices, getAllPackages } = useInstitutionUsers();
 
   // Check if user is admin (only admins can see institution view)
-  const isAdmin = user?.subscription?.isAdmin === true;
+  const isAdmin = user?.subscription?.isAdmin === true && user?.subscription?.plantype === "institutional";
   const canAccessInstitutionView = isAdmin;
 
   const userId = localStorage.getItem('userId');

@@ -12,7 +12,7 @@ export default function Payments() {
   const { institutionUsers, fetchInstitutionUsers } = useInstitutionUsers();
 
   // Check if user is admin (only admins can see institution view)
-  const isAdmin = user?.subscription?.isAdmin === true;
+  const isAdmin = user?.subscription?.isAdmin === true && user?.subscription?.plantype === "institutional";
   const canAccessInstitutionView = isAdmin;
 
   const [showTransferTooltip, setShowTransferTooltip] = useState({});

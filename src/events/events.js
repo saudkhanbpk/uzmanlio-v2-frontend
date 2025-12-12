@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import Swal from "sweetalert2";
 import { eventService } from "../services/eventService";
 import { EventEditModal } from "./EventEditModal";
 import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
@@ -9,7 +10,7 @@ import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
 
 // Events Component
 export const Events = () => {
-  const { viewMode, setViewMode, canAccessInstitutionView } = useViewMode();
+  const { viewMode, setViewMode } = useViewMode();
   const [activeTab, setActiveTab] = useState('all');
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -19,6 +20,10 @@ export const Events = () => {
   const userContext = useUser();
   const user = userContext.user;
   const userSubscription = userContext.user?.subscription;
+
+  // Check if user is admin (only admins with institutional plan can see institution view)
+  const isAdmin = user?.subscription?.isAdmin === true && user?.subscription?.plantype === "institutional";
+  const canAccessInstitutionView = isAdmin;
 
   // Use the InstitutionUsers context for caching
   const {
@@ -135,25 +140,89 @@ export const Events = () => {
   };
 
   const handleApprove = async (event) => {
+    // Show loading state
+    Swal.fire({
+      title: 'Onaylanıyor...',
+      text: 'Etkinlik onaylanıyor, lütfen bekleyin.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
     try {
       const eventId = event.id;
       const ownerId = getEventOwnerId(event);
       await eventService.updateEventStatus(ownerId, eventId, 'approved');
       await loadEvents(userId); // Reload events to reflect changes
+
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Onaylandı!',
+        text: 'Etkinlik başarıyla onaylandı.',
+        timer: 2000,
+        showConfirmButton: false
+      });
     } catch (err) {
-      alert('Etkinlik onaylanırken bir hata oluştu.');
       console.error('Error approving event:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Etkinlik onaylanırken bir hata oluştu.',
+        confirmButtonText: 'Tamam'
+      });
     }
   };
 
   const handleReject = async (event) => {
+    // First confirm with user
+    const result = await Swal.fire({
+      title: 'Emin misiniz?',
+      text: 'Bu etkinliği reddetmek istediğinizden emin misiniz?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Evet, Reddet',
+      cancelButtonText: 'İptal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // Show loading state
+    Swal.fire({
+      title: 'İşleniyor...',
+      text: 'Etkinlik reddediliyor, lütfen bekleyin.',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
     try {
       const ownerId = getEventOwnerId(event);
       await eventService.updateEventStatus(ownerId, event.id, 'cancelled');
       await loadEvents(userId); // Reload events to reflect changes
+
+      // Show success message
+      Swal.fire({
+        icon: 'success',
+        title: 'Reddedildi!',
+        text: 'Etkinlik başarıyla reddedildi.',
+        timer: 2000,
+        showConfirmButton: false
+      });
     } catch (err) {
-      alert('Etkinlik reddedilirken bir hata oluştu.');
       console.error('Error rejecting event:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: 'Etkinlik reddedilirken bir hata oluştu.',
+        confirmButtonText: 'Tamam'
+      });
     }
   };
 
@@ -198,11 +267,13 @@ export const Events = () => {
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Etkinlikler</h1>
         <div className="flex items-center space-x-4">
-          <ViewModeSwitcher
-            currentMode={viewMode}
-            onModeChange={setViewMode}
-            isAdmin={canAccessInstitutionView}
-          />
+          {canAccessInstitutionView && (
+            <ViewModeSwitcher
+              currentMode={viewMode}
+              onModeChange={setViewMode}
+              isAdmin={isAdmin}
+            />
+          )}
           <Link
             to="/dashboard/etkinlikler/olustur"
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"

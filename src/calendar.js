@@ -20,7 +20,7 @@ export const Calendar = () => {
   const { institutionUsers, fetchInstitutionUsers } = useInstitutionUsers();
 
   // Check if user is admin (only admins can see institution view)
-  const isAdmin = user?.subscription?.isAdmin === true;
+  const isAdmin = user?.subscription?.isAdmin === true && user?.subscription?.plantype === "institutional";
   const canAccessInstitutionView = isAdmin;
 
   // Selected user for institution view (whose calendar to display)
@@ -295,9 +295,24 @@ export const Calendar = () => {
     try {
       setIsSaving(true);
 
+      // If alwaysAvailable is checked, generate ALL time slots for all days
+      let slotsToSave = Array.from(selectedSlots);
+
+      if (alwaysAvailable) {
+        // Generate all possible time slots for all 7 days (0-6)
+        const allSlots = [];
+        for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+          for (const time of timeSlots) {
+            allSlots.push(`${dayIndex}-${time}`);
+          }
+        }
+        slotsToSave = allSlots;
+        console.log(`[Calendar] Always Available: Generated ${allSlots.length} time slots`);
+      }
+
       const availabilityData = {
         alwaysAvailable,
-        selectedSlots: Array.from(selectedSlots)
+        selectedSlots: slotsToSave
       };
 
       await updateAvailability(activeUserId, availabilityData);
