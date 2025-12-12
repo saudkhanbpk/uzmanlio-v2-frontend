@@ -25,7 +25,7 @@ export const ViewModeProvider = ({ children }) => {
 
     // Reset to individual mode if user is not admin
     useEffect(() => {
-        if (user && !user.subscription?.isAdmin && viewMode === 'institution') {
+        if (user && !user.subscription?.isAdmin && user?.subscription?.plantype !== 'institutional' && viewMode === 'institution') {
             setViewModeState('individual');
             localStorage.setItem('viewMode', 'individual');
         }
