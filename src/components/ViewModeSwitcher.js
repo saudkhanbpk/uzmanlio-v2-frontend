@@ -16,8 +16,8 @@ export const ViewModeSwitcher = ({ currentMode, onModeChange, isAdmin }) => {
             <button
                 onClick={() => onModeChange('individual')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${currentMode === 'individual'
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-100'
                     }`}
                 title="Sadece kendi verilerinizi görüntüleyin"
             >
@@ -26,8 +26,8 @@ export const ViewModeSwitcher = ({ currentMode, onModeChange, isAdmin }) => {
             <button
                 onClick={() => onModeChange('institution')}
                 className={`ml-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${currentMode === 'institution'
-                        ? 'bg-primary-100 text-primary-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-primary-100 text-primary-700'
+                    : 'text-gray-700 hover:bg-gray-100'
                     }`}
                 title="Tüm kurum verilerini görüntüleyin"
             >

@@ -14,7 +14,7 @@ export default function Customers() {
   const { institutionUsers, fetchInstitutionUsers, getAllCustomers } = useInstitutionUsers();
 
   // Check if user is admin (only admins can see institution view)
-  const isAdmin = user?.subscription?.isAdmin === true;
+  const isAdmin = user?.subscription?.isAdmin === true && user?.subscription?.plantype === "institutional";
   const canAccessInstitutionView = isAdmin;
 
   const [customers, setCustomers] = useState([]);
