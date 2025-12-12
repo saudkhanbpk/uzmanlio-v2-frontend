@@ -1,7 +1,7 @@
-
 import React from 'react';
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import { authFetch } from './authFetch';
+
 const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackages, setSelectedPackage, setEditPackageModal, packages, packageSearchTerm, getCategoryDisplay, getChannelDisplay, getDurationDisplay, getStatusColor, getStatusDisplay, viewMode }) => {
   // Check if we're in institution view (view-only mode for sub-user data)
   const isInstitutionView = viewMode === 'institution';
@@ -33,7 +33,9 @@ const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackage
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${SERVER_URL}/api/expert/${userId}/packages/${packageItem.id}`);
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/packages/${packageItem.id}`, {
+          method: 'DELETE'
+        });
 
         // Update local state
         setPackages(packages.filter(p => p.id !== packageItem.id));

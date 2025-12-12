@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { authFetch, authGet, authPost } from './authFetch';
 
 const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -11,14 +11,14 @@ const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
  */
 export const createPurchaseEntry = async (userId, customerData, packageId) => {
     try {
-        const response = await axios.post(
+        const data = await authPost(
             `${SERVER_URL}/api/expert/${userId}/purchases`,
             {
                 customerData,
                 packageId
             }
         );
-        return response.data;
+        return data;
     } catch (error) {
         console.error('Error creating purchase entry:', error);
         throw error.response?.data || error;
@@ -32,10 +32,10 @@ export const createPurchaseEntry = async (userId, customerData, packageId) => {
  */
 export const getPurchaseEntries = async (userId) => {
     try {
-        const response = await axios.get(
+        const data = await authGet(
             `${SERVER_URL}/api/expert/${userId}/purchases`
         );
-        return response.data;
+        return data;
     } catch (error) {
         console.error('Error fetching purchase entries:', error);
         throw error.response?.data || error;

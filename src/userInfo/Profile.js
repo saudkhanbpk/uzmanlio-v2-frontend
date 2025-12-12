@@ -1,8 +1,9 @@
-import axios from "axios";
+
 import { useState, useEffect } from "react";
 import Swal from "sweetalert2";
 import { useUser } from "../context/UserContext";
 import { profileService } from "../services/ProfileServices";
+import { authFetch, authPost } from "../services/authFetch";
 
 export const Profile = () => {
   const { user, loading, error } = useUser(); // Get user from Context
@@ -128,12 +129,12 @@ export const Profile = () => {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status,
-        url: `${SERVER_URL}/api/expert/${userId}`,
+        url: `${SERVER_URL} /api/expert / ${userId} `,
       });
       Swal.fire({
         icon: "error",
         title: "Hata!",
-        text: `Profil yüklenemedi: ${error.response?.data?.error || error.message}`,
+        text: `Profil yüklenemedi: ${error.response?.data?.error || error.message} `,
       });
     }
   };
@@ -153,20 +154,24 @@ export const Profile = () => {
     const uploadUrl = `${SERVER_URL}/api/expert/${userId}/upload${existingFilename ? `?imageId=${existingFilename}` : ""}`;
 
     try {
-      const response = await axios.post(
+      const response = await authFetch(
         uploadUrl,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        {
+          method: 'POST',
+          body: formData
+          // authFetch handles Content-Type for FormData automatically
+        }
       );
+      const responseData = await response.json();
 
       // Server returns the uploaded file URL under response.data.data.pp
       // and may also include expertInformation at top-level. Use fallbacks
       // and a cache-buster to force the browser to load the new file.
-      const returnedFileUrl = response.data?.data?.pp || response.data?.pp || response.data?.expertInformation?.pp || "";
-      const returnedFilePath = response.data?.data?.ppFile || response.data?.ppFile || response.data?.expertInformation?.ppFile || "";
+      const returnedFileUrl = responseData?.data?.pp || responseData?.pp || responseData?.expertInformation?.pp || "";
+      const returnedFilePath = responseData?.data?.ppFile || responseData?.ppFile || responseData?.expertInformation?.ppFile || "";
 
       if (!returnedFileUrl) {
-        console.warn("Upload succeeded but server didn't return a file URL", response.data);
+        console.warn("Upload succeeded but server didn't return a file URL", responseData);
       }
 
       const imageUrlWithCacheBuster = returnedFileUrl
@@ -205,14 +210,18 @@ export const Profile = () => {
   // Update Profile
   const updateProfile = async () => {
     try {
-      const response = await axios.put(`${SERVER_URL}/api/expert/${userId}`, {
-        information: profile.information,
-        socialMedia: profile.socialMedia,
-        expertPaymentInfo: profile.expertPaymentInfo,
+      const response = await authFetch(`${SERVER_URL}/api/expert/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          information: profile.information,
+          socialMedia: profile.socialMedia,
+          expertPaymentInfo: profile.expertPaymentInfo,
+        })
       });
-      console.log("Profile updated:", response.data);
-      if (response.data && response.data.expertInformation) {
-        const { expertInformation } = response.data;
+      const responseData = await response.json();
+      console.log("Profile updated:", responseData);
+      if (responseData && responseData.expertInformation) {
+        const { expertInformation } = responseData;
         setProfile((prevProfile) => ({
           ...prevProfile,
           pp: expertInformation.pp || prevProfile.pp,
@@ -231,13 +240,13 @@ export const Profile = () => {
     } catch (error) {
       console.error("Update failed:", {
         message: error.message,
-        response: error.response?.data,
+        response: error.response,
         status: error.response?.status,
       });
       Swal.fire({
         icon: "error",
         title: "Hata!",
-        text: `Güncelleme başarısız: ${error.response?.data?.error || error.message}`,
+        text: `Güncelleme başarısız: ${error.message}`,
       });
     }
   };

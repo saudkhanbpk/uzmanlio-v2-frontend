@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import Swal from "sweetalert2";
-import axios from "axios";
+import { authPost } from "./services/authFetch";
 
 const SubscriptionPaymentForm = ({
   setNewsubscriptionModel,
@@ -45,7 +45,7 @@ const SubscriptionPaymentForm = ({
     const normalizedPlan = (subscriptionType || currentPlan || "").toLowerCase();
     const normalizedDuration = (billingPeriod || "monthly").toLowerCase();
 
-    const data = {
+    const dataPayload = {
       ...formData,
       plantype: normalizedPlan,
       duration: normalizedDuration,
@@ -53,68 +53,67 @@ const SubscriptionPaymentForm = ({
       selectedSeats,
     };
 
-    console.log("Final Payload Sent to Backend:", data);
+    console.log("Final Payload Sent to Backend:", dataPayload);
 
     try {
-      const response = await axios.post(
+      const responseData = await authPost(
         `${backendUrl}/api/expert/${userId}/new-subscription`,
-        data
+        dataPayload
       );
 
-      if (response.status === 200) {
-        const user = response.data.user;
-        console.log("User after subscription:", response.data.user);
+      // authPost throws if not OK, so we can assume success here
+      const user = responseData.user;
+      console.log("User after subscription:", user);
 
-        const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
+      const currentSubscription = user.subscription ?? user.Subscription ?? undefined;
 
-        if (currentSubscription && currentSubscription.endDate) {
-          const endTs = new Date(currentSubscription.endDate).getTime();
+      if (currentSubscription && currentSubscription.endDate) {
+        const endTs = new Date(currentSubscription.endDate).getTime();
 
-          if (!Number.isNaN(endTs) && endTs > Date.now()) {
-            const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? "";
-            const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? "";
+        if (!Number.isNaN(endTs) && endTs > Date.now()) {
+          const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? "";
+          const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? "";
 
-            const planFromBackend = String(planFromBackendRaw).toLowerCase();
-            const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
+          const planFromBackend = String(planFromBackendRaw).toLowerCase();
+          const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
 
-            setCurrentPlan(planFromBackend);
-            setBackendDuration(durationFromBackend);
-            setBillingPeriod(durationFromBackend);
+          setCurrentPlan(planFromBackend);
+          setBackendDuration(durationFromBackend);
+          setBillingPeriod(durationFromBackend);
 
-            if (currentSubscription.seats) {
-              setSelectedSeats(Number(currentSubscription.seats));
-            }
-
-            console.log("✅ Active subscription found:", {
-              planFromBackend,
-              durationFromBackend,
-            });
-
-            Swal.fire({
-              icon: "success",
-              title: "Başarılı",
-              text: "Abonelik başarıyla oluşturuldu. Faturanız e-posta ile gönderilecektir.",
-            }).then(() => {
-              window.location.href = '/dashboard';
-            });
-          } else {
-            setCurrentPlan("");
-            setBackendDuration("");
-            Swal.fire({
-              icon: "info",
-              title: "Abonelik Süresi Dolmuş",
-              text: "Aboneliğiniz geçersiz veya süresi dolmuş.",
-            });
+          if (currentSubscription.seats) {
+            setSelectedSeats(Number(currentSubscription.seats));
           }
+
+          console.log("✅ Active subscription found:", {
+            planFromBackend,
+            durationFromBackend,
+          });
+
+          Swal.fire({
+            icon: "success",
+            title: "Başarılı",
+            text: "Abonelik başarıyla oluşturuldu. Faturanız e-posta ile gönderilecektir.",
+          }).then(() => {
+            window.location.href = '/dashboard';
+          });
         } else {
           setCurrentPlan("");
           setBackendDuration("");
           Swal.fire({
             icon: "info",
-            title: "Abonelik Bulunamadı",
-            text: "Aktif abonelik verisi bulunamadı.",
+            title: "Abonelik Süresi Dolmuş",
+            text: "Aboneliğiniz geçersiz veya süresi dolmuş.",
           });
         }
+      } else {
+        setCurrentPlan("");
+        setBackendDuration("");
+        Swal.fire({
+          icon: "info",
+          title: "Abonelik Bulunamadı",
+          text: "Aktif abonelik verisi bulunamadı.",
+        });
       }
 
       reset();
@@ -123,7 +122,7 @@ const SubscriptionPaymentForm = ({
       Swal.fire({
         icon: "error",
         title: "Hata",
-        text: error?.response?.data?.message || error.message || "Abonelik işlemi sırasında bir hata oluştu",
+        text: error?.message || "Abonelik işlemi sırasında bir hata oluştu",
       });
     } finally {
       setNewsubscriptionModel(false);

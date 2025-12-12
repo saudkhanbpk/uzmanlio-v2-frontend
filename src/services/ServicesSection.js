@@ -1,6 +1,7 @@
 
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import { authFetch } from './authFetch';
+
 const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, setServices, setEditServiceModal, setSelectedService, serviceSearchTerm, getCategoryDisplay
   , getChannelDisplay,
   getPlatformDisplay,
@@ -41,7 +42,9 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${SERVER_URL}/api/expert/${userId}/services/${service.id}`);
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/services/${service.id}`, {
+          method: 'DELETE'
+        });
 
         // Update local state
         setServices(services.filter(s => s.id !== service.id));

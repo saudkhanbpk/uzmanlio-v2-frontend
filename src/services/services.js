@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import Swal from "sweetalert2";
-import axios from "axios";
 import ServiceSection from "./ServicesSection";
 import PackageSection from "./PackageSection";
 import { useUser } from "../context/UserContext";
@@ -10,6 +9,7 @@ import { createPurchaseEntry } from "./purchaseService";
 import { useViewMode } from "../contexts/ViewModeContext";
 import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
 import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
+import { authFetch, getAuthUserId } from "./authFetch";
 
 
 
@@ -51,10 +51,11 @@ export default function Services() {
   const fetchPurchaseDetails = async () => {
     try {
       setLoadingPurchases(true);
-      const response = await axios.get(
+      const response = await authFetch(
         `${SERVER_URL}/api/expert/${userId}/packages/purchases/details`
       );
-      setPurchaseDetails(response.data.purchases || []);
+      const data = await response.json();
+      setPurchaseDetails(data.purchases || []);
     } catch (error) {
       console.error('Error fetching purchase details:', error);
     } finally {
@@ -73,8 +74,9 @@ export default function Services() {
   const fetchServices = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${SERVER_URL}/api/expert/${userId}/services`);
-      setServices(response.data.services || []);
+      const response = await authFetch(`${SERVER_URL}/api/expert/${userId}/services`);
+      const data = await response.json();
+      setServices(data.services || []);
     } catch (error) {
       console.error('Error fetching services:', error);
       Swal.fire({
@@ -90,8 +92,9 @@ export default function Services() {
   // Fetch packages from API
   const fetchPackages = async () => {
     try {
-      const response = await axios.get(`${SERVER_URL}/api/expert/${userId}/packages`);
-      setPackages(response.data.packages || []);
+      const response = await authFetch(`${SERVER_URL}/api/expert/${userId}/packages`);
+      const data = await response.json();
+      setPackages(data.packages || []);
     } catch (error) {
       console.error('Error fetching packages:', error);
     }
@@ -215,22 +218,26 @@ export default function Services() {
       console.log('IconBg being sent:', updateData.iconBg);
 
       // Make API call
-      const response = await axios.put(
+      const response = await authFetch(
         `${SERVER_URL}/api/expert/${userId}/services/${updatedService.id}`,
-        updateData
+        {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        }
       );
+      const responseData = await response.json();
 
-      console.log('Response from server:', response.data);
+      console.log('Response from server:', responseData);
       // Handle different response formats from backend
       let updatedServiceData;
 
       // If backend returns { success: true, service: {...} }
-      if (response.data && response.data.service) {
-        updatedServiceData = response.data.service;
+      if (responseData && responseData.service) {
+        updatedServiceData = responseData.service;
       }
       // If backend returns the service directly
-      else if (response.data && response.data.id) {
-        updatedServiceData = response.data;
+      else if (responseData && responseData.id) {
+        updatedServiceData = responseData;
       }
       // Fallback: merge what we sent with original service
       else {
@@ -326,14 +333,18 @@ export default function Services() {
         features: updatedPackage.features || []
       };
 
-      const response = await axios.put(
+      const response = await authFetch(
         `${SERVER_URL}/api/expert/${userId}/packages/${updatedPackage.id}`,
-        updateData
+        {
+          method: 'PUT',
+          body: JSON.stringify(updateData)
+        }
       );
+      const responseData = await response.json();
 
       // Update local state
       setPackages(packages.map(pkg =>
-        pkg.id === updatedPackage.id ? response.data.package : pkg
+        pkg.id === updatedPackage.id ? responseData.package : pkg
       ));
 
       setEditPackageModal(false);
@@ -438,8 +449,9 @@ export default function Services() {
   // Fetch available customers for purchase modal
   const fetchCustomers = async () => {
     try {
-      const response = await axios.get(`${SERVER_URL}/api/expert/${userId}/customers`);
-      setAvailableCustomers(response.data.customers || []);
+      const response = await authFetch(`${SERVER_URL}/api/expert/${userId}/customers`);
+      const data = await response.json();
+      setAvailableCustomers(data.customers || []);
     } catch (error) {
       console.error('Error fetching customers:', error);
     }
@@ -448,12 +460,16 @@ export default function Services() {
   // Handle adding new customer from modal
   const handleAddNewCustomer = async (customerData) => {
     try {
-      const response = await axios.post(
+      const response = await authFetch(
         `${SERVER_URL}/api/expert/${userId}/customers`,
-        customerData
+        {
+          method: 'POST',
+          body: JSON.stringify(customerData)
+        }
       );
+      const responseData = await response.json();
 
-      const newCustomer = response.data.customer;
+      const newCustomer = responseData.customer;
       setAvailableCustomers(prev => [...prev, newCustomer]);
       setSelectedCustomerId(newCustomer._id || newCustomer.id);
       setShowAddCustomerModal(false);

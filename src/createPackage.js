@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Swal from "sweetalert2";
 import { AddCustomerModal } from "./customers/AddCustomerModal";
+import { authPost } from "./services/authFetch";
 import { useUser } from "./context/UserContext";
 
 // CreatePackage Component
@@ -155,12 +155,12 @@ export const CreatePackage = () => {
       };
 
       // Make API call
-      const response = await axios.post(
+      const responseData = await authPost(
         `${SERVER_URL}/api/expert/${userId}/packages`,
         packageDataToSend
       );
 
-      console.log("Response from package creation:", response);
+      console.log("Response from package creation:", responseData);
 
       // Success alert
       await Swal.fire({
@@ -180,7 +180,7 @@ export const CreatePackage = () => {
       Swal.fire({
         icon: 'error',
         title: 'Hata!',
-        text: `Paket oluşturulamadı: ${error.response?.data?.error || error.message}`,
+        text: `Paket oluşturulamadı: ${error.message}`,
       });
     }
   };

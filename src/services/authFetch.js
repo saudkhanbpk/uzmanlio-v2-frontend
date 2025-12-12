@@ -179,20 +179,37 @@ const refreshAccessToken = async () => {
 export const authFetch = async (url, options = {}) => {
     let accessToken = getAccessToken();
 
+    // Debug logging
+    console.log('🔐 authFetch Debug:');
+    console.log('  - URL:', url);
+    console.log('  - Token from sessionStorage:', sessionStorage.getItem('accessToken') ? 'YES' : 'NO');
+    console.log('  - Token from localStorage:', localStorage.getItem('accessToken') ? 'YES' : 'NO');
+    console.log('  - Has accessToken:', !!accessToken);
+
     // If no token, user is not logged in
     if (!accessToken) {
-        console.warn('No access token found, redirecting to login');
+        console.warn('  ❌ No access token found, redirecting to login');
         forceLogout();
         throw new Error('Not authenticated');
     }
 
+    // Decode and show token info
+    const payload = decodeToken(accessToken);
+    if (payload) {
+        console.log('  - Token userId:', payload.id);
+        console.log('  - Token expires:', new Date(payload.exp * 1000).toLocaleTimeString());
+        console.log('  - Token expired:', isTokenExpired(accessToken));
+    }
+
     // Check if token is expired and refresh proactively
     if (isTokenExpired(accessToken)) {
+        console.log('  ⚠️ Token expired/expiring, refreshing...');
         try {
             await refreshAccessToken();
             accessToken = getAccessToken();
+            console.log('  ✅ Token refreshed');
         } catch (error) {
-            console.error('Token refresh failed:', error);
+            console.error('  ❌ Token refresh failed:', error);
             forceLogout();
             throw new Error('Session expired. Please login again.');
         }
@@ -206,6 +223,7 @@ export const authFetch = async (url, options = {}) => {
     // Only add Authorization if token exists
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
+        console.log('  ✅ Authorization header attached');
     }
 
     // Only set Content-Type for JSON if not FormData
@@ -216,15 +234,19 @@ export const authFetch = async (url, options = {}) => {
     try {
         let response = await fetch(url, { ...options, headers });
 
+        console.log('  - Response status:', response.status);
+
         // If 401, try to refresh token and retry
         if (response.status === 401) {
+            console.log('  ⚠️ Got 401, trying token refresh...');
             try {
                 await refreshAccessToken();
                 accessToken = getAccessToken();
                 headers['Authorization'] = `Bearer ${accessToken}`;
                 response = await fetch(url, { ...options, headers });
+                console.log('  - Retry response status:', response.status);
             } catch (refreshError) {
-                console.error('Token refresh failed after 401:', refreshError);
+                console.error('  ❌ Token refresh failed after 401:', refreshError);
                 forceLogout();
                 throw new Error('Session expired. Please login again.');
             }

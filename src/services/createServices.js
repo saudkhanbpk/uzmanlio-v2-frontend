@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
-import axios from "axios";
+import { authFetch } from "./authFetch";
 import { AddCustomerModal } from "../customers/AddCustomerModal";
 
 
@@ -123,11 +123,15 @@ export const CreateService = () => {
       };
 
       // Make API call
-      const response = await axios.post(
+      const response = await authFetch(
         `${SERVER_URL}/api/expert/${userId}/services`,
-        ApiData
+        {
+          method: 'POST',
+          body: JSON.stringify(ApiData)
+        }
       );
-      console.log("Response From service Creation:", response)
+      const data = await response.json();
+      console.log("Response From service Creation:", data)
 
       // Success alert
       await Swal.fire({
