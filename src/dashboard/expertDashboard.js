@@ -133,10 +133,9 @@ export default function Dashboard({ onLogout }) {
     { name: "Pazarlama", href: "/dashboard/marketing", icon: "📢" },
     { name: "Raporlar", href: "/dashboard/reports", icon: "📊" },
     {
-      name: "Kurum Analizi",
+      name: "Analizi",
       href: "/dashboard/admin-analytics",
       icon: "📈",
-      disabled: !isAdmin,
     },
     { name: "Hesap Ayarları", href: "/dashboard/settings", icon: "⚙️" },
   ];

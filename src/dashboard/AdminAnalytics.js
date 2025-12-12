@@ -12,6 +12,7 @@ import {
     Legend,
 } from 'chart.js';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+
 import {
     fetchAllExpertsAnalytics,
     fetchAdminExpertAnalytics,
@@ -32,30 +33,38 @@ ChartJS.register(
     Legend
 );
 
-/**
- * Admin Analytics Dashboard
- * Shows aggregated analytics for all experts in an institution
- * Only accessible by institution admins
- */
 export default function AdminAnalytics() {
-    const [activeTab, setActiveTab] = useState('institutional');
+
+    // ======== USER & PLAN DATA ==========
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const isAdmin = user?.subscription?.isAdmin || false;
+    const planType = user?.subscription?.plantype || "individual";
+
+    // ======== TAB LOGIC ==========
+    const showInstitutionalTab = planType === "institutional" && isAdmin == true;
+    const showOnlyIndividual = planType === "individual" || (planType === "institutional" && !isAdmin);
+
+    const [activeTab, setActiveTab] = useState(
+        showInstitutionalTab ? "institutional" : "individual"
+    );
+
     const [timePeriod, setTimePeriod] = useState('monthly');
     const [year] = useState(new Date().getFullYear());
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [selectedExpert, setSelectedExpert] = useState(null);
 
-    // State for analytics data
     const [aggregatedData, setAggregatedData] = useState({
         totalViews: 0,
         totalSessions: 0,
         experts: [],
         institutionName: ''
     });
+
     const [institutionViews, setInstitutionViews] = useState(0);
+
     const [expertDetails, setExpertDetails] = useState(null);
 
-    // State for individual analytics data
     const [individualData, setIndividualData] = useState({
         totalViews: 0,
         totalSessions: 0,
@@ -65,17 +74,24 @@ export default function AdminAnalytics() {
         userName: ''
     });
 
-    const userId = localStorage.getItem('userId');
+    const userId = localStorage.getItem('userId') || user?.id;
     const institutionId = localStorage.getItem('institutionId');
 
-    // Fetch aggregated data on mount and period change
+
+    // ======== FETCH AGGREGATED DATA (ONLY FOR INSTITUTION ADMINS) ==========
     useEffect(() => {
+ 
+
+        if (!showInstitutionalTab) {
+            setLoading(false);
+            return;
+        }
+
         const fetchData = async () => {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Fetch all experts analytics
                 const allExpertsResponse = await fetchAllExpertsAnalytics(timePeriod, year);
 
                 if (allExpertsResponse.success) {
@@ -87,7 +103,6 @@ export default function AdminAnalytics() {
                     });
                 }
 
-                // Fetch institution page views if institutionId exists
                 if (institutionId) {
                     const institutionResponse = await fetchInstitutionAnalytics(institutionId, timePeriod, year);
                     if (institutionResponse.success) {
@@ -104,9 +119,10 @@ export default function AdminAnalytics() {
         };
 
         fetchData();
-    }, [timePeriod, year, institutionId]);
+    }, [timePeriod, year, institutionId, showInstitutionalTab]);
 
-    // Fetch selected expert details
+
+    // ======== FETCH EXPERT DETAILS ==========
     useEffect(() => {
         if (!selectedExpert) {
             setExpertDetails(null);
@@ -127,11 +143,12 @@ export default function AdminAnalytics() {
         fetchExpertDetails();
     }, [selectedExpert, timePeriod, year]);
 
-    // Fetch individual analytics data when individual tab is active
+
+    // ======== FETCH INDIVIDUAL ANALYTICS ==========
     useEffect(() => {
         if (activeTab !== 'individual' || !userId) return;
 
-        const fetchIndividualData = async () => {
+        const fetchIndividualDataFn = async () => {
             try {
                 const profileResponse = await fetchProfileViews(userId, timePeriod, year);
                 const detailedResponse = await fetchDetailedAnalytics(userId, timePeriod, year);
@@ -153,15 +170,19 @@ export default function AdminAnalytics() {
                         countries: detailedResponse.countries || []
                     }));
                 }
+
             } catch (err) {
                 console.error('Error fetching individual analytics:', err);
+            } finally {
+                setLoading(false);
             }
         };
 
-        fetchIndividualData();
+        fetchIndividualDataFn();
     }, [activeTab, userId, timePeriod, year]);
 
-    // Prepare chart data for experts comparison
+
+    // ======== CHARTS ==========
     const expertsChartData = {
         labels: aggregatedData.experts.map(exp => exp.name || 'Unknown'),
         datasets: [
@@ -179,64 +200,43 @@ export default function AdminAnalytics() {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-            legend: {
-                position: 'top',
-            },
+            legend: { position: 'top' },
             title: {
                 display: true,
                 text: 'Uzman Profil Görüntülenmeleri',
-                font: {
-                    size: 16,
-                    weight: 'bold'
-                }
+                font: { size: 16, weight: 'bold' }
             },
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: {
-                    precision: 0
-                }
+                ticks: { precision: 0 }
             }
         }
     };
 
-    // Traffic source chart (if expert is selected)
-    const trafficSourceData = expertDetails ? {
-        labels: expertDetails.trafficSources?.map(source => source.source) || [],
-        datasets: [
-            {
-                data: expertDetails.trafficSources?.map(source => source.sessions) || [],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(168, 85, 247, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
+    const individualTrafficSourceData =
+        individualData.trafficSources.length > 0
+            ? {
+                labels: individualData.trafficSources.map(s => s.source),
+                datasets: [
+                    {
+                        data: individualData.trafficSources.map(s => s.sessions),
+                        backgroundColor: [
+                            'rgba(59,130,246,0.8)',
+                            'rgba(34,197,94,0.8)',
+                            'rgba(239,68,68,0.8)',
+                            'rgba(168,85,247,0.8)',
+                            'rgba(245,158,11,0.8)'
+                        ],
+                        borderWidth: 0,
+                    },
                 ],
-                borderWidth: 0,
-            },
-        ],
-    } : null;
+            }
+            : null;
 
-    // Individual traffic source chart
-    const individualTrafficSourceData = individualData.trafficSources && individualData.trafficSources.length > 0 ? {
-        labels: individualData.trafficSources.map(source => source.source) || [],
-        datasets: [
-            {
-                data: individualData.trafficSources.map(source => source.sessions) || [],
-                backgroundColor: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(34, 197, 94, 0.8)',
-                    'rgba(239, 68, 68, 0.8)',
-                    'rgba(168, 85, 247, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                ],
-                borderWidth: 0,
-            },
-        ],
-    } : null;
 
+    // ======== LOADING / ERROR ==========
     if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -259,38 +259,51 @@ export default function AdminAnalytics() {
         );
     }
 
+
+    // =========================== RENDER ===========================
+
     return (
         <div className="space-y-6">
+
             {/* Header */}
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">
                         {activeTab === 'individual' ? 'Bireysel Analiz' : 'Kurum Analizi'}
                     </h1>
+
                     {aggregatedData.institutionName && activeTab === 'institutional' && (
                         <p className="text-gray-600">{aggregatedData.institutionName}</p>
                     )}
                 </div>
 
-                {/* Time Period Selection */}
+                {/* Time Period */}
                 <div className="flex bg-gray-100 rounded-lg p-1">
                     <button
                         onClick={() => setTimePeriod('daily')}
-                        className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'daily' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                        className={`px-4 py-2 rounded text-sm font-medium ${timePeriod === 'daily'
+                            ? 'bg-white text-primary-600 shadow-sm'
+                            : 'text-gray-600'
                             }`}
                     >
                         Günlük
                     </button>
+
                     <button
                         onClick={() => setTimePeriod('weekly')}
-                        className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'weekly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                        className={`px-4 py-2 rounded text-sm font-medium ${timePeriod === 'weekly'
+                            ? 'bg-white text-primary-600 shadow-sm'
+                            : 'text-gray-600'
                             }`}
                     >
                         Haftalık
                     </button>
+
                     <button
                         onClick={() => setTimePeriod('monthly')}
-                        className={`px-4 py-2 rounded text-sm font-medium transition-colors ${timePeriod === 'monthly' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600'
+                        className={`px-4 py-2 rounded text-sm font-medium ${timePeriod === 'monthly'
+                            ? 'bg-white text-primary-600 shadow-sm'
+                            : 'text-gray-600'
                             }`}
                     >
                         Aylık
@@ -298,36 +311,36 @@ export default function AdminAnalytics() {
                 </div>
             </div>
 
-            {/* Tab Navigation */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="border-b border-gray-200">
-                    <nav className="flex space-x-8 px-6" aria-label="Tabs">
-                        <button
-                            onClick={() => setActiveTab('individual')}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                activeTab === 'individual'
+            {showInstitutionalTab && (
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="border-b border-gray-200">
+                        <nav className="flex space-x-8 px-6" aria-label="Tabs">
+                            <button
+                                onClick={() => setActiveTab('individual')}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'individual'
                                     ? 'border-primary-500 text-primary-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                        >
-                            Bireysel
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('institutional')}
-                            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                                activeTab === 'institutional'
-                                    ? 'border-primary-500 text-primary-600'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                            }`}
-                        >
-                            Kurumsal
-                        </button>
-                    </nav>
-                </div>
-            </div>
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                Bireysel
+                            </button>
 
-            {/* Institutional Analytics */}
-            {activeTab === 'institutional' && (
+                            <button
+                                onClick={() => setActiveTab('institutional')}
+                                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'institutional'
+                                    ? 'border-primary-500 text-primary-600'
+                                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                            >
+                                Kurumsal
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            )}
+
+            {/* ==================== RENDER INSTITUTIONAL ==================== */}
+            {activeTab === "institutional" && showInstitutionalTab && (
                 <>
                     {/* Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -537,9 +550,9 @@ export default function AdminAnalytics() {
                 </>
             )}
 
-            {/* Individual Analytics */}
-            {activeTab === 'individual' && (
-                <>
+            {/* ==================== RENDER INDIVIDUAL ==================== */}
+            {activeTab === "individual" && showOnlyIndividual &&(
+                 <>
                     {/* Individual Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
