@@ -119,6 +119,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('userId', userData._id); // Keep for components not yet migrated
+        sessionStorage.setItem('userId', userData._id); // Store in sessionStorage too
         localStorage.setItem('isAuthenticated', 'true');
 
         // Initialize API client

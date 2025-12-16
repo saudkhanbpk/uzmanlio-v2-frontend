@@ -72,6 +72,7 @@ class Auth {
         localStorage.setItem("refreshToken", userData.refreshToken);
         localStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("userId", userData.user._id);
+        sessionStorage.setItem("userId", userData.user._id);
 
         // Throw error to trigger subscription modal
         throw new Error("SUBSCRIPTION_EXPIRED");
@@ -89,6 +90,7 @@ class Auth {
       localStorage.setItem("refreshToken", userData.refreshToken);
       localStorage.setItem("accessToken", userData.accessToken);
       localStorage.setItem("userId", userData.user._id);
+      sessionStorage.setItem("userId", userData.user._id);
       localStorage.setItem("subscriptionExpired", "false");
       localStorage.setItem("isAuthenticated", "true");
 

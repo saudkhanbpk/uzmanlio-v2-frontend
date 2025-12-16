@@ -130,7 +130,13 @@ export const DashboardHome = () => {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-800 rounded-2xl p-8 text-white">
-        <h1 className="text-3xl font-bold mb-2">Hoş geldiniz, {user?.information?.name + " " + user?.information?.surname}!</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {loading
+            ? "Yükleniyor..."
+            : user?.information?.name
+              ? `Hoş geldiniz, ${user.information.name} ${user.information.surname || ""}!`
+              : "Hoş geldiniz!"}
+        </h1>
         <p className="text-primary-100 text-lg">İşiniz harika gözüküyor. İşte son durumunuz.</p>
       </div>
 

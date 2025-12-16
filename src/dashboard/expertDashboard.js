@@ -39,72 +39,13 @@ export default function Dashboard({ onLogout }) {
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    mountedRef.current = true;
-    const controller = new AbortController();
-
-    async function checkAdminAndLoad() {
-      const userId = localStorage.getItem("userId");
-
-      // If no userId, don't call API
-      if (!userId) {
-        // ensure loading is false if nothing to fetch
-        setLoading?.(false);
-        return;
-      }
-
-      // If we already have user and it's the same userId, skip fetch (prevents loops)
-      if (user && String(user._id) === String(userId)) {
-        // ensure isAdmin correctly set (in case user came from elsewhere)
-        const adminCheck =
-          user?.subscription?.plantype === "institutional" &&
-          user?.subscription?.isAdmin === true;
-        setIsAdmin(adminCheck);
-        setLoading?.(false);
-        return;
-      }
-
-      try {
-        setLoading?.(true);
-        // Pass abort signal to your service if it supports it
-        const userData = await profileService.getProfile(userId, {
-          signal: controller.signal,
-        });
-
-        if (!mountedRef.current) return;
-
-        // update context once with fresh data
-        setUser(userData);
-        setError?.(null);
-
-        // evaluate admin from fresh data
-        const adminCheck =
-          userData?.subscription?.plantype === "institutional" &&
-          userData?.subscription?.isAdmin === true;
-        setIsAdmin(adminCheck);
-      } catch (err) {
-        if (err.name === "AbortError") {
-          // fetch aborted — ignore
-          return;
-        }
-        console.error("Error fetching user profile:", err);
-        if (mountedRef.current) {
-          setError?.(err);
-        }
-      } finally {
-        if (mountedRef.current) {
-          setLoading?.(false);
-        }
-      }
+    if (user?.subscription) {
+      const adminCheck =
+        user?.subscription?.plantype === "institutional" &&
+        user?.subscription?.isAdmin === true;
+      setIsAdmin(adminCheck);
     }
-
-    checkAdminAndLoad();
-
-    return () => {
-      mountedRef.current = false;
-      controller.abort();
-    };
-
-  }, [ /* no user-based deps here to avoid accidental loops */]);
+  }, [user]);
 
   // Computed safe values for rendering
   const fullName = [user?.information?.name ?? "", user?.information?.surname ?? ""]
