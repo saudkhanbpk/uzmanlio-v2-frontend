@@ -38,7 +38,7 @@ export const FormCreate = () => {
 
   const addField = (fieldType) => {
     const newField = {
-      id: Date.now(),
+      // id: Date.now(),
       type: fieldType.type,
       label: `${fieldType.label} Sorusu`,
       required: false,
