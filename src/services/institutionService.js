@@ -1,4 +1,4 @@
-import axios from 'axios';
+import { authFetch, authGet } from './authFetch';
 const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
@@ -11,7 +11,7 @@ export const institutionService = {
      */
     getInstitutionEvents: async (userId, user) => {
         try {
-            const response = await axios.get(
+            const response = await authFetch(
                 `${SERVER_URL}/api/expert/${userId}/institution/events`,
                 {
                     headers: {
@@ -19,7 +19,8 @@ export const institutionService = {
                     }
                 }
             );
-            return response.data.events || [];
+            const data = await response.json();
+            return data.events || [];
         } catch (error) {
             console.error('Error fetching institution events:', error);
             throw error;
@@ -31,10 +32,8 @@ export const institutionService = {
      */
     getInstitutionServices: async (userId) => {
         try {
-            const response = await axios.get(
-                `${SERVER_URL}/api/expert/${userId}/institution/services`
-            );
-            return response.data.services || [];
+            const data = await authGet(`${SERVER_URL}/api/expert/${userId}/institution/services`);
+            return data.services || [];
         } catch (error) {
             console.error('Error fetching institution services:', error);
             throw error;
@@ -46,10 +45,8 @@ export const institutionService = {
      */
     getInstitutionPackages: async (userId) => {
         try {
-            const response = await axios.get(
-                `${SERVER_URL}/api/expert/${userId}/institution/packages`
-            );
-            return response.data.packages || [];
+            const data = await authGet(`${SERVER_URL}/api/expert/${userId}/institution/packages`);
+            return data.packages || [];
         } catch (error) {
             console.error('Error fetching institution packages:', error);
             throw error;
@@ -61,10 +58,8 @@ export const institutionService = {
      */
     getInstitutionCustomers: async (userId) => {
         try {
-            const response = await axios.get(
-                `${SERVER_URL}/api/expert/${userId}/institution/customers`
-            );
-            return response.data.customers || [];
+            const data = await authGet(`${SERVER_URL}/api/expert/${userId}/institution/customers`);
+            return data.customers || [];
         } catch (error) {
             console.error('Error fetching institution customers:', error);
             throw error;
@@ -76,10 +71,8 @@ export const institutionService = {
      */
     getInstitutionOrders: async (userId) => {
         try {
-            const response = await axios.get(
-                `${SERVER_URL}/api/expert/${userId}/institution/orders`
-            );
-            return response.data.orders || [];
+            const data = await authGet(`${SERVER_URL}/api/expert/${userId}/institution/orders`);
+            return data.orders || [];
         } catch (error) {
             console.error('Error fetching institution orders:', error);
             throw error;
@@ -91,10 +84,8 @@ export const institutionService = {
      */
     getInstitutionStats: async (userId) => {
         try {
-            const response = await axios.get(
-                `${SERVER_URL}/api/expert/${userId}/institution/stats`
-            );
-            return response.data;
+            const data = await authGet(`${SERVER_URL}/api/expert/${userId}/institution/stats`);
+            return data;
         } catch (error) {
             console.error('Error fetching institution stats:', error);
             throw error;

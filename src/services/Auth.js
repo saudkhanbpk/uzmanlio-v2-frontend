@@ -60,23 +60,39 @@ class Auth {
         // Store subscription data for modal display
         localStorage.setItem("subscriptionExpired", "true");
         localStorage.setItem("subscriptionEndDate", userData.subscriptionEndDate || "");
+        sessionStorage.setItem("subscriptionExpired", "true");
+        sessionStorage.setItem("subscriptionEndDate", userData.subscriptionEndDate || "");
 
         // Still save user data but don't show success message
+        // Store in both sessionStorage (new) and localStorage (backward compat)
+        sessionStorage.setItem("user", JSON.stringify(userData.user));
+        sessionStorage.setItem("refreshToken", userData.refreshToken);
+        sessionStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("user", JSON.stringify(userData.user));
         localStorage.setItem("refreshToken", userData.refreshToken);
         localStorage.setItem("accessToken", userData.accessToken);
         localStorage.setItem("userId", userData.user._id);
+        sessionStorage.setItem("userId", userData.user._id);
 
         // Throw error to trigger subscription modal
         throw new Error("SUBSCRIPTION_EXPIRED");
       }
 
-      // Save tokens and user data
+      // Save tokens and user data to both storages
+      // sessionStorage for security (clears on browser close)
+      sessionStorage.setItem("user", JSON.stringify(userData.user));
+      sessionStorage.setItem("refreshToken", userData.refreshToken);
+      sessionStorage.setItem("accessToken", userData.accessToken);
+      sessionStorage.setItem("subscriptionExpired", "false");
+
+      // localStorage for backward compatibility with existing components
       localStorage.setItem("user", JSON.stringify(userData.user));
       localStorage.setItem("refreshToken", userData.refreshToken);
       localStorage.setItem("accessToken", userData.accessToken);
       localStorage.setItem("userId", userData.user._id);
+      sessionStorage.setItem("userId", userData.user._id);
       localStorage.setItem("subscriptionExpired", "false");
+      localStorage.setItem("isAuthenticated", "true");
 
       // ✅ SUCCESS SweetAlert
       Swal.fire({
@@ -87,7 +103,12 @@ class Auth {
         showConfirmButton: false,
       });
 
-      return userData.user;
+      // Return full auth data for AuthContext
+      return {
+        user: userData.user,
+        accessToken: userData.accessToken,
+        refreshToken: userData.refreshToken
+      };
 
     } catch (error) {
       console.error("Login failed:", error);

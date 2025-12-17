@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './dashboard/expertDashboard';
@@ -12,89 +12,97 @@ import { ExpertProvider } from './contexts/ExpertContext';
 import { UserProvider } from './context/UserContext';
 import { ViewModeProvider } from './contexts/ViewModeContext';
 import { InstitutionUsersProvider } from './contexts/InstitutionUsersContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 import EmailVerificationModal from './EmailVerificationModal';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    // Check if user was previously authenticated (in a real app, you'd check localStorage/sessionStorage or a cookie)
-    const authenticated = localStorage.getItem('isAuthenticated') === 'true' && localStorage.getItem('userId') !== null;
-    const subscriptionExpired = localStorage.getItem('subscriptionExpired') === 'true';
+/**
+ * Loading spinner component
+ */
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+  </div>
+);
 
-    // If subscription is expired, don't consider user as authenticated for dashboard access
-    return authenticated && !subscriptionExpired;
-  });
+/**
+ * App Routes - Uses AuthContext for authentication state
+ */
+function AppRoutes() {
+  const { isAuthenticated, loading, logout, login } = useAuth();
 
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-    localStorage.setItem('isAuthenticated', 'true');
-  };
-
-  const handleLogout = () => {
-    setIsAuthenticated(false);
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('user');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('subscriptionExpired');
-    localStorage.removeItem('subscriptionEndDate');
-    sessionStorage.removeItem('verificationSkipped');
-  };
+  // Show loading spinner while checking auth state
+  if (loading) {
+    return <LoadingSpinner />;
+  }
 
   return (
-    <div className="App">
-      <UserProvider>
-        <ViewModeProvider>
-          <InstitutionUsersProvider>
-            <ExpertProvider>
-              <BrowserRouter>
-                <Routes>
-                  <Route
-                    path="/login"
-                    element={
-                      isAuthenticated ?
-                        <Navigate to="/dashboard" replace /> :
-                        <LoginPage onLogin={handleLogin} />
-                    }
-                  />
-                  <Route
-                    path="/signup"
-                    element={
-                      isAuthenticated ?
-                        <Navigate to="/dashboard" replace /> :
-                        <SignupPage />
-                    }
-                  />
-                  <Route
-                    path="/forgot-password"
-                    element={
-                      isAuthenticated ?
-                        <Navigate to="/dashboard" replace /> :
-                        <ForgotPasswordPage />
-                    }
-                  />
-                  {/* Invitation Routes - Public access */}
-                  <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
-                  <Route path="/decline-invitation/:token" element={<DeclineInvitationPage />} />
-                  <Route path="/verify-email" element={<EmailVerificationPage />} />
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/login"
+          element={
+            isAuthenticated ?
+              <Navigate to="/dashboard" replace /> :
+              <LoginPage onLogin={(authData) => {
+                // Handle login with AuthContext
+                if (authData && authData.accessToken) {
+                  login(authData.user, authData.accessToken, authData.refreshToken);
+                }
+              }} />
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            isAuthenticated ?
+              <Navigate to="/dashboard" replace /> :
+              <SignupPage />
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            isAuthenticated ?
+              <Navigate to="/dashboard" replace /> :
+              <ForgotPasswordPage />
+          }
+        />
+        {/* Invitation Routes - Public access */}
+        <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
+        <Route path="/decline-invitation/:token" element={<DeclineInvitationPage />} />
+        <Route path="/verify-email" element={<EmailVerificationPage />} />
 
-                  <Route
-                    path="/dashboard/*"
-                    element={
-                      isAuthenticated ?
-                        <Dashboard onLogout={handleLogout} /> :
-                        <Navigate to="/login" replace />
-                    }
-                  />
-                  {/* <Route path="/blog/:slug" element={<BlogPublicView />} /> */}
-                  <Route path="/" element={<Navigate to="/login" replace />} />
-                </Routes>
-                <EmailVerificationModal />
-              </BrowserRouter>
-            </ExpertProvider>
-          </InstitutionUsersProvider>
-        </ViewModeProvider>
-      </UserProvider>
+        <Route
+          path="/dashboard/*"
+          element={
+            isAuthenticated ?
+              <Dashboard onLogout={logout} /> :
+              <Navigate to="/login" replace />
+          }
+        />
+        {/* <Route path="/blog/:slug" element={<BlogPublicView />} /> */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+      </Routes>
+      <EmailVerificationModal />
+    </BrowserRouter>
+  );
+}
+
+function App() {
+  return (
+    <div className="App">
+      <AuthProvider>
+        <UserProvider>
+          <ViewModeProvider>
+            <InstitutionUsersProvider>
+              <ExpertProvider>
+                <AppRoutes />
+              </ExpertProvider>
+            </InstitutionUsersProvider>
+          </ViewModeProvider>
+        </UserProvider>
+      </AuthProvider>
     </div>
   );
 }

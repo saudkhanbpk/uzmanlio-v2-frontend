@@ -1,5 +1,6 @@
 const backendurl = process.env.REACT_APP_BACKEND_URL;
 const API_BASE_URL = `${backendurl}/api/expert`;
+import { authFetch } from "./authFetch";
 
 // Change to a class-based service
 class ProfileService {
@@ -17,7 +18,7 @@ class ProfileService {
       window.location.href = '/login';
       return null;
     } try {
-      const response = await fetch(`${API_BASE_URL}/${userId}`);
+      const response = await authFetch(`${API_BASE_URL}/${userId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

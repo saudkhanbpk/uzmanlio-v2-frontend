@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import axios from 'axios';
+import { authFetch } from '../services/authFetch';
 
 const InstitutionUsersContext = createContext();
 
@@ -35,7 +35,7 @@ export const InstitutionUsersProvider = ({ children }) => {
 
             console.log("[InstitutionContext] ⏳ Making API call to:", `${SERVER_URL}/api/expert/${adminUserId}/institution/users`);
 
-            const response = await axios.get(
+            const response = await authFetch(
                 `${SERVER_URL}/api/expert/${adminUserId}/institution/users`,
                 {
                     headers: {
@@ -43,8 +43,9 @@ export const InstitutionUsersProvider = ({ children }) => {
                     }
                 }
             );
+            const data = await response.json();
 
-            const users = response.data.users || [];
+            const users = data.users || [];
             console.log("[InstitutionContext] ✅ API Response received");
             console.log("[InstitutionContext] Total users fetched:", users.length);
             console.log("[InstitutionContext] Users data:", users);

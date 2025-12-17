@@ -39,22 +39,19 @@ export default function LoginPage({ onLogin }) {
     setIsLoading(true); // Start loading
 
     try {
+      // auth.login now returns { user, accessToken, refreshToken }
+      const authData = await auth.login(formData);
+      setUser(authData.user);
 
-      const user = await auth.login(formData);
-      setUser(user);
-      // console.log("Login successful!", user);
-      onLogin();
-      // const endDate = localStorage.getItem("subscriptionEndDate");
-      // setSubscriptionEndDate(endDate);
-      // setShowSubscriptionModal(true);
-      // Optionally redirect user
-      // navigate("/dashboard");
+      // Pass full auth data to App.js for AuthContext
+      onLogin(authData);
+
     } catch (error) {
       console.error("Login failed:", error.message);
 
       // Check if error is due to expired subscription
       if (error.message === "SUBSCRIPTION_EXPIRED") {
-        const endDate = localStorage.getItem("subscriptionEndDate");
+        const endDate = localStorage.getItem("subscriptionEndDate") || sessionStorage.getItem("subscriptionEndDate");
         setSubscriptionEndDate(endDate);
         setShowSubscriptionModal(true);
         setIsLoading(false); // Stop loading

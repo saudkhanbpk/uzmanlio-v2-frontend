@@ -2,9 +2,9 @@
 import { useEffect, useState } from "react";
 import SubscriptionPaymentForm from "./SubscriptionPaymentForm";
 import Swal from "sweetalert2";
-import axios from "../node_modules/axios/index";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { authFetch } from "./services/authFetch";
 
 // Settings Component
 export const Settings = () => {
@@ -84,13 +84,14 @@ export const Settings = () => {
     }
     async function fetchUserProfile() {
       try {
-        const response = await axios.get(
+        const response = await authFetch(
           `${process.env.REACT_APP_BACKEND_URL}/api/expert/${userId}/profile`
         );
+        const data = await response.json();
 
-        console.log("Response profile:", response);
+        console.log("Response profile:", data);
 
-        const user = response.data;
+        const user = data;
         // Accept subscription under either 'subscription' or 'Subscription' (some backends differ)
         const currentSubscription = user.subscription
         setIsAdmin(user.subscription.isAdmin === true ? true : false)

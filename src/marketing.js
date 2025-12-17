@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
 import Swal from "sweetalert2";
 import CreateCouponModal from "./createCouponModal";
 import { CreateEmailModal } from "./createEmailModal";
+import { authFetch, authGet, authPost } from "./services/authFetch";
 
 // Marketing Component - Redesigned with Kupon Kodu and E-Posta Pazarlaması sections
 export const Marketing = () => {
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [activeTab, setActiveTab] = useState('kupon');
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);
@@ -44,7 +44,7 @@ export const Marketing = () => {
   const [expertName, setExpertName] = useState('');
   const [companyName, setCompanyName] = useState('');
 
-  const userId = localStorage.getItem('userId') ; // adjust as needed
+  const userId = localStorage.getItem('userId'); // adjust as needed
 
 
 
@@ -57,8 +57,8 @@ export const Marketing = () => {
   const fetchCoupons = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${SERVER_URL}/api/expert/${userId}/coupons`);
-      setCoupons(res.data || []);
+      const data = await authGet(`${SERVER_URL}/api/expert/${userId}/coupons`);
+      setCoupons(data || []);
     } catch (err) {
       console.error("Error fetching coupons:", err);
       Swal.fire({ icon: 'error', title: 'Hata', text: 'Kuponlar yüklenemedi' });
@@ -76,8 +76,8 @@ export const Marketing = () => {
   // Fetch emails for user
   const fetchEmails = async () => {
     try {
-      const res = await axios.get(`${SERVER_URL}/api/expert/${userId}/emails`);
-      setEmails(res.data || []);
+      const data = await authGet(`${SERVER_URL}/api/expert/${userId}/emails`);
+      setEmails(data || []);
     } catch (err) {
       console.error('Error fetching emails:', err);
       Swal.fire({ icon: 'error', title: 'Hata', text: 'E-postalar yüklenemedi' });
@@ -112,13 +112,20 @@ export const Marketing = () => {
     try {
       if (selectedCoupon) {
         // update
-        const res = await axios.put(`${SERVER_URL}/api/expert/${userId}/coupons/${selectedCoupon._id}`, payload);
-        setCoupons((prev) => prev.map((c) => (c._id === res.data._id ? res.data : c)));
+        const response = await authFetch(
+          `${SERVER_URL}/api/expert/${userId}/coupons/${selectedCoupon._id}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+          }
+        );
+        const data = await response.json();
+        setCoupons((prev) => prev.map((c) => (c._id === data._id ? data : c)));
         Swal.fire({ icon: 'success', title: 'Güncellendi', text: 'Kupon başarıyla güncellendi.' });
       } else {
         // create
-        const res = await axios.post(`${SERVER_URL}/api/expert/${userId}/coupons`, payload);
-        setCoupons((prev) => [res.data, ...prev]);
+        const data = await authPost(`${SERVER_URL}/api/expert/${userId}/coupons`, payload);
+        setCoupons((prev) => [data, ...prev]);
         Swal.fire({ icon: 'success', title: 'Oluşturuldu', text: 'Kupon başarıyla oluşturuldu.' });
       }
       setShowCouponModal(false);
@@ -141,7 +148,9 @@ export const Marketing = () => {
     });
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${SERVER_URL}/api/expert/${userId}/coupons/${coupon._id}`);
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/coupons/${coupon._id}`, {
+          method: 'DELETE'
+        });
         setCoupons((prev) => prev.filter((c) => c._id !== coupon._id));
         Swal.fire({ icon: 'success', title: 'Silindi', text: 'Kupon silindi.' });
       } catch (err) {
@@ -155,20 +164,27 @@ export const Marketing = () => {
   const handleSaveEmail = async (payload, options = { sendNow: false }) => {
     try {
       if (selectedEmail) {
-        const res = await axios.put(`${SERVER_URL}/api/expert/${userId}/emails/${selectedEmail._id}`, payload);
-        const updated = res.data.email;
+        const response = await authFetch(
+          `${SERVER_URL}/api/expert/${userId}/emails/${selectedEmail._id}`,
+          {
+            method: 'PUT',
+            body: JSON.stringify(payload)
+          }
+        );
+        const data = await response.json();
+        const updated = data.email;
         setEmails((prev) => prev.map((e) => (e._id === updated._id ? updated : e)));
         // if parent asked to send now, call sendNow
         if (options.sendNow) {
-          await axios.post(`${SERVER_URL}/api/expert/${userId}/emails/${updated._id}/send-now`);
+          await authPost(`${SERVER_URL}/api/expert/${userId}/emails/${updated._id}/send-now`);
         }
         Swal.fire({ icon: 'success', title: 'Güncellendi', text: 'E-posta başarıyla güncellendi.' });
       } else {
-        const res = await axios.post(`${SERVER_URL}/api/expert/${userId}/emails`, payload);
-        const created = res.data.email;
+        const data = await authPost(`${SERVER_URL}/api/expert/${userId}/emails`, payload);
+        const created = data.email;
         setEmails((prev) => [created, ...prev]);
         if (options.sendNow) {
-          await axios.post(`${SERVER_URL}/api/expert/${userId}/emails/${created._id}/send-now`);
+          await authPost(`${SERVER_URL}/api/expert/${userId}/emails/${created._id}/send-now`);
         }
         Swal.fire({ icon: 'success', title: 'Oluşturuldu', text: 'E-posta başarıyla oluşturuldu.' });
       }
@@ -183,8 +199,8 @@ export const Marketing = () => {
   // send now
   const sendNow = async (email) => {
     try {
-      const res = await axios.post(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}/send-now`);
-      setEmails((prev) => prev.map((e) => (e._id === res.data.email._id ? res.data.email : e)));
+      const data = await authPost(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}/send-now`);
+      setEmails((prev) => prev.map((e) => (e._id === data.email._id ? data.email : e)));
       Swal.fire({ icon: 'success', title: 'Gönderildi', text: 'E-posta gönderildi.' });
     } catch (err) {
       console.error('Send now error:', err);
@@ -194,8 +210,8 @@ export const Marketing = () => {
 
   const resendFailed = async (email) => {
     try {
-      const res = await axios.post(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}/resend-failed`);
-      setEmails((prev) => prev.map((e) => (e._id === res.data.email._id ? res.data.email : e)));
+      const data = await authPost(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}/resend-failed`);
+      setEmails((prev) => prev.map((e) => (e._id === data.email._id ? data.email : e)));
       Swal.fire({ icon: 'success', title: 'Tekrar denendi', text: 'Hatalı alıcılara tekrar gönderim denendi.' });
     } catch (err) {
       console.error('Resend failed error:', err);
@@ -215,7 +231,9 @@ export const Marketing = () => {
     });
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}`);
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/emails/${email._id}`, {
+          method: 'DELETE'
+        });
         setEmails((prev) => prev.filter((e) => e._id !== email._id));
         Swal.fire({ icon: 'success', title: 'Silindi', text: 'E-posta silindi.' });
       } catch (err) {
@@ -259,8 +277,8 @@ export const Marketing = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-6 border-b-2 font-medium text-sm ${activeTab === tab.id
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  ? 'border-primary-500 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
               >
                 {tab.label}
@@ -311,8 +329,8 @@ export const Marketing = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.type === 'percentage'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-green-100 text-green-800'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-green-100 text-green-800'
                           }`}>
                           {coupon.type === 'percentage' ? 'Yüzde' : 'TL'}
                         </span>
@@ -328,8 +346,8 @@ export const Marketing = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.status === 'active'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
                           }`}>
                           {coupon.status === 'active' ? 'Aktif' : 'Süresi Doldu'}
                         </span>

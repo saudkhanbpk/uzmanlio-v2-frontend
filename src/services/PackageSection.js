@@ -1,8 +1,8 @@
-
 import React from 'react';
-import axios from 'axios';
 import Swal from 'sweetalert2';
-const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackages, setSelectedPackage, setEditPackageModal, packages, packageSearchTerm, getCategoryDisplay, getChannelDisplay, getDurationDisplay, getStatusColor, getStatusDisplay, viewMode }) => {
+import { authFetch } from './authFetch';
+
+const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackages, setSelectedPackage, setEditPackageModal, packages, packageSearchTerm, getCategoryDisplay, getChannelDisplay, getDurationDisplay, getStatusColor, getStatusDisplay, viewMode, onDeletePackage }) => {
   // Check if we're in institution view (view-only mode for sub-user data)
   const isInstitutionView = viewMode === 'institution';
 
@@ -33,10 +33,19 @@ const PackageSection = ({ title, status, bgColor, SERVER_URL, userId, setPackage
 
     if (result.isConfirmed) {
       try {
-        await axios.delete(`${SERVER_URL}/api/expert/${userId}/packages/${packageItem.id}`);
+        // Use _id for MongoDB ObjectId, fallback to id for legacy
+        const packageId = packageItem._id || packageItem.id;
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/packages/${packageId}`, {
+          method: 'DELETE'
+        });
 
         // Update local state
-        setPackages(packages.filter(p => p.id !== packageItem.id));
+        setPackages(packages.filter(p => (p._id || p.id) !== packageId));
+
+        // Call callback if provided (for UserContext update)
+        if (onDeletePackage) {
+          onDeletePackage(packageId);
+        }
 
         Swal.fire({
           icon: 'success',

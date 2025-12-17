@@ -1,6 +1,7 @@
-import axios from 'axios';
+// Reports Service - API calls for reports and analytics
+import { authFetch, getAuthUserId } from './authFetch';
 
-const API_BASE_URL = 'http://localhost:4000/api';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL;
 
 /**
  * Fetch reports summary for an expert
@@ -9,8 +10,12 @@ const API_BASE_URL = 'http://localhost:4000/api';
  */
 export const fetchReportsSummary = async (userId) => {
     try {
-        const response = await axios.get(`${API_BASE_URL}/expert/${userId}/reports/summary`);
-        return response.data;
+        const effectiveUserId = userId || getAuthUserId();
+        const response = await authFetch(`${API_BASE_URL}/api/expert/${effectiveUserId}/reports/summary`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching reports summary:', error);
         throw error;
@@ -26,12 +31,16 @@ export const fetchReportsSummary = async (userId) => {
  */
 export const fetchAnalyticsData = async (userId, period = 'monthly', year) => {
     try {
+        const effectiveUserId = userId || getAuthUserId();
         const url = year
-            ? `${API_BASE_URL}/expert/${userId}/reports/analytics?period=${period}&year=${year}`
-            : `${API_BASE_URL}/expert/${userId}/reports/analytics?period=${period}`;
+            ? `${API_BASE_URL}/api/expert/${effectiveUserId}/reports/analytics?period=${period}&year=${year}`
+            : `${API_BASE_URL}/api/expert/${effectiveUserId}/reports/analytics?period=${period}`;
 
-        const response = await axios.get(url);
-        return response.data;
+        const response = await authFetch(url);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching analytics data:', error);
         throw error;
@@ -46,10 +55,14 @@ export const fetchAnalyticsData = async (userId, period = 'monthly', year) => {
  */
 export const fetchTopServices = async (userId, limit = 5) => {
     try {
-        const response = await axios.get(
-            `${API_BASE_URL}/expert/${userId}/reports/top-services?limit=${limit}`
+        const effectiveUserId = userId || getAuthUserId();
+        const response = await authFetch(
+            `${API_BASE_URL}/api/expert/${effectiveUserId}/reports/top-services?limit=${limit}`
         );
-        return response.data;
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
     } catch (error) {
         console.error('Error fetching top services:', error);
         throw error;

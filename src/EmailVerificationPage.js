@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const EmailVerificationPage = () => {
@@ -21,9 +20,15 @@ const EmailVerificationPage = () => {
 
             try {
                 const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
-                const response = await axios.post(`${backendUrl}/api/expert/verify-email`, { token });
+                const response = await fetch(`${backendUrl}/api/expert/verify-email`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token })
+                });
 
-                if (response.data.success) {
+                const data = await response.json();
+
+                if (data.success) {
                     Swal.fire({
                         title: 'Email Verified!',
                         text: 'Your email has been successfully verified.',
@@ -31,18 +36,18 @@ const EmailVerificationPage = () => {
                         confirmButtonText: 'OK'
                     }).then(() => {
                         // Save user in localStorage
-                        localStorage.setItem('user', JSON.stringify(response.data.user));
+                        localStorage.setItem('user', JSON.stringify(data.user));
                         // Update UI message so success icon appears
                         setMessage('Email verified successfully');
                         // Do NOT navigate anywhere (stays on the same page)
                     });
 
                 } else {
-                    setMessage(response.data.message || 'Verification failed.');
+                    setMessage(data.message || 'Verification failed.');
                 }
             } catch (error) {
                 console.error('Verification error:', error);
-                const errorMessage = error.response?.data?.message || 'Failed to verify email. Please try again.';
+                const errorMessage = error.message || 'Failed to verify email. Please try again.';
                 setMessage(errorMessage);
             } finally {
                 setLoading(false);
@@ -83,14 +88,14 @@ const EmailVerificationPage = () => {
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">Email Verification</h2>
                     <p className="text-gray-600">{message}</p>
                 </div>
-            
-                    <button
-                        onClick={() => navigate('/dashboard')}
-                        className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
-                    >
-                        Go to dashboard
-                    </button>
-             
+
+                <button
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700"
+                >
+                    Go to dashboard
+                </button>
+
 
             </div>
         </div>

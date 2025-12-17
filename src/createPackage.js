@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import Swal from "sweetalert2";
 import { AddCustomerModal } from "./customers/AddCustomerModal";
+import { authPost } from "./services/authFetch";
 import { useUser } from "./context/UserContext";
 
 // CreatePackage Component
 export const CreatePackage = () => {
-  const user = useUser();
+  const { user, patchUser } = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -155,12 +155,18 @@ export const CreatePackage = () => {
       };
 
       // Make API call
-      const response = await axios.post(
+      const responseData = await authPost(
         `${SERVER_URL}/api/expert/${userId}/packages`,
         packageDataToSend
       );
 
-      console.log("Response from package creation:", response);
+      console.log("Response from package creation:", responseData);
+
+      // Update UserContext with new package
+      if (responseData.package) {
+        const currentPackages = user?.packages || [];
+        patchUser({ packages: [...currentPackages, responseData.package] });
+      }
 
       // Success alert
       await Swal.fire({
@@ -180,7 +186,7 @@ export const CreatePackage = () => {
       Swal.fire({
         icon: 'error',
         title: 'Hata!',
-        text: `Paket oluşturulamadı: ${error.response?.data?.error || error.message}`,
+        text: `Paket oluşturulamadı: ${error.message}`,
       });
     }
   };

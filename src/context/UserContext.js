@@ -70,6 +70,74 @@ export function UserProvider({ children }) {
   const setLoading = (loading) => dispatch({ type: 'SET_LOADING', payload: loading });
   const setError = (error) => dispatch({ type: 'SET_ERROR', payload: error });
 
+  // Automatic user fetch if userId exists but user data is missing
+  React.useEffect(() => {
+    const loadUser = async () => {
+      // Check sessionStorage first, then localStorage
+      const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+      console.log('🔄 UserContext: loadUser called, userId:', userId);
+
+      // If no userId, user is not logged in - force logout/redirect
+      if (!userId) {
+        console.log('🔄 UserContext: No userId found - redirecting to login');
+        setLoading(false);
+        // Only redirect if we're not already on login/signup pages
+        if (window.location.pathname !== '/login' &&
+          window.location.pathname !== '/signup' &&
+          window.location.pathname !== '/forgot-password' &&
+          !window.location.pathname.startsWith('/accept-invitation') &&
+          !window.location.pathname.startsWith('/decline-invitation') &&
+          !window.location.pathname.startsWith('/verify-email')) {
+          // Clear any stale auth data
+          sessionStorage.clear();
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          localStorage.removeItem('user');
+          localStorage.removeItem('userId');
+          localStorage.removeItem('isAuthenticated');
+          window.location.href = '/login';
+        }
+        return;
+      }
+
+      // If we already have the correct user data loaded, stop loading
+      if (state.user && String(state.user._id) === String(userId) && state.user.information?.name) {
+        console.log('🔄 UserContext: User already loaded, skipping fetch');
+        if (state.loading) setLoading(false);
+        return;
+      }
+
+      console.log('🔄 UserContext: Fetching user data from backend...');
+      try {
+        setLoading(true);
+        // Dynamically import profile service to avoid circular dependencies
+        const { profileService } = await import('../services/ProfileServices');
+
+        const userData = await profileService.getProfile(userId);
+        console.log('🔄 UserContext: Received userData:', userData ? 'SUCCESS' : 'NULL');
+
+        if (userData) {
+          setUser(userData);
+          console.log('🔄 UserContext: User set in context:', userData.information?.name);
+        } else {
+          // Verify if we should logout if user not found?
+          console.warn("User data fetch returned null");
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Failed to load user in Context:", err);
+        setError(err);
+        setLoading(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, []); // Run once on mount 
+  // If user logs out, userId changes. But context might be unmounted/remounted.
+  // Let's stick to mount for now, or listen to localStorage? (Not reactive).
+
   return (
     <UserContext.Provider value={{
       user: state.user,

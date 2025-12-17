@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from './context/UserContext';
 import { useLocation } from 'react-router-dom';
-import axios from 'axios';
 import Swal from 'sweetalert2';
+import { authPost } from './services/authFetch';
 
 const EmailVerificationModal = () => {
     const { user } = useUser();
@@ -43,7 +43,7 @@ const EmailVerificationModal = () => {
         try {
             // Use the backend URL from env or default to localhost
             const backendUrl = process.env.REACT_APP_BACKEND_URL || 'http://localhost:4000';
-            await axios.post(`${backendUrl}/api/expert/resend-verification`, { email });
+            await authPost(`${backendUrl}/api/expert/resend-verification`, { email });
 
             Swal.fire({
                 title: 'Email Sent!',

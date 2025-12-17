@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import SubscriptionPaymentForm from '../SubscriptionPaymentForm';
 import PlanSelectionModal from './PlanSelectionModal';
-import axios from 'axios';
 
 export default function SubscriptionExpiredModal({ subscriptionEndDate, onClose }) {
     const [showPlanSelection, setShowPlanSelection] = useState(false);
