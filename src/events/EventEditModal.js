@@ -10,7 +10,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
   const { getUserById, institutionUsers } = useInstitutionUsers();
 
   const [formData, setFormData] = useState({
-    id: event.id,
+    id: event._id,
     title: event.title || '',
     description: event.description || '',
     date: event.date || '',

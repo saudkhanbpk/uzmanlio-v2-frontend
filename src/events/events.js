@@ -152,7 +152,7 @@ export const Events = () => {
     });
 
     try {
-      const eventId = event.id;
+      const eventId = event._id;
       const ownerId = getEventOwnerId(event);
       await eventService.updateEventStatus(ownerId, eventId, 'approved');
       await loadEvents(userId); // Reload events to reflect changes
@@ -204,7 +204,7 @@ export const Events = () => {
 
     try {
       const ownerId = getEventOwnerId(event);
-      await eventService.updateEventStatus(ownerId, event.id, 'cancelled');
+      await eventService.updateEventStatus(ownerId, event._id, 'cancelled');
       await loadEvents(userId); // Reload events to reflect changes
 
       // Show success message
@@ -240,7 +240,7 @@ export const Events = () => {
     if (window.confirm('Bu etkinliği silmek istediğinizden emin misiniz?')) {
       try {
         const ownerId = getEventOwnerId(event);
-        await eventService.deleteEvent(ownerId, event.id);
+        await eventService.deleteEvent(ownerId, event._id);
         await loadEvents(userId); // Reload events to reflect changes
       } catch (err) {
         alert('Etkinlik silinirken bir hata oluştu.');
