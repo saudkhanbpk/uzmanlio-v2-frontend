@@ -55,12 +55,12 @@ export const BlogCreate = () => {
     e.preventDefault();
 
     if (!formData.title || !formData.content || !formData.category) {
-  Swal.fire({
-    icon: "info",
-    title: "Lütfen tüm zorunlu alanları doldurun."
-  });
-  return;
-}
+      Swal.fire({
+        icon: "info",
+        title: "Lütfen tüm zorunlu alanları doldurun."
+      });
+      return;
+    }
 
 
     try {

@@ -1,22 +1,155 @@
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
-import { Link } from "react-router-dom";
-import { mockForms } from "../utility/mockData";
+// import { useState } from "react";
+// import { useNavigate, useParams } from "react-router-dom";
+// import { Link } from "react-router-dom";
+// import { mockForms } from "../utility/mockData";
+// import Swal from "sweetalert2";
+// // Form Edit Component
+// export const FormEdit = () => {
+//   const { id } = useParams();
+//   const navigate = useNavigate();
+
+//   // Find the form by ID (in real app, this would be an API call)
+//   const existingForm = mockForms.find(form => form.id === parseInt(id));
+
+//   const [formData, setFormData] = useState({
+//     title: existingForm?.title || '',
+//     description: existingForm?.description || '',
+//     status: existingForm?.status || 'draft'
+//   });
+//   const [fields, setFields] = useState(existingForm?.fields || []);
+
+//   const fieldTypes = [
+//     { type: 'text', label: 'Metin', icon: '📝', description: 'Kısa metin girişi' },
+//     { type: 'email', label: 'E-posta', icon: '📧', description: 'E-posta adresi girişi' },
+//     { type: 'phone', label: 'Telefon', icon: '📞', description: 'Telefon numarası girişi' },
+//     { type: 'single-choice', label: 'Tek Seçim', icon: '⚪', description: 'Seçeneklerden birini seçme' },
+//     { type: 'multiple-choice', label: 'Çoklu Seçim', icon: '☑️', description: 'Birden fazla seçenek seçme' },
+//     { type: 'ranking', label: 'Sıralama', icon: '🔢', description: 'Seçenekleri sıralama' },
+//     { type: 'file-upload', label: 'Dosya Yükleme', icon: '📎', description: 'Dosya yükleme alanı' }
+//   ];
+
+//   if (!existingForm) {
+//     return (
+//       <div className="space-y-6">
+//         <div className="flex items-center space-x-4">
+//           <Link
+//             to="/dashboard/forms"
+//             className="text-gray-500 hover:text-gray-700"
+//           >
+//             ← Geri
+//           </Link>
+//           <h1 className="text-2xl font-bold text-gray-900">Form Bulunamadı</h1>
+//         </div>
+//         <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
+//           <p className="text-gray-600">Düzenlemek istediğiniz form bulunamadı.</p>
+//         </div>
+//       </div>
+//     );
+//   }
+
+//   const handleInputChange = (e) => {
+//     const { name, value } = e.target;
+//     setFormData(prev => ({
+//       ...prev,
+//       [name]: value
+//     }));
+//   };
+
+//   const addField = (fieldType) => {
+//     const newField = {
+//       id: Date.now(),
+//       type: fieldType.type,
+//       label: `${fieldType.label} Sorusu`,
+//       required: false,
+//       placeholder: '',
+//       options: fieldType.type.includes('choice') || fieldType.type === 'ranking' ? ['Seçenek 1', 'Seçenek 2'] : undefined
+//     };
+//     setFields(prev => [...prev, newField]);
+//   };
+
+//   const updateField = (fieldId, updates) => {
+//     setFields(prev => prev.map(field =>
+//       field.id === fieldId ? { ...field, ...updates } : field
+//     ));
+//   };
+
+//   const removeField = (fieldId) => {
+//     setFields(prev => prev.filter(field => field.id !== fieldId));
+//   };
+
+//   const addOption = (fieldId) => {
+//     const field = fields.find(f => f.id === fieldId);
+//     const newOptionNumber = field.options.length + 1;
+//     updateField(fieldId, {
+//       options: [...field.options, `Seçenek ${newOptionNumber}`]
+//     });
+//   };
+
+//   const updateOption = (fieldId, optionIndex, value) => {
+//     const field = fields.find(f => f.id === fieldId);
+//     const newOptions = [...field.options];
+//     newOptions[optionIndex] = value;
+//     updateField(fieldId, { options: newOptions });
+//   };
+
+//   const removeOption = (fieldId, optionIndex) => {
+//     const field = fields.find(f => f.id === fieldId);
+//     const newOptions = field.options.filter((_, index) => index !== optionIndex);
+//     updateField(fieldId, { options: newOptions });
+//   };
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+
+//     if (!formData.title || fields.length === 0) {
+//       // alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
+//       Swal.fire({
+//         icon: "info",
+//         title: "Lütfen form başlığını girin ve en az bir soru ekleyin."
+//       })
+//       return;
+//     }
+
+//     console.log('Form güncellendi:', {
+//       ...existingForm,
+//       ...formData,
+//       fields: fields,
+//       updatedAt: new Date().toISOString().split('T')[0]
+//     });
+
+//     alert('Form başarıyla güncellendi!');
+//     navigate('/dashboard/forms');
+//   };
+
+//   return (
+
+//   );
+// };
+
+
+
+
+
+
+
+import { useState, useEffect } from "react";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import Swal from "sweetalert2";
-// Form Edit Component
+import axios from "axios";
+import { formService } from "../services/formService";
+
+
 export const FormEdit = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
-  // Find the form by ID (in real app, this would be an API call)
-  const existingForm = mockForms.find(form => form.id === parseInt(id));
-  
+  const userId = localStorage.getItem("userId");
   const [formData, setFormData] = useState({
-    title: existingForm?.title || '',
-    description: existingForm?.description || '',
-    status: existingForm?.status || 'draft'
+    title: '',
+    description: '',
+    status: 'draft'
   });
-  const [fields, setFields] = useState(existingForm?.fields || []);
+  const [fields, setFields] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const fieldTypes = [
     { type: 'text', label: 'Metin', icon: '📝', description: 'Kısa metin girişi' },
@@ -28,24 +161,32 @@ export const FormEdit = () => {
     { type: 'file-upload', label: 'Dosya Yükleme', icon: '📎', description: 'Dosya yükleme alanı' }
   ];
 
-  if (!existingForm) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Link 
-            to="/dashboard/forms"
-            className="text-gray-500 hover:text-gray-700"
-          >
-            ← Geri
-          </Link>
-          <h1 className="text-2xl font-bold text-gray-900">Form Bulunamadı</h1>
-        </div>
-        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200 text-center">
-          <p className="text-gray-600">Düzenlemek istediğiniz form bulunamadı.</p>
-        </div>
-      </div>
-    );
-  }
+  // Fetch form data from API
+  useEffect(() => {
+    const fetchForm = async () => {
+      try {
+        const form = await formService.getForm(userId, id);
+        setFormData({
+          title: form.title,
+          description: form.description,
+          status: form.status
+        });
+        setFields(form.fields || []);
+      } catch (error) {
+        console.error("Error fetching form:", error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Form yüklenemedi',
+          text: error.message
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchForm();
+  }, [id, userId]);
+
+  if (loading) return <p>Loading...</p>;
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -68,7 +209,7 @@ export const FormEdit = () => {
   };
 
   const updateField = (fieldId, updates) => {
-    setFields(prev => prev.map(field => 
+    setFields(prev => prev.map(field =>
       field.id === fieldId ? { ...field, ...updates } : field
     ));
   };
@@ -84,48 +225,54 @@ export const FormEdit = () => {
       options: [...field.options, `Seçenek ${newOptionNumber}`]
     });
   };
-
   const updateOption = (fieldId, optionIndex, value) => {
     const field = fields.find(f => f.id === fieldId);
     const newOptions = [...field.options];
     newOptions[optionIndex] = value;
     updateField(fieldId, { options: newOptions });
   };
-
   const removeOption = (fieldId, optionIndex) => {
     const field = fields.find(f => f.id === fieldId);
     const newOptions = field.options.filter((_, index) => index !== optionIndex);
     updateField(fieldId, { options: newOptions });
   };
 
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.title || fields.length === 0) {
-      // alert('Lütfen form başlığını girin ve en az bir soru ekleyin.');
-       Swal.fire({
-        icon:"info",
-        title:"Lütfen form başlığını girin ve en az bir soru ekleyin."
-      })
-      return;
+      return Swal.fire({
+        icon: "info",
+        title: "Lütfen form başlığını girin ve en az bir soru ekleyin."
+      });
     }
 
-    console.log('Form güncellendi:', {
-      ...existingForm,
-      ...formData,
-      fields: fields,
-      updatedAt: new Date().toISOString().split('T')[0]
-    });
-    
-    alert('Form başarıyla güncellendi!');
-    navigate('/dashboard/forms');
+    try {
+      await formService.updateForm(userId, id, formService.formatFormData(formData, fields));
+
+      Swal.fire({
+        icon: 'success',
+        title: 'Form başarıyla güncellendi!'
+      });
+
+      navigate('/dashboard/forms');
+    } catch (error) {
+      console.error("Update form error:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Form güncellenemedi',
+        text: error.message
+      });
+    }
   };
+
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
-        <Link 
+        <Link
           to="/dashboard/forms"
           className="text-gray-500 hover:text-gray-700"
         >
@@ -179,7 +326,7 @@ export const FormEdit = () => {
                   required
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Açıklama
@@ -312,8 +459,8 @@ export const FormEdit = () => {
                         <input
                           type="text"
                           value={field.acceptedTypes?.join(', ') || 'pdf, doc, docx, jpg, png'}
-                          onChange={(e) => updateField(field.id, { 
-                            acceptedTypes: e.target.value.split(',').map(type => type.trim()) 
+                          onChange={(e) => updateField(field.id, {
+                            acceptedTypes: e.target.value.split(',').map(type => type.trim())
                           })}
                           placeholder="pdf, doc, docx, jpg, png"
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
