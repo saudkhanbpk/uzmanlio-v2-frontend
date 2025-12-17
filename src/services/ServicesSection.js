@@ -8,7 +8,8 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
   getDurationDisplay,
   getStatusDisplay,
   getStatusColor,
-  viewMode  // New prop for view mode
+  viewMode,
+  onDeleteService  // Callback for UserContext update
 }) => {
   // Check if we're in institution view (view-only mode for sub-user data)
   const isInstitutionView = viewMode === 'institution';
@@ -42,12 +43,19 @@ const ServiceSection = ({ SERVER_URL, userId, title, status, bgColor, services, 
 
     if (result.isConfirmed) {
       try {
-        await authFetch(`${SERVER_URL}/api/expert/${userId}/services/${service.id}`, {
+        // Use _id for MongoDB ObjectId, fallback to id for legacy
+        const serviceId = service._id || service.id;
+        await authFetch(`${SERVER_URL}/api/expert/${userId}/services/${serviceId}`, {
           method: 'DELETE'
         });
 
         // Update local state
-        setServices(services.filter(s => s.id !== service.id));
+        setServices(services.filter(s => (s._id || s.id) !== serviceId));
+
+        // Call callback if provided (for UserContext update)
+        if (onDeleteService) {
+          onDeleteService(serviceId);
+        }
 
         Swal.fire({
           icon: 'success',

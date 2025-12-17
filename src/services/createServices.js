@@ -3,12 +3,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { authFetch } from "./authFetch";
 import { AddCustomerModal } from "../customers/AddCustomerModal";
+import { useUser } from "../context/UserContext";
 
 
 export const CreateService = () => {
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
-  const userId = localStorage.getItem('userId')
+  const userId = localStorage.getItem('userId');
+  const { user, patchUser } = useUser();
 
   const [serviceData, setServiceData] = useState({
     title: '',
@@ -131,7 +133,13 @@ export const CreateService = () => {
         }
       );
       const data = await response.json();
-      console.log("Response From service Creation:", data)
+      console.log("Response From service Creation:", data);
+
+      // Update UserContext with new service
+      if (data.service) {
+        const currentServices = user?.services || [];
+        patchUser({ services: [...currentServices, data.service] });
+      }
 
       // Success alert
       await Swal.fire({

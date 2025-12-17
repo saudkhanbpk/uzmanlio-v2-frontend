@@ -159,25 +159,8 @@ export default function Services() {
     }
   };
 
-  // Reload data when component mounts or when switching tabs
-  useEffect(() => {
-    // Reload services when on hizmetler tab
-    if (activeTab === 'hizmetler' && viewMode !== 'institution') {
-      fetchServices();
-    }
-    // Reload packages when on paketler tab
-    if (activeTab === 'paketler' && viewMode !== 'institution') {
-      fetchPackages();
-    }
-  }, [activeTab]); // run when tab changes
-
-  // Also reload when component first mounts (when navigating back to this page)
-  useEffect(() => {
-    if (viewMode !== 'institution') {
-      fetchServices();
-      fetchPackages();
-    }
-  }, []); // run once on mount
+  // Note: loadData() already handles data loading from context or API
+  // No need for additional useEffect hooks to refetch on tab change or mount
 
 
   const saveServiceChanges = async (updatedService) => {
@@ -217,9 +200,10 @@ export default function Services() {
       console.log('Sending update data:', updateData);
       console.log('IconBg being sent:', updateData.iconBg);
 
-      // Make API call
+      // Make API call - use _id for MongoDB ObjectId, fallback to id for legacy
+      const serviceId = updatedService._id || updatedService.id;
       const response = await authFetch(
-        `${SERVER_URL}/api/expert/${userId}/services/${updatedService.id}`,
+        `${SERVER_URL}/api/expert/${userId}/services/${serviceId}`,
         {
           method: 'PUT',
           body: JSON.stringify(updateData)
@@ -256,6 +240,7 @@ export default function Services() {
       console.log('Final service data to save:', updatedServiceData);
 
       // Update the services array in state
+      const svcId = updatedService._id || updatedService.id;
       setServices(prevServices => {
         if (!Array.isArray(prevServices)) {
           console.error('Services is not an array:', prevServices);
@@ -263,10 +248,10 @@ export default function Services() {
         }
 
         const newServices = prevServices.map(service =>
-          service.id === updatedService.id ? updatedServiceData : service
+          (service._id || service.id) === svcId ? updatedServiceData : service
         );
 
-        console.log('Updated services array:', newServices); // Debug updated array
+        console.log('Updated services array:', newServices);
         return newServices;
       });
 
@@ -333,8 +318,10 @@ export default function Services() {
         features: updatedPackage.features || []
       };
 
+      // Use _id for MongoDB ObjectId, fallback to id for legacy
+      const packageId = updatedPackage._id || updatedPackage.id;
       const response = await authFetch(
-        `${SERVER_URL}/api/expert/${userId}/packages/${updatedPackage.id}`,
+        `${SERVER_URL}/api/expert/${userId}/packages/${packageId}`,
         {
           method: 'PUT',
           body: JSON.stringify(updateData)
@@ -342,9 +329,10 @@ export default function Services() {
       );
       const responseData = await response.json();
 
-      // Update local state
+      // Update local state - compare by _id or id
+      const pkgId = updatedPackage._id || updatedPackage.id;
       setPackages(packages.map(pkg =>
-        pkg.id === updatedPackage.id ? responseData.package : pkg
+        (pkg._id || pkg.id) === pkgId ? responseData.package : pkg
       ));
 
       setEditPackageModal(false);
@@ -697,89 +685,6 @@ export default function Services() {
       {/* Paketler Tab Content */}
       {activeTab === 'paketler' && (
         <>
-          {/* Purchased Packages Table */}
-          {/* <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-medium text-gray-900">Satın Alınan Paketler</h3>
-              <button
-                onClick={() => {
-                  setShowPurchaseModal(true);
-                  fetchCustomers();
-                }}
-                className="bg-primary-500 text-white px-4 py-2 rounded-lg hover:bg-primary-600"
-              >
-                Add Purchase entry
-              </button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Müşteri Adı
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      E-Posta
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Telefon
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Paket Adı
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Satın Alma Tarihi
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Randevu Kullanımı
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {packages.filter(pkg => pkg.purchasedBy && pkg.purchasedBy.length > 0).length > 0 ? (
-                    packages.filter(pkg => pkg.purchasedBy && pkg.purchasedBy.length > 0).map(pkg =>
-                      pkg.purchasedBy.map((purchase, index) => (
-                        <tr key={`${pkg.id}-${index}`}>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm font-medium text-gray-900">-</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">-</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">-</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">{pkg.title}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              {new Date(purchase.purchaseDate).toLocaleDateString('tr-TR')}
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap">
-                            <div className="text-sm text-gray-900">
-                              <span className="font-medium text-primary-600">{purchase.sessionsUsed || 0}</span>
-                              <span className="text-gray-500">/{pkg.appointmentCount || pkg.sessionsIncluded}</span>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
-                    )
-                  ) : (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                        Henüz satın alınan paket bulunmamaktadır.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div> */}
-          {/* Purchased Packages Table */}
-
           {loadingPurchases ? (
             <div className="flex justify-center items-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500"></div>
@@ -1670,7 +1575,7 @@ export default function Services() {
                 >
                   <option value="">Paket seçin</option>
                   {packages.filter(pkg => pkg.status === 'active').map((pkg) => (
-                    <option key={pkg.id} value={pkg.id}>
+                    <option key={pkg._id || pkg.id} value={pkg._id || pkg.id}>
                       {pkg.title} - ₺{pkg.price} ({pkg.appointmentCount || pkg.sessionsIncluded} randevu)
                     </option>
                   ))}
