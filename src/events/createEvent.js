@@ -131,8 +131,8 @@ export const CreateEvent = () => {
           const packages = Array.isArray(parsedUser.packages) ? parsedUser.packages : [];
 
           const combined = [
-            ...services.map(s => ({ id: s.id, title: s.title, type: "service" })),
-            ...packages.map(p => ({ id: p.id, title: p.title, type: "package" }))
+            ...services.map(s => ({ id: s._id || s.id, title: s.title, type: "service", price: s.price })),
+            ...packages.map(p => ({ id: p._id || p.id, title: p.title, type: "package", price: p.price }))
           ];
 
           setAvailableServices(combined);
@@ -163,7 +163,16 @@ export const CreateEvent = () => {
         console.error("No user data received");
         return;
       }
-      ShowServices();
+
+      const services = user.services || [];
+      const packages = user.packages || [];
+
+      const combined = [
+        ...services.map(s => ({ id: s._id || s.id, title: s.title, type: "service", price: s.price })),
+        ...packages.map(p => ({ id: p._id || p.id, title: p.title, type: "package", price: p.price }))
+      ];
+
+      setAvailableServices(combined);
     } catch (err) {
       console.error('Error loading services:', err);
       setAvailableServices([]);
@@ -214,12 +223,14 @@ export const CreateEvent = () => {
   };
 
   const handleServiceChange = (e) => {
-    const serviceId = parseInt(e.target.value);
-    const selectedService = availableServices.find(s => s.id === serviceId);
+    const val = e.target.value;
+    // Don't parseInt blindly. Maintain string for ObjectId.
+    // Compare loosely or ensure type match
+    const selectedService = availableServices.find(s => String(s.id) === String(val));
 
     setEventData(prev => ({
       ...prev,
-      service: e.target.value,
+      service: val,
       price: selectedService ? selectedService.price : ''
     }));
   };
@@ -286,7 +297,7 @@ export const CreateEvent = () => {
       setError(null);
 
       const selectedService = availableServices.find(
-        s => s.id === eventData.service
+        s => String(s.id) === String(eventData.service)
       );
 
       if (!selectedService) {
