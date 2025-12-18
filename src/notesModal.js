@@ -4,6 +4,7 @@ import { customerService } from "./services/customerService";
 // NotesModal Component - Shows customer notes and allows platform user to add/update notes
 export default function NotesModal({ customer, onClose }) {
   const [notes, setNotes] = useState([]);
+  const [noteError, setNoteError] = useState('');
   const [newNote, setNewNote] = useState('');
   const [uploadedFile, setUploadedFile] = useState(null);
   const [filePreview, setFilePreview] = useState('');
@@ -33,6 +34,18 @@ export default function NotesModal({ customer, onClose }) {
     }
   };
 
+  const handleNoteChange = (e) => {
+    const value = e.target.value;
+    setNewNote(value);
+
+    // Simple validation
+    if (value.trim().length === 0 && !uploadedFile) {
+      setNoteError('Not boş olamaz.');
+    } else {
+      setNoteError('');
+    }
+  };
+
 
 
   const handleFileUpload = (event) => {
@@ -52,12 +65,15 @@ export default function NotesModal({ customer, onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!newNote.trim() && !uploadedFile) return;
+    if (!newNote.trim() && !uploadedFile) {
+      setNoteError('Not boş olamaz.');
+      return;
+    }
 
     try {
       setAddingNote(true);
       setError(null);
-
+      setNoteError('');
       const formData = new FormData();
       formData.append('content', newNote.trim() || "Dosya yüklendi");
       formData.append('author', 'expert');
@@ -162,10 +178,10 @@ export default function NotesModal({ customer, onClose }) {
                       >
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${isExpert
-                              ? 'bg-green-100 text-gray-900 rounded-tr-none'
-                              : isSystem
-                                ? 'bg-blue-50 text-gray-900 border border-blue-200'
-                                : 'bg-gray-100 text-gray-900 rounded-tl-none'
+                            ? 'bg-green-100 text-gray-900 rounded-tr-none'
+                            : isSystem
+                              ? 'bg-blue-50 text-gray-900 border border-blue-200'
+                              : 'bg-gray-100 text-gray-900 rounded-tl-none'
                             }`}
                         >
                           <div className="flex items-center space-x-2 mb-1 justify-between gap-2">
