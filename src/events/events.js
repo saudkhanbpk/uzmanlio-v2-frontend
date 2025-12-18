@@ -36,11 +36,11 @@ export const Events = () => {
 
   const userId = localStorage.getItem('userId');
 
-  // Load events on component mount and when view mode changes
+  // Load events on component mount and when view mode changes or user.events changes
   useEffect(() => {
-    console.log("[Events] useEffect triggered - viewMode:", viewMode, "userId:", userId);
+    console.log("[Events] useEffect triggered - viewMode:", viewMode, "userId:", userId, "userEventsCount:", user?.events?.length || 0);
     loadEvents();
-  }, [viewMode, userId]);
+  }, [viewMode, userId, user?.events]);
 
   const loadEvents = async () => {
     try {
@@ -83,10 +83,19 @@ export const Events = () => {
           }
         }
       } else {
-        // Individual view - fetch only own events
-        console.log("[Events] Individual view mode - fetching own events");
-        eventsData = await eventService.getEvents(userId);
-        console.log("[Events] Own events fetched:", eventsData?.length || 0);
+        // Individual view - use events from UserContext instead of API call
+        console.log("[Events] Individual view mode - using events from UserContext");
+
+        // Check if user.events is available in context (populated from backend)
+        if (user?.events && Array.isArray(user.events) && user.events.length > 0) {
+          console.log("[Events] ✅ Using events from UserContext:", user.events.length, "events");
+          eventsData = user.events;
+        } else {
+          // Fallback to API call if events not in context (e.g., first load or context not ready)
+          console.log("[Events] ⚠️ No events in UserContext, falling back to API call");
+          eventsData = await eventService.getEvents(userId);
+          console.log("[Events] Events fetched from API:", eventsData?.length || 0);
+        }
       }
 
       console.log("[Events] Final events to display:", eventsData);

@@ -14,7 +14,7 @@ export const CreatePackage = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
 
   // Mock clients data (in real app, this would come from your backend)
-  const availableClients = user.user.customers
+  const availableClients = user.customers
     .map(c => c.customerId)
     .filter(Boolean);
 
