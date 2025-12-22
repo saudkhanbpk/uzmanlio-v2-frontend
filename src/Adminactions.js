@@ -278,12 +278,31 @@ export const Adminactions = () => {
     } catch (error) {
       console.error('Error inviting user:', error);
       setError(error.message || 'Davet gönderilirken hata oluştu.');
-      await Swal.fire({
-        icon: 'error',
-        title: 'Hata!',
-        text: error.message || 'Davet gönderilirken hata oluştu.',
-        confirmButtonText: 'Tamam',
-      });
+      if (error.message === "User has no institution") {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Hata!',
+          text: 'Please fill the company information first.',
+          showCancelButton: true,        // Adds Cancel button
+          confirmButtonText: 'Fill Company Info',
+          cancelButtonText: 'Cancel',    // Label for Cancel button
+          allowOutsideClick: false
+        }).then((result) => {
+          if (result.isConfirmed) {
+            setActiveTab('organization'); // Switch to organization tab
+          }
+          // If cancelled, do nothing
+        });
+      } else {
+        // Default error
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata!',
+          text: error.message || 'Davet gönderilirken hata oluştu.',
+          confirmButtonText: 'Tamam',
+        });
+      }
+
     } finally {
       setLoading(false);
     }
@@ -404,7 +423,7 @@ export const Adminactions = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               {orgNameError && <p className="text-red-500 text-sm mt-1">{orgNameError}</p>}
-              
+
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bio (Kısa Açıklama)</label>
@@ -412,7 +431,7 @@ export const Adminactions = () => {
                 type="text"
                 value={orgBio}
                 onChange={handleOrgBioChange}
-                
+
                 placeholder="Kısa tanım ekleyin..."
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent ${orgBioError ? 'border-red-500' : 'border-gray-300'}`}
               />

@@ -2,6 +2,13 @@
 const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+    const token = localStorage.getItem('accessToken'); // Changed from 'token' to 'accessToken'
+    return {
+        'Authorization': `Bearer ${token}`
+    };
+};
 
 export const adminService = {
 
@@ -10,7 +17,9 @@ export const adminService = {
         // console.log("Fetching institution profile for user:", userId);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution`);
+            const response = await fetch(`${API_BASE_URL}/${userId}/institution`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -30,6 +39,7 @@ export const adminService = {
             console.log("Sending FormData to backend...");
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/Update`, {
                 method: 'PUT',
+                headers: getAuthHeaders(), // Add Authorization header
                 body: formdata,
                 // Don't set Content-Type header - browser will set it with boundary
             });
@@ -52,7 +62,9 @@ export const adminService = {
     // Get invited users
     async getInvitedUsers(userId, user, patchUser) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users`);
+            const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users`, {
+                headers: getAuthHeaders()
+            });
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -74,6 +86,7 @@ export const adminService = {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invite-user`, {
                 method: 'POST',
                 headers: {
+                    ...getAuthHeaders(),
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ name, email }),
@@ -98,6 +111,7 @@ export const adminService = {
         try {
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users/${id}`, {
                 method: 'DELETE',
+                headers: getAuthHeaders()
             });
 
             if (!response.ok) {
@@ -120,6 +134,7 @@ export const adminService = {
             // Using the institution route as requested
             const response = await fetch(`${API_BASE_URL}/${userId}/institution/resend-invite/${invitationId}`, {
                 method: 'POST',
+                headers: getAuthHeaders()
             });
 
             if (!response.ok) {
