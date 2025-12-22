@@ -1,4 +1,6 @@
 // Admin Service - API calls for institution management
+import { authGet, authPost, authUpload, authDelete } from './authFetch';
+
 const backendUrl = process.env.REACT_APP_BACKEND_URL
 const API_BASE_URL = `${backendUrl}/api/expert`;
 
@@ -17,13 +19,7 @@ export const adminService = {
         // console.log("Fetching institution profile for user:", userId);
 
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution`, {
-                headers: getAuthHeaders()
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            const data = await authGet(`${API_BASE_URL}/${userId}/institution`);
             patchUser({ institution: data.institution });
             console.log("Data.institution:", data.institution)
             return data.institution || {};
@@ -37,20 +33,13 @@ export const adminService = {
     async updateInstitution(formdata, userId) {
         try {
             console.log("Sending FormData to backend...");
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/Update`, {
-                method: 'PUT',
-                headers: getAuthHeaders(), // Add Authorization header
-                body: formdata,
-                // Don't set Content-Type header - browser will set it with boundary
-            });
+            // authUpload handles method (default POST, pass 'PUT' as 3rd arg)
+            const data = await authUpload(
+                `${API_BASE_URL}/${userId}/institution/Update`,
+                formdata,
+                'PUT'
+            );
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                console.log("Error response data:", errorData);
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
             console.log("Institution updated successfully:", data);
             return data.institution || {};
         } catch (error) {
@@ -62,13 +51,8 @@ export const adminService = {
     // Get invited users
     async getInvitedUsers(userId, user, patchUser) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users`, {
-                headers: getAuthHeaders()
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
+            const data = await authGet(`${API_BASE_URL}/${userId}/institution/invited-users`);
+
             if (typeof patchUser === 'function') {
                 patchUser({ invitedUsers: data.invitedUsers });
             }
@@ -83,21 +67,7 @@ export const adminService = {
     // Invite user to institution
     async inviteUser(userId, name, email) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/invite-user`, {
-                method: 'POST',
-                headers: {
-                    ...getAuthHeaders(),
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, email }),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await authPost(`${API_BASE_URL}/${userId}/institution/invite-user`, { name, email });
             console.log("User invited successfully:", data);
             return data.invitedUser;
         } catch (error) {
@@ -109,17 +79,7 @@ export const adminService = {
     // Remove invited user
     async removeInvitedUser(userId, id) {
         try {
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/invited-users/${id}`, {
-                method: 'DELETE',
-                headers: getAuthHeaders()
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await authDelete(`${API_BASE_URL}/${userId}/institution/invited-users/${id}`);
             console.log("Invited user removed:", data);
             return data;
         } catch (error) {
@@ -132,17 +92,7 @@ export const adminService = {
     async resendInvitation(userId, invitationId) {
         try {
             // Using the institution route as requested
-            const response = await fetch(`${API_BASE_URL}/${userId}/institution/resend-invite/${invitationId}`, {
-                method: 'POST',
-                headers: getAuthHeaders()
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
+            const data = await authPost(`${API_BASE_URL}/${userId}/institution/resend-invite/${invitationId}`, {});
             console.log("Invitation resent:", data);
             return data;
         } catch (error) {
