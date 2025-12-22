@@ -137,16 +137,45 @@ class ApiClient {
     }
 
     /**
-     * Main request method with automatic token refresh
+     * Fetch CSRF token from backend
+     */
+    async fetchCsrfToken() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/csrf-token`, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                this.csrfToken = data.csrfToken;
+                return data.csrfToken;
+            }
+        } catch (error) {
+            console.error('Failed to fetch CSRF token:', error);
+        }
+        return null;
+    }
+
+    /**
+     * Main request method with automatic token refresh and CSRF protection
      */
     async request(endpoint, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
+        const method = options.method || 'GET';
+
+        // Fetch CSRF token for state-changing requests if not already present
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && !this.csrfToken) {
+            await this.fetchCsrfToken();
+        }
 
         // Prepare headers
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers,
         };
+
+        if (this.csrfToken) {
+            headers['X-CSRF-Token'] = this.csrfToken;
+        }
 
         // Check if token is about to expire and proactively refresh
         if (this.accessToken && this.refreshToken && this.isTokenExpired()) {
@@ -167,7 +196,25 @@ class ApiClient {
         }
 
         try {
-            let response = await fetch(url, { ...options, headers });
+            let response = await fetch(url, {
+                ...options,
+                headers,
+                credentials: 'include' // Required for CSRF cookies
+            });
+
+            // If 403 (Invalid CSRF), try to refresh CSRF token once
+            if (response.status === 403 && this.csrfToken) {
+                const errorData = await response.clone().json().catch(() => ({}));
+                if (errorData.error === 'Invalid CSRF token') {
+                    await this.fetchCsrfToken();
+                    headers['X-CSRF-Token'] = this.csrfToken;
+                    response = await fetch(url, {
+                        ...options,
+                        headers,
+                        credentials: 'include'
+                    });
+                }
+            }
 
             // If 401 and we have a refresh token, try to refresh
             if (response.status === 401 && this.refreshToken) {
@@ -180,7 +227,11 @@ class ApiClient {
 
                         // Retry original request with new token
                         headers['Authorization'] = `Bearer ${this.accessToken}`;
-                        response = await fetch(url, { ...options, headers });
+                        response = await fetch(url, {
+                            ...options,
+                            headers,
+                            credentials: 'include'
+                        });
                     } catch (refreshError) {
                         // Refresh failed - logout user
                         console.error('Token refresh failed:', refreshError);
@@ -200,7 +251,7 @@ class ApiClient {
 
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+                throw new Error(errorData.message || errorData.error || `HTTP error! status: ${response.status}`);
             }
 
             return await response.json();
@@ -263,8 +314,19 @@ class ApiClient {
      */
     async upload(endpoint, formData, options = {}) {
         const url = `${API_BASE_URL}${endpoint}`;
+        const method = options.method || 'POST';
+
+        // Fetch CSRF token for state-changing requests if not already present
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase()) && !this.csrfToken) {
+            await this.fetchCsrfToken();
+        }
+
         const headers = { ...options.headers };
         delete headers['Content-Type']; // Let browser set it for FormData
+
+        if (this.csrfToken) {
+            headers['X-CSRF-Token'] = this.csrfToken;
+        }
 
         // Check if token is about to expire and proactively refresh
         if (this.accessToken && this.refreshToken && this.isTokenExpired()) {
@@ -285,14 +347,15 @@ class ApiClient {
 
         const response = await fetch(url, {
             ...options,
-            method: options.method || 'POST',
+            method,
             headers,
-            body: formData
+            body: formData,
+            credentials: 'include' // Required for CSRF cookies
         });
 
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+            throw new Error(errorData.message || errorData.error || `HTTP error! status: ${response.status}`);
         }
 
         return response.json();

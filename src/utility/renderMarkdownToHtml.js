@@ -1,8 +1,10 @@
+import DOMPurify from 'dompurify';
+
 // Function to render markdown-like text to HTML
 export const renderMarkdownToHtml = (text) => {
   if (!text) return '';
-  
-  return text
+
+  const renderedHtml = text
     // Headers
     .replace(/^### (.*$)/gim, '<h3>$1</h3>')
     .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -20,4 +22,6 @@ export const renderMarkdownToHtml = (text) => {
     .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
     // Line breaks
     .replace(/\n/g, '<br>');
+
+  return DOMPurify.sanitize(renderedHtml);
 };
