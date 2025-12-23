@@ -26,6 +26,9 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
 /**
  * Get access token from storage
  */
+/**
+ * Get access token from storage
+ */
 export const getAccessToken = () => {
     return sessionStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
 };
@@ -123,6 +126,64 @@ const isTokenExpired = (token, bufferSeconds = 30) => {
 let isRefreshing = false;
 let refreshPromise = null;
 
+// CSRF Token State
+let csrfToken = null;
+let isFetchingCsrf = false;
+let csrfPromise = null;
+
+/**
+ * Fetch CSRF Token from backend
+ */
+/**
+ * Fetch CSRF Token from backend
+ */
+export const fetchCsrfToken = async (force = false) => {
+    if (csrfToken && !force) return csrfToken;
+    if (isFetchingCsrf && csrfPromise) return csrfPromise;
+
+    isFetchingCsrf = true;
+    console.log('🔄 Fetching new CSRF token...');
+
+    const accessToken = getAccessToken();
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+
+    if (accessToken) {
+        headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    csrfPromise = fetch(`${API_BASE_URL}/api/csrf-token`, {
+        method: 'GET',
+        headers,
+        credentials: 'include' // Important for cookies
+    })
+        .then(async (response) => {
+            if (!response.ok) {
+                throw new Error('Failed to fetch CSRF token');
+            }
+            return response.json();
+        })
+        .then((data) => {
+            if (data.csrfToken) {
+                csrfToken = data.csrfToken;
+                console.log('✅ CSRF token fetched successfully');
+                return data.csrfToken;
+            }
+            throw new Error('No CSRF token in response');
+        })
+        .catch((err) => {
+            console.error('❌ Error fetching CSRF token:', err);
+            return null;
+        })
+        .finally(() => {
+            isFetchingCsrf = false;
+            csrfPromise = null;
+        });
+
+    return csrfPromise;
+};
+
 /**
  * Refresh the access token
  */
@@ -139,14 +200,29 @@ const refreshAccessToken = async () => {
 
     isRefreshing = true;
 
+    // NOTE: We do NOT fetch CSRF token here anymore. 
+    // The refresh endpoint (/api/expert/refresh-token) should be excluded from CSRF protection
+    // or does not require it because it's in the authRoutes block which is mounted BEFORE doubleCsrfProtection.
+    // Fetching here with an expired access token causes the server to generate an "anonymous" CSRF token,
+    // which then fails validation for subsequent authenticated requests.
+
+    const headers = { 'Content-Type': 'application/json' };
+
+    // Some setups might still want CSRF if available, but be careful of the anonymous issue.
+    // If csrfToken is already set (and valid), we send it.
+    if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken;
+    }
+
     refreshPromise = fetch(`${API_BASE_URL}/api/expert/refresh-token`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken })
+        headers,
+        body: JSON.stringify({ refreshToken }),
+        credentials: 'include'
     })
         .then(async (response) => {
             if (!response.ok) {
-                const error = await response.json().catch(() => ({}));
+                const error = await response.clone().json().catch(() => ({}));
                 throw new Error(error.message || 'Token refresh failed');
             }
             return response.json();
@@ -154,6 +230,11 @@ const refreshAccessToken = async () => {
         .then((data) => {
             saveTokens(data.accessToken, data.refreshToken);
             console.log('✅ Tokens refreshed successfully');
+
+            // Clear the old CSRF token because it might be bound to the old session/anonymous
+            // and we want to force a fetch with the new access token on next request.
+            csrfToken = null;
+
             return data;
         })
         .finally(() => {
@@ -169,7 +250,9 @@ const refreshAccessToken = async () => {
  * 
  * Automatically:
  * - Attaches Authorization header with JWT token
+ * - Attaches x-csrf-token header
  * - Refreshes token if expired
+ * - Refreshes CSRF token if invalid
  * - Logs out user if refresh fails
  * 
  * @param {string} url - The URL to fetch
@@ -180,25 +263,13 @@ export const authFetch = async (url, options = {}) => {
     let accessToken = getAccessToken();
 
     // Debug logging
-    console.log('🔐 authFetch Debug:');
-    console.log('  - URL:', url);
-    console.log('  - Token from sessionStorage:', sessionStorage.getItem('accessToken') ? 'YES' : 'NO');
-    console.log('  - Token from localStorage:', localStorage.getItem('accessToken') ? 'YES' : 'NO');
-    console.log('  - Has accessToken:', !!accessToken);
+    // console.log('🔐 authFetch Debug:', url);
 
     // If no token, user is not logged in
     if (!accessToken) {
         console.warn('  ❌ No access token found, redirecting to login');
         forceLogout();
         throw new Error('Not authenticated');
-    }
-
-    // Decode and show token info
-    const payload = decodeToken(accessToken);
-    if (payload) {
-        console.log('  - Token userId:', payload.id);
-        console.log('  - Token expires:', new Date(payload.exp * 1000).toLocaleTimeString());
-        console.log('  - Token expired:', isTokenExpired(accessToken));
     }
 
     // Check if token is expired and refresh proactively
@@ -215,26 +286,63 @@ export const authFetch = async (url, options = {}) => {
         }
     }
 
-    // Add Authorization header
+    // Ensure CSRF token is present for non-GET requests
+    const method = options.method || 'GET';
+    const isStateChange = !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase());
+
+    if (isStateChange && !csrfToken) {
+        await fetchCsrfToken();
+    }
+
+    // Prepare headers
     const headers = {
         ...options.headers,
     };
 
-    // Only add Authorization if token exists
+    // Attach Authorization
     if (accessToken) {
         headers['Authorization'] = `Bearer ${accessToken}`;
-        console.log('  ✅ Authorization header attached');
     }
+
+    // Attach CSRF Token
+    if (csrfToken) {
+        headers['x-csrf-token'] = csrfToken;
+    }
+    console.log("Here is CSRF:", csrfToken)
 
     // Only set Content-Type for JSON if not FormData
     if (!(options.body instanceof FormData) && !headers['Content-Type']) {
         headers['Content-Type'] = 'application/json';
     }
 
-    try {
-        let response = await fetch(url, { ...options, headers });
+    // Helper to perform the actual fetch
+    const doFetch = async (currAccessToken, currCsrfToken) => {
+        const currHeaders = { ...headers };
+        if (currAccessToken) currHeaders['Authorization'] = `Bearer ${currAccessToken}`;
+        if (currCsrfToken) currHeaders['x-csrf-token'] = currCsrfToken;
 
-        console.log('  - Response status:', response.status);
+        return fetch(url, { ...options, headers: currHeaders, credentials: 'include' });
+    };
+
+    try {
+        let response = await doFetch(accessToken, csrfToken);
+
+        // Handle 403 Invalid CSRF token
+        if (response.status === 403) {
+            const errorClone = response.clone();
+            try {
+                const errData = await errorClone.json();
+                if (errData.error === "Invalid CSRF token") {
+                    console.log('⚠️ Invalid CSRF token, refreshing token and retrying...');
+                    // FORCE refresh the CSRF token
+                    await fetchCsrfToken(true);
+                    // Retry with new CSRF token
+                    response = await doFetch(accessToken, csrfToken);
+                }
+            } catch (e) {
+                // Not a JSON error or other issue
+            }
+        }
 
         // If 401, try to refresh token and retry
         if (response.status === 401) {
@@ -242,8 +350,8 @@ export const authFetch = async (url, options = {}) => {
             try {
                 await refreshAccessToken();
                 accessToken = getAccessToken();
-                headers['Authorization'] = `Bearer ${accessToken}`;
-                response = await fetch(url, { ...options, headers });
+                // Retry with new access token
+                response = await doFetch(accessToken, csrfToken);
                 console.log('  - Retry response status:', response.status);
             } catch (refreshError) {
                 console.error('  ❌ Token refresh failed after 401:', refreshError);

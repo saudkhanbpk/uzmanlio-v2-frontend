@@ -278,7 +278,7 @@ export const Adminactions = () => {
     } catch (error) {
       console.error('Error inviting user:', error);
       setError(error.message || 'Davet gönderilirken hata oluştu.');
-      if (error.message === "User has no institution") {
+      if (error.status = 400) {
         Swal.fire({
           icon: 'warning',
           title: 'Hata!',
