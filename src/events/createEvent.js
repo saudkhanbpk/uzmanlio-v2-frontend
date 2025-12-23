@@ -10,7 +10,7 @@ import Swal from "sweetalert2";
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
-  const { user } = useUser();
+  const { user, updateUserField } = useUser();
   const navigate = useNavigate();
   const [customerPackageMap, setCustomerPackageMap] = useState([]);
   const userId = localStorage.getItem('userId') // Mock user ID for development
@@ -117,55 +117,40 @@ export const CreateEvent = () => {
     console.log("Payment settings saved:", settings);
   };
 
-  const ShowServices = async () => {
-    const storedUser = localStorage.getItem("user");
+  // ✅ FIXED: Reactively load services/packages from UserContext
+  useEffect(() => {
+    if (user && (user.services || user.packages)) {
+      console.log("🔄 [CreateEvent] Syncing services/packages from UserContext");
 
-    try {
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
+      const services = Array.isArray(user.services) ? user.services : [];
+      const packages = Array.isArray(user.packages) ? user.packages : [];
 
-        if (parsedUser && (parsedUser.services?.length || parsedUser.packages?.length)) {
-          console.log("Using stored user data:", parsedUser);
+      const combined = [
+        ...services.map(s => ({ id: s._id || s.id, title: s.title, type: "service", price: s.price })),
+        ...packages.map(p => ({ id: p._id || p.id, title: p.title, type: "package", price: p.price }))
+      ];
 
-          const services = Array.isArray(parsedUser.services) ? parsedUser.services : [];
-          const packages = Array.isArray(parsedUser.packages) ? parsedUser.packages : [];
-
-          const combined = [
-            ...services.map(s => ({ id: s._id || s.id, title: s.title, type: "service", price: s.price })),
-            ...packages.map(p => ({ id: p._id || p.id, title: p.title, type: "package", price: p.price }))
-          ];
-
-          setAvailableServices(combined);
-        } else {
-          console.log("No services/packages in stored user, fetching from DB");
-          loadServicesAndPackages();
-        }
-      } else {
-        console.log("No user in localStorage, fetching from DB");
-        loadServicesAndPackages();
-      }
-    } catch (error) {
-      console.error("Error parsing stored user:", error);
+      setAvailableServices(combined);
+      console.log(`✅ [CreateEvent] Loaded ${combined.length} items from context`);
+    } else {
+      // Fallback only if context is empty (initial load or error)
+      console.log("⚠️ [CreateEvent] UserContext empty, attempting fallback load");
       loadServicesAndPackages();
     }
-  };
-
-  useEffect(() => {
-    ShowServices()
-  }, []);
+  }, [user]); // Re-run whenever user context changes
 
   const loadServicesAndPackages = async () => {
     console.log("Loading services and packages from DB");
     try {
-      const user = await eventService.getServicesAndPackages(userId);
+      const userData = await eventService.getServicesAndPackages(userId);
 
-      if (!user) {
+      if (!userData) {
         console.error("No user data received");
         return;
       }
 
-      const services = user.services || [];
-      const packages = user.packages || [];
+      const services = userData.services || [];
+      const packages = userData.packages || [];
 
       const combined = [
         ...services.map(s => ({ id: s._id || s.id, title: s.title, type: "service", price: s.price })),
@@ -175,7 +160,7 @@ export const CreateEvent = () => {
       setAvailableServices(combined);
     } catch (err) {
       console.error('Error loading services:', err);
-      setAvailableServices([]);
+      // Don't set empty if we already have data
     }
   };
 
@@ -340,7 +325,14 @@ export const CreateEvent = () => {
 
       console.log("✅ Formatted Data before API:", formattedData);
 
-      await eventService.createEvent(userId, formattedData);
+      const createdEvent = await eventService.createEvent(userId, formattedData);
+
+      // ✅ Update UserContext with the new event
+      if (createdEvent) {
+        console.log("🔄 [CreateEvent] Syncing UserContext with new event");
+        const currentEvents = user.events || [];
+        updateUserField('events', [...currentEvents, createdEvent]);
+      }
 
       navigate("/dashboard/events");
     } catch (err) {

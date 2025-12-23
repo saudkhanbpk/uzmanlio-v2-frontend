@@ -115,15 +115,10 @@ export const Calendar = () => {
         setFetchedEvents([]);
       }
 
-      // Use cached availability from UserContext - NO API CALL!
+      // Availability is now handled by the sync useEffect below to avoid race conditions
+      // See "Sync local state with context data" section
       if (user.availability) {
-        console.log("[Calendar] ✅ Availability from UserContext - NO API call");
-        setAlwaysAvailable(user.availability.alwaysAvailable || false);
-        setSelectedSlots(new Set(user.availability.selectedSlots || []));
-      } else {
-        console.log("[Calendar] No availability in UserContext, resetting");
-        setAlwaysAvailable(false);
-        setSelectedSlots(new Set());
+        console.log("[Calendar] ✅ Availability present in UserContext (handled by sync effect)");
       }
 
       // Use cached calendar providers from UserContext
@@ -209,12 +204,26 @@ export const Calendar = () => {
   }, [user, activeUserId, viewMode, institutionUsers]); // Re-run when user or active user changes
 
   // Sync local state with context data
+  // In individual view, prioritize UserContext over ExpertContext
+  // In institution view, data comes from InstitutionUsersContext (handled in main useEffect)
   useEffect(() => {
+    // Individual view - read from UserContext
+    if (viewMode === 'individual' && user?.availability) {
+      console.log(`[Calendar Sync] 🔄 Syncing from UserContext. Slots found: ${user.availability.selectedSlots?.length}`);
+      setAlwaysAvailable(user.availability.alwaysAvailable || false);
+      const newSet = new Set(user.availability.selectedSlots || []);
+      setSelectedSlots(newSet);
+      console.log(`[Calendar Sync] ✅ State updated. Set size: ${newSet.size}`);
+      return;
+    }
+
+    // Fallback to ExpertContext (for legacy or other views)
     if (availability) {
       setAlwaysAvailable(availability.alwaysAvailable || false);
       setSelectedSlots(new Set(availability.selectedSlots || []));
+      console.log('[Calendar] 🔄 Synced UI from ExpertContext availability');
     }
-  }, [availability]);
+  }, [availability, user, viewMode]);
 
   // Time slots for availability selection - Extended from 07:00 to 06:00 (next day)
   const timeSlots = [
@@ -371,15 +380,19 @@ export const Calendar = () => {
         selectedSlots: slotsToSave
       };
 
-      await updateAvailability(activeUserId, availabilityData);
+      // Call API - response structure is: { availability: {...}, message: "..." }
+      const response = await updateAvailability(activeUserId, availabilityData);
 
-      // ✅ UPDATE CONTEXT - changes will be reflected immediately!
-      if (viewMode === 'individual') {
-        updateUserContextField('availability', availabilityData);
-        console.log('[Calendar] ✅ UserContext updated with new availability');
-      } else {
-        updateInstitutionUserField(activeUserId, 'availability', availabilityData);
-        console.log('[Calendar] ✅ InstitutionContext updated with new availability');
+      // ✅ UPDATE CONTEXT with BACKEND RESPONSE (includes lastUpdated, _id, etc.)
+      // The response from updateAvailability already contains the full availability object
+      if (response && response.availability) {
+        if (viewMode === 'individual') {
+          updateUserContextField('availability', response.availability);
+          console.log('[Calendar] ✅ UserContext updated with backend availability:', response.availability);
+        } else {
+          updateInstitutionUserField(activeUserId, 'availability', response.availability);
+          console.log('[Calendar] ✅ InstitutionContext updated with backend availability:', response.availability);
+        }
       }
 
       // ✅ SUCCESS SweetAlert
@@ -420,15 +433,18 @@ export const Calendar = () => {
         selectedSlots: []
       };
 
-      await updateAvailability(activeUserId, availabilityData);
+      // Call API - response structure is: { availability: {...}, message: "..." }
+      const response = await updateAvailability(activeUserId, availabilityData);
 
-      // ✅ UPDATE CONTEXT
-      if (viewMode === 'individual') {
-        updateUserContextField('availability', availabilityData);
-        console.log('[Calendar] ✅ UserContext updated (reset availability)');
-      } else {
-        updateInstitutionUserField(activeUserId, 'availability', availabilityData);
-        console.log('[Calendar] ✅ InstitutionContext updated (reset availability)');
+      // ✅ UPDATE CONTEXT with BACKEND RESPONSE
+      if (response && response.availability) {
+        if (viewMode === 'individual') {
+          updateUserContextField('availability', response.availability);
+          console.log('[Calendar] ✅ UserContext updated (reset):', response.availability);
+        } else {
+          updateInstitutionUserField(activeUserId, 'availability', response.availability);
+          console.log('[Calendar] ✅ InstitutionContext updated (reset):', response.availability);
+        }
       }
 
       // Show success message
@@ -879,6 +895,10 @@ export const Calendar = () => {
                 {timeSlots.map((time) => {
                   const slotKey = `${dayIndex}-${time}`;
                   const isSelected = selectedSlots.has(slotKey);
+                  // Debug first few slots
+                  if (dayIndex === 0 && (time === '07:00' || time === '08:00')) {
+                    console.log(`[Calendar Render] Slot ${slotKey}: isSelected=${isSelected}, Set has ${selectedSlots.size} items`);
+                  }
 
                   return (
                     <button

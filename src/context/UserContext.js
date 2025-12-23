@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useReducer } from 'react';
 
 // 1. Create Context
-const UserContext = createContext();
+export const UserContext = createContext();
 
 // 2. Reducer – handles all updates
 const userReducer = (state, action) => {
@@ -32,13 +32,22 @@ const userReducer = (state, action) => {
 function deepMerge(target, source) {
   // If both are arrays (like events, skills, appointments)
   if (Array.isArray(target) && Array.isArray(source)) {
+    // Check if array contains primitives (strings/numbers)
+    if (source.length > 0 && (typeof source[0] === 'string' || typeof source[0] === 'number')) {
+      // For primitive arrays (like selectedSlots), just return the new source array
+      return source;
+    }
+
+    // For object arrays, merge by ID
     const map = new Map();
     target.forEach(item => item.id && map.set(item.id, item));
     source.forEach(item => {
       if (item.id && map.has(item.id)) {
         map.set(item.id, { ...map.get(item.id), ...item });
       } else {
-        map.set(item.id || Date.now(), item);
+        // Only use Date.now() if it's truly a new item without ID
+        // But be careful - generating random IDs for everything might be bad
+        map.set(item.id || item._id || Math.random().toString(36), item);
       }
     });
     return Array.from(map.values());

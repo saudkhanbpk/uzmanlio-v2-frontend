@@ -1,4 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useContext } from 'react';
+import { UserContext } from '../context/UserContext';
 import { useExpert, EXPERT_ACTIONS } from '../contexts/ExpertContext';
 import expertService from '../services/expertService';
 
@@ -6,15 +7,18 @@ import expertService from '../services/expertService';
 // Custom hook for managing expert data operations
 export const useExpertData = () => {
 
-  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;  
-  console.log("Backend URL:", SERVER_URL); 
+  const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+  console.log("Backend URL:", SERVER_URL);
   const { state, dispatch } = useExpert();
-  
+
+  // Also get UserContext to update global user state
+  const { updateUserField, user: loggedInUser } = useContext(UserContext);
+
   // Helper function to handle API calls with loading and error states
   const handleApiCall = useCallback(async (field, apiCall, successAction) => {
     dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field, value: true } });
     dispatch({ type: EXPERT_ACTIONS.SET_ERROR, payload: { field, error: null } });
-    
+
     try {
       const result = await apiCall();
       if (successAction) {
@@ -31,7 +35,7 @@ export const useExpertData = () => {
 
   // Titles operations
   const loadTitles = useCallback(async (userId) => {
-    return handleApiCall('titles', 
+    return handleApiCall('titles',
       () => expertService.getTitles(userId),
       (result) => ({ type: EXPERT_ACTIONS.SET_TITLES, payload: result.titles })
     );
@@ -332,9 +336,18 @@ export const useExpertData = () => {
   const addService = useCallback(async (userId, serviceData) => {
     return handleApiCall('services',
       () => expertService.addService(userId, serviceData),
-      (result) => ({ type: EXPERT_ACTIONS.ADD_SERVICE, payload: result.service })
+      (result) => {
+        // Also update UserContext if modifying the logged-in user
+        if (loggedInUser && (loggedInUser._id === userId || loggedInUser.id === userId)) {
+          console.log('[useExpertData] 🔄 Syncing UserContext: Added Service');
+          // Start by getting current services or init empty array
+          const currentServices = loggedInUser.services || [];
+          updateUserField('services', [...currentServices, result.service]);
+        }
+        return { type: EXPERT_ACTIONS.ADD_SERVICE, payload: result.service };
+      }
     );
-  }, [handleApiCall]);
+  }, [handleApiCall, loggedInUser, updateUserField]);
 
   const updateService = useCallback(async (userId, serviceId, serviceData) => {
     return handleApiCall('services',
@@ -382,9 +395,17 @@ export const useExpertData = () => {
   const addPackage = useCallback(async (userId, packageData) => {
     return handleApiCall('packages',
       () => expertService.addPackage(userId, packageData),
-      (result) => ({ type: EXPERT_ACTIONS.ADD_PACKAGE, payload: result.package })
+      (result) => {
+        // Also update UserContext if modifying the logged-in user
+        if (loggedInUser && (loggedInUser._id === userId || loggedInUser.id === userId)) {
+          console.log('[useExpertData] 🔄 Syncing UserContext: Added Package');
+          const currentPackages = loggedInUser.packages || [];
+          updateUserField('packages', [...currentPackages, result.package]);
+        }
+        return { type: EXPERT_ACTIONS.ADD_PACKAGE, payload: result.package };
+      }
     );
-  }, [handleApiCall]);
+  }, [handleApiCall, loggedInUser, updateUserField]);
 
   const updatePackage = useCallback(async (userId, packageId, packageData) => {
     return handleApiCall('packages',
@@ -410,30 +431,30 @@ export const useExpertData = () => {
   return {
     // State
     ...state,
-    
+
     // Titles operations
     loadTitles,
     addTitle,
     updateTitle,
     deleteTitle,
-    
+
     // Categories operations
     loadCategories,
     addCategory,
     removeCategory,
-    
+
     // Education operations
     loadEducation,
     addEducation,
     updateEducation,
     deleteEducation,
-    
+
     // Certificate operations
     loadCertificates,
     addCertificate,
     updateCertificate,
     deleteCertificate,
-    
+
     // Experience operations
     loadExperience,
     addExperience,
@@ -450,7 +471,7 @@ export const useExpertData = () => {
     loadGalleryFiles,
     uploadGalleryFile,
     deleteGalleryFile,
-    
+
     // Services operations
     loadServices,
     loadActiveServices,
@@ -458,7 +479,7 @@ export const useExpertData = () => {
     updateService,
     deleteService,
     toggleServiceActive,
-    
+
     // Packages operations
     loadPackages,
     loadActivePackages,
