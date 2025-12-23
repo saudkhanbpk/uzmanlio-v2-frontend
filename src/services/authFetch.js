@@ -308,7 +308,6 @@ export const authFetch = async (url, options = {}) => {
     if (csrfToken) {
         headers['x-csrf-token'] = csrfToken;
     }
-    console.log("Here is CSRF:", csrfToken)
 
     // Only set Content-Type for JSON if not FormData
     if (!(options.body instanceof FormData) && !headers['Content-Type']) {

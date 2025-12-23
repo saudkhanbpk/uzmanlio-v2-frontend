@@ -70,6 +70,11 @@ export function UserProvider({ children }) {
   const setLoading = (loading) => dispatch({ type: 'SET_LOADING', payload: loading });
   const setError = (error) => dispatch({ type: 'SET_ERROR', payload: error });
 
+  // Update a specific field in the user object
+  const updateUserField = (fieldPath, value) => {
+    patchUser({ [fieldPath]: value });
+  };
+
   // Automatic user fetch if userId exists but user data is missing
   React.useEffect(() => {
     const loadUser = async () => {
@@ -145,6 +150,7 @@ export function UserProvider({ children }) {
       error: state.error,
       setUser,
       patchUser,
+      updateUserField,
       setLoading,
       setError
     }}>

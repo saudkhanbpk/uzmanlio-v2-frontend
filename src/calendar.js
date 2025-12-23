@@ -38,6 +38,10 @@ export const Calendar = () => {
     updateAvailability
   } = useExpertData();
 
+  // Get context update methods
+  const { updateUserField: updateUserContextField } = useUser();
+  const { getUserById, updateUserField: updateInstitutionUserField } = useInstitutionUsers();
+
   // const { getProfile } = profileService();
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -91,11 +95,54 @@ export const Calendar = () => {
   useEffect(() => {
     console.log("[Calendar] Loading data for user:", activeUserId, "viewMode:", viewMode);
 
-    // In institution view, try to use cached data from context first
+    // INDIVIDUAL VIEW - Use UserContext data (NO API calls!)
+    if (viewMode === 'individual' && user) {
+      console.log("[Calendar] ✅ Using ALL cached data from UserContext");
+
+      // Use cached events from UserContext
+      if (user.events && Array.isArray(user.events)) {
+        const mapped = user.events.map(evt => ({
+          id: evt.id || evt._id,
+          title: evt.title,
+          date: evt.date,
+          time: evt.time || '',
+          status: evt.status === 'approved' ? 'confirmed' : (evt.status || 'pending'),
+          type: evt.meetingType || '1-1',
+        }));
+        setFetchedEvents(mapped);
+        console.log("[Calendar] ✅ Events from UserContext:", mapped.length);
+      } else {
+        setFetchedEvents([]);
+      }
+
+      // Use cached availability from UserContext - NO API CALL!
+      if (user.availability) {
+        console.log("[Calendar] ✅ Availability from UserContext - NO API call");
+        setAlwaysAvailable(user.availability.alwaysAvailable || false);
+        setSelectedSlots(new Set(user.availability.selectedSlots || []));
+      } else {
+        console.log("[Calendar] No availability in UserContext, resetting");
+        setAlwaysAvailable(false);
+        setSelectedSlots(new Set());
+      }
+
+      // Use cached calendar providers from UserContext
+      if (user.calendarProviders) {
+        setCalendarProviders(user.calendarProviders);
+        console.log("[Calendar] ✅ Calendar providers from UserContext");
+      } else {
+        // Only fetch if not in context
+        loadCalendarProviders();
+      }
+
+      return; // Don't make ANY API calls - all data from UserContext!
+    }
+
+    // INSTITUTION VIEW - Use InstitutionUsersContext data
     if (viewMode === 'institution' && institutionUsers.length > 0) {
       const cachedUser = institutionUsers.find(u => u._id === activeUserId);
       if (cachedUser) {
-        console.log("[Calendar] ✅ Using ALL cached data from context for:", cachedUser.information?.name);
+        console.log("[Calendar] ✅ Using ALL cached data from InstitutionContext for:", cachedUser.information?.name);
 
         // Use cached events from context
         if (cachedUser.events && Array.isArray(cachedUser.events)) {
@@ -108,14 +155,14 @@ export const Calendar = () => {
             type: evt.meetingType || '1-1',
           }));
           setFetchedEvents(mapped);
-          console.log("[Calendar] Events from cache:", mapped.length);
+          console.log("[Calendar] ✅ Events from InstitutionContext:", mapped.length);
         } else {
           setFetchedEvents([]);
         }
 
         // Use cached availability from context - NO API CALL!
         if (cachedUser.availability) {
-          console.log("[Calendar] ✅ Using cached availability - NO API call");
+          console.log("[Calendar] ✅ Availability from InstitutionContext - NO API call");
           setAlwaysAvailable(cachedUser.availability.alwaysAvailable || false);
           setSelectedSlots(new Set(cachedUser.availability.selectedSlots || []));
         } else {
@@ -124,12 +171,21 @@ export const Calendar = () => {
           setSelectedSlots(new Set());
         }
 
+        // Use cached calendar providers from context
+        if (cachedUser.calendarProviders) {
+          setCalendarProviders(cachedUser.calendarProviders);
+          console.log("[Calendar] ✅ Calendar providers from InstitutionContext");
+        } else {
+          // Only fetch if not in context
+          loadCalendarProviders();
+        }
+
         return; // Don't make ANY API calls - all data from cache!
       }
     }
 
-    // Individual view or no cached data - make API calls
-    console.log("[Calendar] ⏳ Making API call for user data...");
+    // FALLBACK - No cached data, make API calls
+    console.log("[Calendar] ⏳ No cached data, making API calls...");
     loadExpertProfile(activeUserId).catch(console.error);
     profileService.getProfile(activeUserId)
       .then(data => {
@@ -150,7 +206,7 @@ export const Calendar = () => {
       })
       .catch(console.error);
     loadCalendarProviders();
-  }, [loadExpertProfile, activeUserId, viewMode, institutionUsers]); // Re-run when activeUserId changes
+  }, [user, activeUserId, viewMode, institutionUsers]); // Re-run when user or active user changes
 
   // Sync local state with context data
   useEffect(() => {
@@ -317,6 +373,15 @@ export const Calendar = () => {
 
       await updateAvailability(activeUserId, availabilityData);
 
+      // ✅ UPDATE CONTEXT - changes will be reflected immediately!
+      if (viewMode === 'individual') {
+        updateUserContextField('availability', availabilityData);
+        console.log('[Calendar] ✅ UserContext updated with new availability');
+      } else {
+        updateInstitutionUserField(activeUserId, 'availability', availabilityData);
+        console.log('[Calendar] ✅ InstitutionContext updated with new availability');
+      }
+
       // ✅ SUCCESS SweetAlert
       Swal.fire({
         icon: "success",
@@ -344,7 +409,6 @@ export const Calendar = () => {
   const handleResetAvailability = async () => {
     try {
       setIsSaving(true);
-      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
       // Reset local state
       setSelectedSlots(new Set());
@@ -357,6 +421,15 @@ export const Calendar = () => {
       };
 
       await updateAvailability(activeUserId, availabilityData);
+
+      // ✅ UPDATE CONTEXT
+      if (viewMode === 'individual') {
+        updateUserContextField('availability', availabilityData);
+        console.log('[Calendar] ✅ UserContext updated (reset availability)');
+      } else {
+        updateInstitutionUserField(activeUserId, 'availability', availabilityData);
+        console.log('[Calendar] ✅ InstitutionContext updated (reset availability)');
+      }
 
       // Show success message
       alert('Müsaitlik ayarları sıfırlandı!');
@@ -417,12 +490,21 @@ export const Calendar = () => {
 
   const loadCalendarProviders = async () => {
     try {
-      // const userId = localStorage.getItem('userId') // Mock user ID for development
-      const response = await fetch(`${backendUrl}/api/calendar/auth/${userId}/providers`);
+      const response = await fetch(`${backendUrl}/api/calendar/auth/${activeUserId}/providers`);
       const data = await response.json();
 
       if (response.ok) {
-        setCalendarProviders(data.providers || []);
+        const providers = data.providers || [];
+        setCalendarProviders(providers);
+
+        // ✅ UPDATE CONTEXT - cache for future page loads
+        if (viewMode === 'individual') {
+          updateUserContextField('calendarProviders', providers);
+          console.log('[Calendar] ✅ Calendar providers cached in UserContext');
+        } else {
+          updateInstitutionUserField(activeUserId, 'calendarProviders', providers);
+          console.log('[Calendar] ✅ Calendar providers cached in InstitutionContext');
+        }
       } else {
         setCalendarError(data.error || 'Takvim sağlayıcıları yüklenemedi');
       }

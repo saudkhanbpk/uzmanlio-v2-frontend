@@ -160,6 +160,23 @@ export const InstitutionUsersProvider = ({ children }) => {
         );
     }, []);
 
+    /**
+     * Update a specific field for a user in the cache
+     */
+    const updateUserField = useCallback((userId, fieldPath, value) => {
+        setInstitutionUsers(prev =>
+            prev.map(user => {
+                if (user._id === userId || user._id?.toString() === userId) {
+                    return {
+                        ...user,
+                        [fieldPath]: value
+                    };
+                }
+                return user;
+            })
+        );
+    }, []);
+
     const value = {
         // State
         institutionUsers,
@@ -176,7 +193,8 @@ export const InstitutionUsersProvider = ({ children }) => {
         getAllPackages,
         getAllCustomers,
         clearCache,
-        updateUserInCache
+        updateUserInCache,
+        updateUserField
     };
 
     return (
