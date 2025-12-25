@@ -246,31 +246,60 @@ export const CreateEvent = () => {
     }));
   };
 
-  const handleAddNewClient = (newClientData) => {
-    const newClient = {
-      id: Date.now(),
-      name: newClientData.name,
-      surname: newClientData.surname,
-      fullName: `${newClientData.name} ${newClientData.surname}`,
-      email: newClientData.email,
-      phone: newClientData.phone,
-      packages: []
-    };
+  const handleAddNewClient = async (newClientData) => {
+    try {
+      setLoading(true);
+      const formattedData = customerService.formatCustomerData(newClientData);
+      const createdCustomer = await customerService.createCustomer(userId, formattedData);
 
-    // Note: You should also add this to your backend/user state
-    if (eventData.meetingType === '1-1') {
-      setEventData(prev => ({
-        ...prev,
-        selectedClients: [newClient]
-      }));
-    } else {
-      setEventData(prev => ({
-        ...prev,
-        selectedClients: [...prev.selectedClients, newClient]
-      }));
+      if (createdCustomer) {
+        // Update UserContext
+        const currentCustomers = user?.customers || [];
+        updateUserField('customers', [...currentCustomers, { customerId: createdCustomer }]);
+
+        // Update selectedClients in eventData
+        const clientForSelection = {
+          id: createdCustomer._id || createdCustomer.id,
+          name: createdCustomer.name,
+          surname: createdCustomer.surname,
+          fullName: `${createdCustomer.name} ${createdCustomer.surname}`,
+          email: createdCustomer.email,
+          phone: createdCustomer.phone,
+          packages: createdCustomer.packages || [],
+          _id: createdCustomer._id || createdCustomer.id
+        };
+
+        if (eventData.meetingType === '1-1') {
+          setEventData(prev => ({
+            ...prev,
+            selectedClients: [clientForSelection]
+          }));
+        } else {
+          setEventData(prev => ({
+            ...prev,
+            selectedClients: [...prev.selectedClients, clientForSelection]
+          }));
+        }
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Başarılı',
+          text: 'Danışan başarıyla oluşturuldu ve seçildi.',
+          timer: 2000,
+          showConfirmButton: false
+        });
+      }
+    } catch (err) {
+      console.error("Error creating customer inline:", err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err.message || 'Danışan oluşturulurken bir hata oluştu.'
+      });
+    } finally {
+      setLoading(false);
+      setShowAddClientModal(false);
     }
-
-    setShowAddClientModal(false);
   };
 
 
@@ -292,14 +321,18 @@ export const CreateEvent = () => {
         return;
       }
 
-      if (Object.keys(customerPaymentSettings).length === 0) {
-        console.error("❌ No payment settings found");
-        // setError("Please configure payment settings for all clients.");
+      const allClientsHavePayment = eventData.selectedClients.every(client => {
+        const clientId = client._id || client.id;
+        return customerPaymentSettings[clientId];
+      });
+
+      if (!allClientsHavePayment) {
+        console.error("❌ Some clients are missing payment settings");
         setLoading(false);
         Swal.fire({
           icon: 'error',
-          title: 'Error',
-          text: 'Please configure payment settings for all clients.',
+          title: 'Hata',
+          text: 'Lütfen tüm danışanlar için ödeme kesinti seçeneklerini ayarlayın.',
         });
         return;
       }
@@ -812,16 +845,17 @@ export const CreateEvent = () => {
             }
           </button>
 
-          {Object.keys(customerPaymentSettings).length > 0 ? (
+          {eventData.selectedClients.length > 0 &&
+            eventData.selectedClients.every(client => customerPaymentSettings[client._id || client.id]) ? (
             <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-sm text-green-800">
-                ✓ {Object.keys(customerPaymentSettings).length} danışan için ödeme ayarları yapılandırıldı
+                ✓ Tüm danışanlar için ödeme ayarları yapılandırıldı
               </p>
             </div>
           ) : eventData.selectedClients.length > 0 && (
             <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
               <p className="text-sm text-red-800">
-                ⚠️ Lütfen ödeme kesinti yöntemini seçin
+                ⚠️ Lütfen tüm danışanlar için ödeme kesinti yöntemini seçin
               </p>
             </div>
           )}

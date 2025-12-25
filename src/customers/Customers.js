@@ -9,7 +9,7 @@ import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
 
 // Customers Component
 export default function Customers() {
-  const { user } = useUser();
+  const { user, updateUserField } = useUser();
   const { viewMode, setViewMode } = useViewMode();
   const { institutionUsers, fetchInstitutionUsers, getAllCustomers } = useInstitutionUsers();
 
@@ -208,7 +208,18 @@ export default function Customers() {
   const addCustomer = async (customerData) => {
     try {
       const formattedData = customerService.formatCustomerData(customerData);
-      await customerService.createCustomer(userId, formattedData);
+      const newCustomer = await customerService.createCustomer(userId, formattedData);
+
+      // Update local state is already handled by loadCustomers, but let's be explicit with UserContext
+      if (newCustomer) {
+        const currentCustomers = user?.customers || [];
+        // The User schema shows customers is an array of objects { customerId: ObjectId, ... }
+        // but getCustomers returns the full objects. 
+        // UserContext stores a copy of the expert profile.
+        // We need to match the structure expected by the backend when pulling the profile.
+        updateUserField('customers', [...currentCustomers, { customerId: newCustomer }]);
+      }
+
       await loadCustomers(); // Reload customers to reflect changes
       await loadStats(); // Reload stats
       setShowAddModal(false);
@@ -228,6 +239,15 @@ export default function Customers() {
         console.log("[Customers] Deleting customer:", customerId, "from expert:", targetUserId);
         await customerService.deleteCustomer(targetUserId, customerId);
 
+        // Update UserContext
+        if (user?.customers) {
+          const updatedCustomers = user.customers.filter(c => {
+            const id = c.customerId?._id || c.customerId || c._id || c.id;
+            return String(id) !== String(customerId);
+          });
+          updateUserField('customers', updatedCustomers);
+        }
+
         // Reload customers based on view mode
         if (viewMode === 'institution') {
           // Refresh institution data to reflect changes
@@ -245,7 +265,24 @@ export default function Customers() {
 
   const updateCustomerStatus = async (customerId, status) => {
     try {
-      await customerService.updateCustomerStatus(userId, customerId, status);
+      const updatedCustomer = await customerService.updateCustomerStatus(userId, customerId, status);
+
+      // Update UserContext
+      if (user?.customers) {
+        const updatedCustomers = user.customers.map(c => {
+          const id = c.customerId?._id || c.customerId || c._id || c.id;
+          if (String(id) === String(customerId)) {
+            // Update status in the context
+            if (c.customerId && typeof c.customerId === 'object') {
+              return { ...c, customerId: { ...c.customerId, status } };
+            }
+            return { ...c, status };
+          }
+          return c;
+        });
+        updateUserField('customers', updatedCustomers);
+      }
+
       await loadCustomers(); // Reload customers to reflect changes
     } catch (err) {
       alert('Danışan durumu güncellenirken bir hata oluştu.');

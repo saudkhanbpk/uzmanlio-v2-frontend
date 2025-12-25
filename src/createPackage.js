@@ -5,10 +5,11 @@ import Swal from "sweetalert2";
 import { AddCustomerModal } from "./customers/AddCustomerModal";
 import { authPost } from "./services/authFetch";
 import { useUser } from "./context/UserContext";
+import { customerService } from "./services/customerService";
 
 // CreatePackage Component
 export const CreatePackage = () => {
-  const { user, patchUser } = useUser();
+  const { user, patchUser, updateUserField } = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -246,54 +247,24 @@ export const CreatePackage = () => {
         }
       });
 
-      // Prepare data for API
-      // The backend expects specific fields. Ensure we map them correctly.
-      // Usually AddCustomerModal provides name, surname, email, phone etc.
-      const customerData = {
-        name: newClientData.name,
-        surname: newClientData.surname,
-        email: newClientData.email,
-        phone: newClientData.phone || "", // Ensure phone is sent if available
-        status: 'active',
-        // Add other defaults if necessary
-      };
+      const formattedData = customerService.formatCustomerData(newClientData);
+      const createdCustomer = await customerService.createCustomer(userId, formattedData);
 
-      const response = await authPost(`${SERVER_URL}/api/expert/${userId}/customers`, customerData);
-
-      if (response && response.customer) {
-        const newCustomer = response.customer;
-
+      if (createdCustomer) {
         // 1. Update UserContext (Global State)
-        // We need to add the new customer to the user.customers array in the context
-        // user.customers in context usually has structure: [{ customerId: {...}, isArchived: false, ... }] 
-        // OR it might be the populated/flattened list depending on how useUser loads it.
-        // Let's check how useUser loads it. usually it's the raw user object from DB.
-        // But mapped "availableClients" above uses `user.customers.map(c => c.customerId)`.
+        const currentCustomers = user?.customers || [];
+        updateUserField('customers', [...currentCustomers, { customerId: createdCustomer }]);
 
-        // We need to mimic the structure the backend returns for user.customers
-        const newCustomerRef = {
-          customerId: newCustomer, // In the running app, we might need the full object here for the UI to update instantly without refetch
-          isArchived: false,
-          addedAt: new Date().toISOString()
-        };
-
-        const updatedCustomers = [...(user.customers || []), newCustomerRef];
-        patchUser({ customers: updatedCustomers });
-
-        // 2. Update Local "Available Clients" list (if derived from user, this might update auto, but let's be safe)
-        // actually availableClients is a const derived from user.customers on every render.
-        // So patching user should trigger re-render and update availableClients.
-
-        // 3. Auto-select the new client
+        // 2. Auto-select the new client
         if (packageData.meetingType === '1-1') {
           setPackageData(prev => ({
             ...prev,
-            selectedClients: [newCustomer]
+            selectedClients: [createdCustomer]
           }));
         } else {
           setPackageData(prev => ({
             ...prev,
-            selectedClients: [...prev.selectedClients, newCustomer]
+            selectedClients: [...prev.selectedClients, createdCustomer]
           }));
         }
 

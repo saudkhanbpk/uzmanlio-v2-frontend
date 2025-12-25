@@ -14,7 +14,7 @@ import { authFetch, getAuthUserId } from "./authFetch";
 
 
 export default function Services() {
-  const { user } = useUser();
+  const { user, updateUserField } = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [activeTab, setActiveTab] = useState('hizmetler');
   const [editServiceModal, setEditServiceModal] = useState(false);
@@ -448,30 +448,33 @@ export default function Services() {
   // Handle adding new customer from modal
   const handleAddNewCustomer = async (customerData) => {
     try {
-      const response = await authFetch(
-        `${SERVER_URL}/api/expert/${userId}/customers`,
-        {
-          method: 'POST',
-          body: JSON.stringify(customerData)
-        }
-      );
-      const responseData = await response.json();
+      const formattedData = customerService.formatCustomerData(customerData);
+      const createdCustomer = await customerService.createCustomer(userId, formattedData);
 
-      const newCustomer = responseData.customer;
-      setAvailableCustomers(prev => [...prev, newCustomer]);
-      setSelectedCustomerId(newCustomer._id || newCustomer.id);
-      setShowAddCustomerModal(false);
+      if (createdCustomer) {
+        // Update UserContext
+        const currentCustomers = user?.customers || [];
+        updateUserField('customers', [...currentCustomers, { customerId: createdCustomer }]);
 
-      Swal.fire({
-        icon: 'success',
-        title: 'Başarılı!',
-        text: 'Danışan başarıyla eklendi.',
-        showConfirmButton: false,
-        timer: 1500
-      });
+        setAvailableCustomers(prev => [...prev, createdCustomer]);
+        setSelectedCustomerId(createdCustomer._id || createdCustomer.id);
+        setShowAddCustomerModal(false);
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Başarılı!',
+          text: 'Danışan başarıyla eklendi.',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      }
     } catch (error) {
       console.error('Error adding customer:', error);
-      throw error;
+      Swal.fire({
+        icon: 'error',
+        title: 'Hata!',
+        text: error.message || 'Danışan eklenirken bir hata oluştu.',
+      });
     }
   };
 
