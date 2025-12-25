@@ -465,37 +465,13 @@ export const Calendar = () => {
       setCalendarError(null);
       // const userId = localStorage.getItem('userId') // Mock user ID for development
 
-      const response = await fetch(`https://uzmanlio-backend-kpwz.onrender.com/api/calendar/auth/${provider}/auth/${userId}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/calendar/auth/${provider}/auth/${userId}`);
       console.log("Response From Goolge calendar", response)
       const data = await response.json();
       if (response.ok && data.authUrl) {
         // Redirect the current page to Google OAuth URL
         window.location.href = data.authUrl;
       }
-
-
-      // if (response.ok && data.authUrl) {
-      //   // Open OAuth flow in new window
-      //   const authWindow = window.open(
-      //     data.authUrl,
-      //     'calendar-auth',
-      //     'width=600,height=700,scrollbars=yes,resizable=yes'
-      //   );
-
-      //   // Listen for auth completion
-      //   const checkClosed = setInterval(() => {
-
-      //     if (authWindow.closed) {
-      //       clearInterval(checkClosed);
-      //       // Reload providers after auth
-      //       setTimeout(() => {
-      //         loadCalendarProviders();
-      //       }, 1000);
-      //     }
-      //   }, 1000);
-      // } else {
-      //   setCalendarError(data.error || 'Kimlik doğrulama başlatılamadı');
-      // }
     } catch (err) {
       setCalendarError('Takvim bağlantısı başarısız');
       console.error('Error connecting calendar:', err);
