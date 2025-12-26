@@ -4,6 +4,7 @@ import Swal from "sweetalert2";
 import { useSearchParams } from "react-router-dom";
 import { profileService } from "./services/ProfileServices";
 import { useUser } from "./context/UserContext";
+import { authFetch } from "./services/authFetch";
 import { useViewMode } from "./contexts/ViewModeContext";
 import { useInstitutionUsers } from "./contexts/InstitutionUsersContext";
 import { ViewModeSwitcher } from "./components/ViewModeSwitcher";
@@ -463,13 +464,12 @@ export const Calendar = () => {
     try {
       setCalendarLoading(true);
       setCalendarError(null);
-      // const userId = localStorage.getItem('userId') // Mock user ID for development
 
-      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/calendar/auth/${provider}/auth/${userId}`);
-      console.log("Response From Goolge calendar", response)
+      const response = await authFetch(`${process.env.REACT_APP_BACKEND_URL}/api/calendar/auth/${provider}/auth/${activeUserId}`);
+      console.log(`Response From ${provider} calendar`, response)
       const data = await response.json();
       if (response.ok && data.authUrl) {
-        // Redirect the current page to Google OAuth URL
+        // Redirect the current page to the provider's OAuth URL
         window.location.href = data.authUrl;
       }
     } catch (err) {
