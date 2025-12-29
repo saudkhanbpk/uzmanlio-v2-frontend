@@ -173,7 +173,8 @@ export const fetchCsrfToken = async (force = false) => {
             throw new Error('No CSRF token in response');
         })
         .catch((err) => {
-            console.error('❌ Error fetching CSRF token:', err);
+            console.error('❌ Error fetching CSRF token from backend. Check if COOKIE_SECRET and CSRF_SECRET are set:', err);
+            csrfToken = null;
             return null;
         })
         .finally(() => {
@@ -332,11 +333,13 @@ export const authFetch = async (url, options = {}) => {
             try {
                 const errData = await errorClone.json();
                 if (errData.error === "Invalid CSRF token") {
-                    console.log('⚠️ Invalid CSRF token, refreshing token and retrying...');
+                    console.warn('⚠️ Invalid CSRF token in authFetch, refreshing token and retrying...');
                     // FORCE refresh the CSRF token
-                    await fetchCsrfToken(true);
-                    // Retry with new CSRF token
-                    response = await doFetch(accessToken, csrfToken);
+                    const nextToken = await fetchCsrfToken(true);
+                    if (nextToken) {
+                        // Retry with new CSRF token
+                        response = await doFetch(accessToken, nextToken);
+                    }
                 }
             } catch (e) {
                 // Not a JSON error or other issue

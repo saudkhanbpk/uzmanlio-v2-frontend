@@ -36,21 +36,6 @@ export const BlogCreate = () => {
     }));
   };
 
-  const generateSlug = (title) => {
-    return title
-      .toLowerCase()
-      .replace(/ğ/g, 'g')
-      .replace(/ü/g, 'u')
-      .replace(/ş/g, 's')
-      .replace(/ı/g, 'i')
-      .replace(/ö/g, 'o')
-      .replace(/ç/g, 'c')
-      .replace(/[^a-z0-9\s-]/g, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .trim('-');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -207,7 +192,7 @@ export const BlogCreate = () => {
           <SimpleRichTextEditor
             value={formData.content}
             onChange={handleContentChange}
-            placeholder="Blog yazısının içeriğini buraya yazın... Markdown formatını kullanabilirsiniz."
+            placeholder="Lütfen en az 10 karakter girin. Blog içeriğinizi buraya yazın. Biçimlendirme için Markdown formatını kullanabilirsiniz."
             className="min-h-[300px]"
           />
         </div>

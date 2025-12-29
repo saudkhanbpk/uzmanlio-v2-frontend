@@ -141,8 +141,14 @@ class ApiClient {
      */
     async fetchCsrfToken() {
         try {
+            const headers = { 'Content-Type': 'application/json' };
+            if (this.accessToken) {
+                headers['Authorization'] = `Bearer ${this.accessToken}`;
+            }
+
             const response = await fetch(`${API_BASE_URL}/api/csrf-token`, {
-                headers: { 'Content-Type': 'application/json' }
+                headers,
+                credentials: 'include'
             });
             if (response.ok) {
                 const data = await response.json();
@@ -174,7 +180,9 @@ class ApiClient {
         };
 
         if (this.csrfToken) {
-            headers['X-CSRF-Token'] = this.csrfToken;
+            headers['x-csrf-token'] = this.csrfToken;
+        } else if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+            console.warn(`⚠️ No CSRF token available for ${method} request to ${endpoint}`);
         }
 
         // Check if token is about to expire and proactively refresh
@@ -206,13 +214,16 @@ class ApiClient {
             if (response.status === 403 && this.csrfToken) {
                 const errorData = await response.clone().json().catch(() => ({}));
                 if (errorData.error === 'Invalid CSRF token') {
+                    console.warn('⚠️ Invalid CSRF token in apiClient, refreshing and retrying...');
                     await this.fetchCsrfToken();
-                    headers['X-CSRF-Token'] = this.csrfToken;
-                    response = await fetch(url, {
-                        ...options,
-                        headers,
-                        credentials: 'include'
-                    });
+                    if (this.csrfToken) {
+                        headers['x-csrf-token'] = this.csrfToken;
+                        response = await fetch(url, {
+                            ...options,
+                            headers,
+                            credentials: 'include'
+                        });
+                    }
                 }
             }
 
