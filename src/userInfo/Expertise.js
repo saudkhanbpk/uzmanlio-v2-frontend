@@ -442,7 +442,7 @@ export const Expertise = () => {
                 </div>
                 <div className="flex-1">
                   <h4 className="font-medium text-gray-900">{edu.department} {edu.level}</h4>
-                  <p className="text-sm text-gray-600">{edu.name} • {edu.graduationYear}</p>
+                  <p className="text-sm text-gray-600">{edu.name} • {edu.current ? "Present" : edu.graduationYear}</p>
                 </div>
                 <button
                   onClick={() => handleDeleteEducation(edu.id)}
@@ -748,12 +748,22 @@ export const Expertise = () => {
             setSelectedCertificate(null);
           }}
           certificate={selectedCertificate}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId); // Reload the profile to get updated titles
+          }}
         />
       )}
-      {showExpModal && <ExperienceModal experience={selectedExperience} onClose={() => setExpModal(false)} onUpdate={() => {
-        const userId = localStorage.getItem('userId');
-        loadExpertProfile(userId); // Reload the profile to get updated titles
-      }} />}
+      {showExpModal && (
+        <ExperienceModal
+          experience={selectedExperience}
+          onClose={() => setExpModal(false)}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId); // Reload the profile to get updated titles
+          }}
+        />
+      )}
       {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
       {showSkillEditModal && (
         <SkillEditModal

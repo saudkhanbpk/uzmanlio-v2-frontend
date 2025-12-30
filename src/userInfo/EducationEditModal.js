@@ -20,9 +20,13 @@ export const EducationEditModal = ({ onClose, education, onUpdate }) => {
         institution: education.name || '',
         degree: education.level || '',
         field: education.department || '',
-        startDate: '', // We'll need to handle date conversion
-        endDate: education.graduationYear ? `${education.graduationYear}-06-01` : '',
-        current: false
+        startDate: education.startDate
+          ? new Date(education.startDate).toISOString().split('T')[0]
+          : '',
+        endDate: education.endDate
+          ? new Date(education.endDate).toISOString().split('T')[0]
+          : '',
+        current: education.current || false
       });
     }
   }, [education]);
@@ -32,16 +36,23 @@ export const EducationEditModal = ({ onClose, education, onUpdate }) => {
     setError('');
 
     try {
-      // For now, using a mock userId - in a real app, this would come from auth context
-      const userId = localStorage.getItem('userId') // Mock user ID
+      const userId = localStorage.getItem('userId'); // Mock user ID
 
       const educationData = {
         level: formData.degree,
         name: formData.institution,
         department: formData.field,
-        graduationYear: formData.endDate ? new Date(formData.endDate).getFullYear() : null,
-        startDate: formData.startDate ? new Date(formData.startDate) : null,
-        endDate: formData.current ? null : (formData.endDate ? new Date(formData.endDate) : null),
+        graduationYear: formData.endDate
+          ? new Date(formData.endDate).getFullYear()
+          : education.graduationYear,
+        startDate: formData.startDate
+          ? new Date(formData.startDate + "T00:00:00Z")
+          : education.startDate,
+        endDate: formData.current
+          ? null
+          : formData.endDate
+            ? new Date(formData.endDate + "T00:00:00Z")
+            : education.endDate,
         current: formData.current
       };
 
