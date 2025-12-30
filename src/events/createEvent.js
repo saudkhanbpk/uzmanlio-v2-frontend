@@ -7,6 +7,7 @@ import { useUser } from "../context/UserContext";
 import PaymentDeductionModal from "./paymentDeductionmodel";
 import RepetitionModal from "./repetitionModel";
 import Swal from "sweetalert2";
+import { customerService } from "../services/customerService";
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {

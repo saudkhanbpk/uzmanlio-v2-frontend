@@ -10,6 +10,7 @@ import { useViewMode } from "../contexts/ViewModeContext";
 import { useInstitutionUsers } from "../contexts/InstitutionUsersContext";
 import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
 import { authFetch, getAuthUserId } from "./authFetch";
+import { customerService } from "./customerService";
 
 
 
