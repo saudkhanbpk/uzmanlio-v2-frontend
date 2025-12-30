@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
-export const TitleModal = ({ onClose }) => {
+export const TitleModal = ({ onClose, onUpdate }) => {
   const { addTitle, loading } = useExpertData();
 
   const [formData, setFormData] = useState({
@@ -68,6 +68,7 @@ export const TitleModal = ({ onClose }) => {
         description: formData.description.trim(),
       });
 
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setErrors((prev) => ({

@@ -100,6 +100,11 @@ export const Expertise = () => {
     setExpModal(true);
   };
 
+  const handleAddExperience = () => {
+    setSelectedExperience(null);
+    setExpModal(true);
+  };
+
   const handleDeleteExperience = async (experienceId) => {
     if (window.confirm('Bu deneyim kaydını silmek istediğinizden emin misiniz?')) {
       try {
@@ -522,7 +527,7 @@ export const Expertise = () => {
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-medium text-gray-900">Deneyim</h3>
           <button
-            onClick={() => setExpModal(true)}
+            onClick={handleAddExperience}
             className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors"
           >
             + Deneyim Ekle
@@ -712,7 +717,15 @@ export const Expertise = () => {
       </div>
 
       {/* Modals */}
-      {showTitleModal && <TitleModal onClose={() => setTitleModal(false)} />}
+      {showTitleModal && (
+        <TitleModal
+          onClose={() => setTitleModal(false)}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId);
+          }}
+        />
+      )}
       {showTitleEditModal && (
         <TitleEditModal
           onClose={() => {
@@ -726,7 +739,15 @@ export const Expertise = () => {
           }}
         />
       )}
-      {showEduModal && <EducationModal onClose={() => setEduModal(false)} />}
+      {showEduModal && (
+        <EducationModal
+          onClose={() => setEduModal(false)}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId);
+          }}
+        />
+      )}
       {showEduEditModal && (
         <EducationEditModal
           onClose={() => {
@@ -740,7 +761,15 @@ export const Expertise = () => {
           }}
         />
       )}
-      {showCertModal && <CertificationModal onClose={() => setCertModal(false)} />}
+      {showCertModal && (
+        <CertificationModal
+          onClose={() => setCertModal(false)}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId);
+          }}
+        />
+      )}
       {showCertEditModal && (
         <CertificationEditModal
           onClose={() => {
@@ -757,14 +786,25 @@ export const Expertise = () => {
       {showExpModal && (
         <ExperienceModal
           experience={selectedExperience}
-          onClose={() => setExpModal(false)}
+          onClose={() => {
+            setExpModal(false);
+            setSelectedExperience(null);
+          }}
           onUpdate={() => {
             const userId = localStorage.getItem('userId');
             loadExpertProfile(userId); // Reload the profile to get updated titles
           }}
         />
       )}
-      {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
+      {showSkillModal && (
+        <SkillModal
+          onClose={() => setShowSkillModal(false)}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId);
+          }}
+        />
+      )}
       {showSkillEditModal && (
         <SkillEditModal
           onClose={() => {
@@ -772,6 +812,10 @@ export const Expertise = () => {
             setSelectedSkill(null);
           }}
           skill={selectedSkill}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId);
+          }}
         />
       )}
 

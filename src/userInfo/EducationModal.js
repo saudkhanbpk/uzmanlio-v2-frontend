@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Education Modal Component
-export const EducationModal = ({ onClose }) => {
+export const EducationModal = ({ onClose, onUpdate }) => {
   const { addEducation, loading } = useExpertData();
   const [formData, setFormData] = useState({
     institution: '',
@@ -34,6 +34,7 @@ export const EducationModal = ({ onClose }) => {
 
 
       await addEducation(userId, educationData);
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add education');

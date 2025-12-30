@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Skill Edit Modal Component
-export const SkillEditModal = ({ onClose, skill }) => {
+export const SkillEditModal = ({ onClose, skill, onUpdate }) => {
   const { updateSkill, loading } = useExpertData();
   const [formData, setFormData] = useState({
     name: '',
@@ -26,7 +26,7 @@ export const SkillEditModal = ({ onClose, skill }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!formData.name.trim()) {
       setError('Beceri adı gereklidir');
       return;
@@ -40,13 +40,14 @@ export const SkillEditModal = ({ onClose, skill }) => {
     try {
       // TODO: Replace with real user ID from authentication context in production
       const userId = localStorage.getItem('userId') // Mock user ID for development
-      
+
       await updateSkill(userId, skill.id, {
         name: formData.name.trim(),
         level: parseInt(formData.level),
         category: formData.category.trim(),
         description: formData.description.trim()
       });
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to update skill');
@@ -60,31 +61,31 @@ export const SkillEditModal = ({ onClose, skill }) => {
           <h3 className="text-lg font-semibold text-gray-900">Beceri Düzenle</h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
-        
+
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Beceri Adı *</label>
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               placeholder="Örn: React.js, Dijital Pazarlama"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="">Kategori seçin</option>
@@ -95,7 +96,7 @@ export const SkillEditModal = ({ onClose, skill }) => {
               <option value="language">Dil</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Seviye: {formData.level}%
@@ -105,7 +106,7 @@ export const SkillEditModal = ({ onClose, skill }) => {
               min="1"
               max="100"
               value={formData.level}
-              onChange={(e) => setFormData({...formData, level: parseInt(e.target.value)})}
+              onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-gray-500 mt-1">
@@ -115,18 +116,18 @@ export const SkillEditModal = ({ onClose, skill }) => {
               <span>Uzman</span>
             </div>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Bu beceri hakkında kısa bir açıklama..."
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"

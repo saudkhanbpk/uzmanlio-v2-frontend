@@ -3,45 +3,58 @@ import { useExpertData } from "../hooks/useExpertData";
 
 // Experience Modal Component
 export const ExperienceModal = ({ onClose, experience, onUpdate }) => {
-  const { addExperience, loading } = useExpertData();
+  const { addExperience, updateExperience, loading } = useExpertData();
+
+  // Helper to format Date for input
+  const formatDateForInput = (dateInput) => {
+    if (!dateInput) return "";
+    const date = new Date(dateInput);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString().split("T")[0];
+  };
+
   const [formData, setFormData] = useState({
-    title: experience?.title || "",
+    title: experience?.position || "",
     company: experience?.company || "",
     location: experience?.location || "",
-    startDate: experience?.start || "",
-    endDate: experience?.end || "",
-    current: experience?.stillWork || false,
+    startDate: experience?.startDate ? formatDateForInput(experience.startDate) : (experience?.start ? `${experience.start}-01-01` : ""),
+    endDate: experience?.endDate ? formatDateForInput(experience.endDate) : (experience?.end ? `${experience.end}-01-01` : ""),
+    current: experience?.current || experience?.stillWork || false,
     description: experience?.description || "",
-    skills: experience?.skills || ""
+    skills: experience?.skills ? experience.skills.join(', ') : ""
   });
   const [error, setError] = useState('');
-  console.log("Experience:", experience)
+  const isEditing = !!experience;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     try {
-      // For now, using a mock userId - in a real app, this would come from auth context
-      const userId = localStorage.getItem('userId') // Mock user ID
+      const userId = localStorage.getItem('userId');
 
+      // Use the same date format as EducationModal for consistency
       const experienceData = {
         company: formData.company,
         position: formData.title,
-        start: formData.startDate ? new Date(formData.startDate).getFullYear() : null,
-        end: formData.current ? null : (formData.endDate ? new Date(formData.endDate).getFullYear() : null),
-        stillWork: formData.current,
+        startDate: formData.startDate ? new Date(formData.startDate + "T00:00:00Z") : null,
+        endDate: formData.current ? null : (formData.endDate ? new Date(formData.endDate + "T00:00:00Z") : null),
+        current: formData.current,
         description: formData.description,
-        skills: formData.skills.split(',').map(skill => skill.trim()),
-        // For now, we'll store location as a string, but in a real app you'd have country/city references
+        skills: formData.skills ? formData.skills.split(',').map(skill => skill.trim()) : [],
         location: formData.location
       };
 
-      await addExperience(userId, experienceData);
+      if (isEditing) {
+        await updateExperience(userId, experience.id, experienceData);
+      } else {
+        await addExperience(userId, experienceData);
+      }
+
       onUpdate();
       onClose();
     } catch (err) {
-      setError(err.message || 'Failed to add experience');
+      setError(err.message || `Failed to ${isEditing ? 'update' : 'add'} experience`);
     }
   };
 
@@ -49,7 +62,9 @@ export const ExperienceModal = ({ onClose, experience, onUpdate }) => {
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl p-6 w-full max-w-lg mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Deneyim Ekle</h3>
+          <h3 className="text-lg font-semibold text-gray-900">
+            {isEditing ? 'Deneyimi Düzenle' : 'Deneyim Ekle'}
+          </h3>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
         </div>
 
@@ -166,7 +181,7 @@ export const ExperienceModal = ({ onClose, experience, onUpdate }) => {
               disabled={loading.experience}
               className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading.experience ? 'Ekleniyor...' : 'Ekle'}
+              {loading.experience ? (isEditing ? 'Güncelleniyor...' : 'Ekleniyor...') : (isEditing ? 'Güncelle' : 'Ekle')}
             </button>
           </div>
         </form>

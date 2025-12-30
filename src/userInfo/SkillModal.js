@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Skill Modal Component
-export const SkillModal = ({ onClose }) => {
+export const SkillModal = ({ onClose, onUpdate }) => {
   const { addSkill, loading } = useExpertData();
   const [formData, setFormData] = useState({
     name: '',
@@ -36,6 +36,7 @@ export const SkillModal = ({ onClose }) => {
         category: formData.category.trim(),
         description: formData.description.trim()
       });
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add skill');
@@ -62,18 +63,18 @@ export const SkillModal = ({ onClose }) => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Örn: React.js"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Kategori</label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({...formData, category: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="">Kategori seçin</option>
@@ -84,7 +85,7 @@ export const SkillModal = ({ onClose }) => {
               <option value="language">Dil</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Seviye: {formData.level}%
@@ -94,22 +95,22 @@ export const SkillModal = ({ onClose }) => {
               min="1"
               max="100"
               value={formData.level}
-              onChange={(e) => setFormData({...formData, level: parseInt(e.target.value)})}
+              onChange={(e) => setFormData({ ...formData, level: parseInt(e.target.value) })}
               className="w-full"
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
             <textarea
               value={formData.description}
-              onChange={(e) => setFormData({...formData, description: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="Bu beceri hakkında detay..."
               rows={2}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
-          
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
