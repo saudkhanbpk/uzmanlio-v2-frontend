@@ -5,6 +5,7 @@ import Swal from "sweetalert2";
 import { LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { authFetch } from "./services/authFetch";
+import { useUser } from "./context/UserContext";
 
 // Settings Component
 export const Settings = () => {
@@ -75,83 +76,54 @@ export const Settings = () => {
     sessionStorage.removeItem('verificationSkipped');
   };
 
-  // Fetch user profile and subscription from backend (uses lowercase keys)
+  const { user, loading: contextLoading } = useUser();
+
+  // Sync state from context user
   useEffect(() => {
-    if (!userId) {
-      handleLogout();
-      navigate('/login');
-      return;
-    }
-    async function fetchUserProfile() {
-      try {
-        const response = await authFetch(
-          `${process.env.REACT_APP_BACKEND_URL}/api/expert/${userId}/profile`
-        );
-        const data = await response.json();
+    if (user) {
+      const currentSubscription = user.subscription;
+      setIsAdmin(user.subscription?.isAdmin === true);
 
-        console.log("Response profile:", data);
+      if (currentSubscription && currentSubscription.endDate) {
+        const endTs = new Date(currentSubscription.endDate).getTime();
+        if (!Number.isNaN(endTs) && endTs > Date.now()) {
+          const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? '';
+          const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? '';
 
-        const user = data;
-        // Accept subscription under either 'subscription' or 'Subscription' (some backends differ)
-        const currentSubscription = user.subscription
-        setIsAdmin(user.subscription.isAdmin === true ? true : false)
+          const planFromBackend = String(planFromBackendRaw).toLowerCase();
+          const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
 
-        if (currentSubscription && currentSubscription.endDate) {
-          // Only treat as active if endDate is in future
-          const endTs = new Date(currentSubscription.endDate).getTime();
-          if (!Number.isNaN(endTs) && endTs > Date.now()) {
-            // Expect backend now sends lowercase: plantype, duration
-            const planFromBackendRaw = currentSubscription.plantype ?? currentSubscription.Plantype ?? '';
-            const durationFromBackendRaw = currentSubscription.duration ?? currentSubscription.Duration ?? '';
+          setCurrentPlan(planFromBackend);
+          setBackendDuration(durationFromBackend);
+          setBillingPeriod(durationFromBackend);
 
-            const planFromBackend = String(planFromBackendRaw).toLowerCase();
-            const durationFromBackend = String(durationFromBackendRaw).toLowerCase();
-
-            // Set backend-active values (these drive the highlighting)
-            setCurrentPlan(planFromBackend);      // 'individual' or 'institutional'
-            setBackendDuration(durationFromBackend); // 'monthly' or 'yearly'
-
-            // Also set the UI billingPeriod to backend duration so displayed prices match backend on load
-            setBillingPeriod(durationFromBackend);
-
-            // If backend provides seat count, use it (otherwise keep 1)
-            if (currentSubscription.seats) {
-              setSelectedSeats(Number(currentSubscription.seats));
-            }
-
-            // compute and set price for modal / display (based on backend plan & duration)
-            let computedPrice = 0;
-            if (planFromBackend === 'individual') {
-              computedPrice = durationFromBackend === 'monthly' ? monthlyPrices.individual : yearlyPrices.individual;
-            } else if (planFromBackend === 'institutional') {
-              // compute institutional price including seats
-              const base = durationFromBackend === 'monthly' ? monthlyPrices.institutional : yearlyPrices.institutional;
-              const seatP = durationFromBackend === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice;
-              computedPrice = base + Math.max(0, selectedSeats - 1) * seatP;
-            }
-            setPrice(computedPrice);
-
-            console.log("Active subscription found:", { planFromBackend, durationFromBackend, computedPrice });
-          } else {
-            // subscription expired or invalid -> clear
-            setCurrentPlan('');
-            setBackendDuration('');
-            console.log("No Active Plan For the Current User");
+          if (currentSubscription.seats) {
+            setSelectedSeats(Number(currentSubscription.seats));
           }
+
+          let computedPrice = 0;
+          if (planFromBackend === 'individual') {
+            computedPrice = durationFromBackend === 'monthly' ? monthlyPrices.individual : yearlyPrices.individual;
+          } else if (planFromBackend === 'institutional') {
+            const base = durationFromBackend === 'monthly' ? monthlyPrices.institutional : yearlyPrices.institutional;
+            const seatP = durationFromBackend === 'monthly' ? monthlyPrices.seatPrice : yearlyPrices.seatPrice;
+            computedPrice = base + Math.max(0, (currentSubscription.seats || 1) - 1) * seatP;
+          }
+          setPrice(computedPrice);
+
+          console.log("Active subscription synced from context:", { planFromBackend, durationFromBackend, computedPrice });
         } else {
-          // no subscription
           setCurrentPlan('');
           setBackendDuration('');
-          console.log("No subscription data found");
+          console.log("Subscription from context is expired or invalid");
         }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
+      } else {
+        setCurrentPlan('');
+        setBackendDuration('');
+        console.log("No subscription data found in context");
       }
     }
-
-    fetchUserProfile();
-    // run once on mount
-  }, []);
+  }, [user]);
 
 
   // When user clicks on Plan button -> open subscription modal
