@@ -244,28 +244,22 @@ export const useExpertData = () => {
 
   const uploadGalleryFile = useCallback(async (userId, files) => {
     try {
+      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'galleryFiles', value: true } });
       const uploadedFiles = [];
       for (const fileData of files) {
-        const formData = new FormData();
-        formData.append("file", fileData.file);
-        formData.append("type", fileData.type);
-        const response = await fetch(`${SERVER_URL}/api/expert/${userId}/gallery`, {
-          method: "POST",
-          body: formData,
-        });
-        if (!response.ok) {
-          throw new Error("Failed to upload file");
-        }
-        const data = await response.json();
-        uploadedFiles.push(data.file);
+        const result = await expertService.uploadGalleryFile(userId, fileData);
+        uploadedFiles.push(result.file);
       }
       await loadExpertProfile(userId);
       return uploadedFiles;
     } catch (error) {
       console.error("Error uploading gallery files:", error);
+      dispatch({ type: EXPERT_ACTIONS.SET_ERROR, payload: { field: 'galleryFiles', error: error.message } });
       throw error;
+    } finally {
+      dispatch({ type: EXPERT_ACTIONS.SET_LOADING, payload: { field: 'galleryFiles', value: false } });
     }
-  }, [handleApiCall]);
+  }, [expertService, loadExpertProfile, dispatch]);
 
 
   const deleteGalleryFile = useCallback(async (userId, fileId) => {

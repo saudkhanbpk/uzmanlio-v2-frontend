@@ -8,11 +8,11 @@ class ExpertService {
   async apiCall(endpoint, options = {}) {
     const url = `${SERVER_URL}${endpoint}`;
     const config = {
+      ...options,
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...options.headers,
       },
-      ...options,
     };
 
     try {
