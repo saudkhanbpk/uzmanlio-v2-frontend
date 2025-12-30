@@ -720,6 +720,10 @@ export const Expertise = () => {
             setSelectedTitle(null);
           }}
           title={selectedTitle}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId); // Reload the profile to get updated titles
+          }}
         />
       )}
       {showEduModal && <EducationModal onClose={() => setEduModal(false)} />}
@@ -730,6 +734,10 @@ export const Expertise = () => {
             setSelectedEducation(null);
           }}
           education={selectedEducation}
+          onUpdate={() => {
+            const userId = localStorage.getItem('userId');
+            loadExpertProfile(userId); // Reload the profile to get updated titles
+          }}
         />
       )}
       {showCertModal && <CertificationModal onClose={() => setCertModal(false)} />}
@@ -742,7 +750,10 @@ export const Expertise = () => {
           certificate={selectedCertificate}
         />
       )}
-      {showExpModal && <ExperienceModal experience={selectedExperience} onClose={() => setExpModal(false)} />}
+      {showExpModal && <ExperienceModal experience={selectedExperience} onClose={() => setExpModal(false)} onUpdate={() => {
+        const userId = localStorage.getItem('userId');
+        loadExpertProfile(userId); // Reload the profile to get updated titles
+      }} />}
       {showSkillModal && <SkillModal onClose={() => setShowSkillModal(false)} />}
       {showSkillEditModal && (
         <SkillEditModal

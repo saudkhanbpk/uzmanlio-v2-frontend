@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Experience Modal Component
-export const ExperienceModal = ({ onClose, experience }) => {
+export const ExperienceModal = ({ onClose, experience, onUpdate }) => {
   const { addExperience, loading } = useExpertData();
   const [formData, setFormData] = useState({
     title: experience?.title || "",
@@ -38,6 +38,7 @@ export const ExperienceModal = ({ onClose, experience }) => {
       };
 
       await addExperience(userId, experienceData);
+      onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add experience');

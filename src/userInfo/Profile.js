@@ -7,6 +7,7 @@ import { authFetch, authPost } from "../services/authFetch";
 
 export const Profile = () => {
   const { user, loading, error } = useUser(); // Get user from Context
+  const [updating, setUpdating] = useState(false);
 
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const userId = localStorage.getItem('userId');
@@ -209,6 +210,7 @@ export const Profile = () => {
   };
   // Update Profile
   const updateProfile = async () => {
+    setUpdating(true); // Start loading
     try {
       const response = await authFetch(`${SERVER_URL}/api/expert/${userId}`, {
         method: 'PUT',
@@ -248,6 +250,8 @@ export const Profile = () => {
         title: "Hata!",
         text: `Güncelleme başarısız: ${error.message}`,
       });
+    } finally {
+      setUpdating(false); // Stop loading
     }
   };
 
@@ -407,10 +411,12 @@ export const Profile = () => {
         <div className="mt-6">
           <button
             onClick={updateProfile}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={updating}
+            className={`bg-primary-600 text-white px-6 py-2 rounded-lg transition-colors ${updating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700'}`}
           >
-            Güncelle
+            {updating ? "Güncelleniyor..." : "Güncelle"}
           </button>
+
         </div>
       </div>
 
@@ -527,9 +533,10 @@ export const Profile = () => {
         <div className="mt-6">
           <button
             onClick={updateProfile}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={updating}
+            className={`bg-primary-600 text-white px-6 py-2 rounded-lg transition-colors ${updating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700'}`}
           >
-            Güncelle
+            {updating ? "Güncelleniyor..." : "Güncelle"}
           </button>
         </div>
       </div>
@@ -615,9 +622,10 @@ export const Profile = () => {
         <div className="mt-6">
           <button
             onClick={updateProfile}
-            className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+            disabled={updating}
+            className={`bg-primary-600 text-white px-6 py-2 rounded-lg transition-colors ${updating ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary-700'}`}
           >
-            Güncelle
+            {updating ? "Güncelleniyor..." : "Güncelle"}
           </button>
         </div>
       </div>

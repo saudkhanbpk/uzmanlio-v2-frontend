@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
-export const TitleEditModal = ({ onClose, title }) => {
+export const TitleEditModal = ({ onClose, title, onUpdate }) => {
   const { updateTitle, loading } = useExpertData();
   const [formData, setFormData] = useState({
     title: "",
@@ -66,11 +66,8 @@ export const TitleEditModal = ({ onClose, title }) => {
     try {
       const userId = localStorage.getItem("userId");
 
-      await updateTitle(userId, title.id, {
-        title: formData.title,
-        description: formData.description
-      });
-
+      await updateTitle(userId, title.id, { title: formData.title, description: formData.description });
+      onUpdate();
       onClose();
     } catch (err) {
       setErrors((prev) => ({
