@@ -9,7 +9,7 @@ import { ViewModeSwitcher } from "../components/ViewModeSwitcher";
 
 // Customers Component
 export default function Customers() {
-  const { user, updateUserField } = useUser();
+  const { user, patchUser } = useUser();
   const { viewMode, setViewMode } = useViewMode();
   const { institutionUsers, fetchInstitutionUsers, getAllCustomers } = useInstitutionUsers();
 
@@ -217,7 +217,10 @@ export default function Customers() {
         // but getCustomers returns the full objects. 
         // UserContext stores a copy of the expert profile.
         // We need to match the structure expected by the backend when pulling the profile.
-        updateUserField('customers', [...currentCustomers, { customerId: newCustomer }]);
+        patchUser({
+          customers: [...currentCustomers, { customerId: newCustomer }]
+        });
+
       }
 
       await loadCustomers(); // Reload customers to reflect changes
@@ -245,7 +248,9 @@ export default function Customers() {
             const id = c.customerId?._id || c.customerId || c._id || c.id;
             return String(id) !== String(customerId);
           });
-          updateUserField('customers', updatedCustomers);
+          patchUser({
+            customers: updatedCustomers
+          });
         }
 
         // Reload customers based on view mode
@@ -280,7 +285,9 @@ export default function Customers() {
           }
           return c;
         });
-        updateUserField('customers', updatedCustomers);
+        patchUser({
+          customers: updatedCustomers
+        });
       }
 
       await loadCustomers(); // Reload customers to reflect changes
