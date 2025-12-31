@@ -11,7 +11,7 @@ import { customerService } from "../services/customerService";
 
 // CreateEvent Component - Updated with new requirements
 export const CreateEvent = () => {
-  const { user, updateUserField } = useUser();
+  const { user, patchUser } = useUser();
   const navigate = useNavigate();
   const [customerPackageMap, setCustomerPackageMap] = useState([]);
   const userId = localStorage.getItem('userId') // Mock user ID for development
@@ -256,7 +256,7 @@ export const CreateEvent = () => {
       if (createdCustomer) {
         // Update UserContext
         const currentCustomers = user?.customers || [];
-        updateUserField('customers', [...currentCustomers, { customerId: createdCustomer }]);
+        patchUser('customers', [...currentCustomers, { customerId: createdCustomer }]);
 
         // Update selectedClients in eventData
         const clientForSelection = {
@@ -365,7 +365,9 @@ export const CreateEvent = () => {
       if (createdEvent) {
         console.log("🔄 [CreateEvent] Syncing UserContext with new event");
         const currentEvents = user.events || [];
-        updateUserField('events', [...currentEvents, createdEvent]);
+        patchUser({
+          events: [...currentEvents, createdEvent]
+        });
       }
 
       navigate("/dashboard/events");
