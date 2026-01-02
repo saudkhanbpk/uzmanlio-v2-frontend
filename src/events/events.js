@@ -235,9 +235,17 @@ export const Events = () => {
     }
   };
 
-  const handleJoin = (eventId) => {
-    console.log('Etkinliğe katıl:', eventId);
-    // Here you would handle joining the event (redirect to meeting platform)
+  const handleJoin = (event) => {
+    const joinUrl = event.zoomStartUrl || event.zoomJoinUrl || event.platform;
+    if (joinUrl && joinUrl.startsWith('http')) {
+      window.open(joinUrl, '_blank');
+    } else {
+      Swal.fire({
+        icon: 'info',
+        title: 'Bağlantı Hazır Değil',
+        text: 'Bu etkinlik için henüz bir katılım bağlantısı tanımlanmamış.',
+      });
+    }
   };
 
   const handleEdit = (event) => {
@@ -421,7 +429,7 @@ export const Events = () => {
                       {/* Join button for approved events */}
                       {event.status === 'approved' && (
                         <button
-                          onClick={() => handleJoin(event.id)}
+                          onClick={() => handleJoin(event)}
                           className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-sm hover:bg-primary-200 transition-colors"
                         >
                           Katıl

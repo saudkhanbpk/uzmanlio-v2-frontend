@@ -325,6 +325,27 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                 </div>
               )}
 
+              {formData.platform === 'zoom' && event.zoomJoinUrl && (
+                <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <span className="text-blue-600 mr-2">🔵</span>
+                      <div>
+                        <p className="text-xs font-medium text-blue-800">Zoom Katılım Bağlantısı (Otomatik Oluşturuldu)</p>
+                        <p className="text-sm text-blue-600 truncate max-w-md">{event.zoomJoinUrl}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => window.open(event.zoomStartUrl || event.zoomJoinUrl, '_blank')}
+                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Başlat/Katıl
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Location - Only visible for Yüz Yüze or Hibrit */}
               {showLocation && (
                 <div>
