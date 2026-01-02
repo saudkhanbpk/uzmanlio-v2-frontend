@@ -80,7 +80,7 @@ export default function AdminAnalytics() {
 
     // ======== FETCH AGGREGATED DATA (ONLY FOR INSTITUTION ADMINS) ==========
     useEffect(() => {
- 
+
 
         if (!showInstitutionalTab) {
             setLoading(false);
@@ -222,6 +222,26 @@ export default function AdminAnalytics() {
                 datasets: [
                     {
                         data: individualData.trafficSources.map(s => s.sessions),
+                        backgroundColor: [
+                            'rgba(59,130,246,0.8)',
+                            'rgba(34,197,94,0.8)',
+                            'rgba(239,68,68,0.8)',
+                            'rgba(168,85,247,0.8)',
+                            'rgba(245,158,11,0.8)'
+                        ],
+                        borderWidth: 0,
+                    },
+                ],
+            }
+            : null;
+
+    const trafficSourceData =
+        expertDetails?.trafficSources?.length > 0
+            ? {
+                labels: expertDetails.trafficSources.map(s => s.source),
+                datasets: [
+                    {
+                        data: expertDetails.trafficSources.map(s => s.sessions),
                         backgroundColor: [
                             'rgba(59,130,246,0.8)',
                             'rgba(34,197,94,0.8)',
@@ -551,8 +571,8 @@ export default function AdminAnalytics() {
             )}
 
             {/* ==================== RENDER INDIVIDUAL ==================== */}
-            {activeTab === "individual" && showOnlyIndividual &&(
-                 <>
+            {activeTab === "individual" && (
+                <>
                     {/* Individual Summary Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -563,7 +583,9 @@ export default function AdminAnalytics() {
                                 <div className="ml-4">
                                     <p className="text-sm font-medium text-gray-600">Profil Görüntülenme</p>
                                     <p className="text-2xl font-bold text-gray-900">
-                                        {individualData.totalViews.toLocaleString('tr-TR')}
+                                        {individualData.totalViews > 0
+                                            ? individualData.totalViews.toLocaleString('tr-TR')
+                                            : '0'}
                                     </p>
                                 </div>
                             </div>
@@ -585,7 +607,7 @@ export default function AdminAnalytics() {
                     </div>
 
                     {/* Individual Detailed Analytics */}
-                    {(individualData.trafficSources.length > 0 || individualData.devices.length > 0 || individualData.countries.length > 0) && (
+                    {(individualData.totalViews > 0) && (
                         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
                             <h3 className="text-lg font-semibold text-gray-900 mb-4">
                                 {individualData.userName || 'Kullanıcı'} - Detaylı Analiz
@@ -649,13 +671,13 @@ export default function AdminAnalytics() {
                     )}
 
                     {/* No Data Message */}
-                    {individualData.totalViews === 0 && individualData.totalSessions === 0 && (
-                        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+                    {individualData.totalViews === 0 && (
+                        <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-200">
                             <div className="text-center py-12">
-                                <div className="text-6xl mb-4">📊</div>
-                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Henüz Veri Yok</h3>
-                                <p className="text-gray-600">
-                                    Profiliniz henüz görüntülenmemiş. Analiz verileri burada görünecektir.
+                                <div className="text-6xl mb-4 text-gray-300">📊</div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-2">Henüz Görüntülenme Yok</h3>
+                                <p className="text-gray-600 max-w-md mx-auto">
+                                    Profiliniz bu dönemde henüz görüntülenmemiş. Ziyaretçiler profilinizi incelediğinde analiz verileri burada anlık olarak güncellenecektir.
                                 </p>
                             </div>
                         </div>
