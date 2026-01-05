@@ -322,6 +322,7 @@ export const Calendar = () => {
         time: apt.time || apt.startTime || '',
         status: apt.status || 'pending',
         type: apt.type || apt.meetingType || '1-1',
+        videoMeetingUrl: apt.videoMeetingUrl || ''
       });
     });
 
@@ -708,10 +709,23 @@ export const Calendar = () => {
                           {dayAppointments.map((apt) => (
                             <div
                               key={apt.id}
-                              className={`text-xs p-1 rounded text-white ${apt.status === 'confirmed' ? 'bg-green-500' : 'bg-yellow-500'
+                              className={`group relative text-xs p-1 rounded text-white ${apt.status === 'confirmed' ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'
                                 }`}
                             >
-                              {apt.time} {apt.title ? `• ${apt.title}` : (apt.type === '1-1' ? '👤' : '👥')}
+                              <div className="flex justify-between items-center">
+                                <span>{apt.time} {apt.title ? `• ${apt.title}` : (apt.type === '1-1' ? '👤' : '👥')}</span>
+                                {apt.videoMeetingUrl && (
+                                  <a
+                                    href={apt.videoMeetingUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="opacity-0 group-hover:opacity-100 bg-white text-black px-1 rounded text-[10px] ml-1 transition-opacity"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    Katıl
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>

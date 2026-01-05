@@ -583,6 +583,9 @@ export const CreateEvent = () => {
                   <option value="microsoft-teams">Microsoft Teams</option>
                   <option value="jitsi">Jitsi</option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500 italic">
+                  * Online etkinlikler için katılım linki otomatik olarak oluşturulacaktır.
+                </p>
               </div>
             )}
 

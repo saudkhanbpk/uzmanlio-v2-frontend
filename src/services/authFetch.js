@@ -64,8 +64,12 @@ export const forceLogout = () => {
     localStorage.removeItem('subscriptionExpired');
     localStorage.removeItem('subscriptionEndDate');
 
-    // Redirect to login
-    if (window.location.pathname !== '/login') {
+    // Whitelist for public routes that don't require login
+    const publicPaths = ['/login', '/signup', '/forgot-password', '/accept-invitation', '/decline-invitation', '/verify-email', '/meeting'];
+    const isPublicPath = publicPaths.some(path => window.location.pathname.startsWith(path));
+
+    // Redirect to login only if not on a whitelisted path
+    if (!isPublicPath) {
         window.location.href = '/login';
     }
 };

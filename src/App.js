@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Dashboard from './dashboard/expertDashboard';
 import LoginPage from './loginPage';
 import SignupPage from './signupPage';
@@ -13,6 +13,7 @@ import { UserProvider } from './context/UserContext';
 import { ViewModeProvider } from './contexts/ViewModeContext';
 import { InstitutionUsersProvider } from './contexts/InstitutionUsersContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import Meeting from './events/Meeting';
 
 import EmailVerificationModal from './EmailVerificationModal';
 
@@ -30,20 +31,30 @@ const LoadingSpinner = () => (
  */
 function AppRoutes() {
   const { isAuthenticated, loading, logout, login } = useAuth();
+  const location = useLocation();
 
   // Show loading spinner while checking auth state
   if (loading) {
     return <LoadingSpinner />;
   }
 
+  // Get returnUrl from search parameters
+  const queryParams = new URLSearchParams(location.search);
+  let returnUrl = queryParams.get('returnUrl') || '/dashboard';
+
+  // Prevent redirection loop if returnUrl is /login
+  if (returnUrl === '/login' || returnUrl === '/') {
+    returnUrl = '/dashboard';
+  }
+
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route
           path="/login"
           element={
             isAuthenticated ?
-              <Navigate to="/dashboard" replace /> :
+              <Navigate to={returnUrl} replace /> :
               <LoginPage onLogin={(authData) => {
                 // Handle login with AuthContext
                 if (authData && authData.accessToken) {
@@ -72,6 +83,7 @@ function AppRoutes() {
         <Route path="/accept-invitation/:token" element={<AcceptInvitationPage />} />
         <Route path="/decline-invitation/:token" element={<DeclineInvitationPage />} />
         <Route path="/verify-email" element={<EmailVerificationPage />} />
+        <Route path="/meeting/:roomId" element={<Meeting />} />
 
         <Route
           path="/dashboard/*"
@@ -85,7 +97,7 @@ function AppRoutes() {
         <Route path="/" element={<Navigate to="/login" replace />} />
       </Routes>
       <EmailVerificationModal />
-    </BrowserRouter>
+    </>
   );
 }
 
@@ -97,7 +109,9 @@ function App() {
           <ViewModeProvider>
             <InstitutionUsersProvider>
               <ExpertProvider>
-                <AppRoutes />
+                <BrowserRouter>
+                  <AppRoutes />
+                </BrowserRouter>
               </ExpertProvider>
             </InstitutionUsersProvider>
           </ViewModeProvider>

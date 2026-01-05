@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.0",
+    "@jitsi/react-sdk": "^1.4.4",
     "axios": "^1.12.2",
     "chart.js": "^4.5.0",
     "cra-template": "1.2.0",

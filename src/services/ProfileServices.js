@@ -13,9 +13,13 @@ class ProfileService {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('subscriptionExpired');
       localStorage.removeItem('subscriptionEndDate');
-      sessionStorage.removeItem('verificationSkipped');
+      // Whitelist for public routes that don't require login
+      const publicPaths = ['/login', '/signup', '/forgot-password', '/accept-invitation', '/decline-invitation', '/verify-email', '/meeting'];
+      const isPublicPath = publicPaths.some(path => window.location.pathname.startsWith(path));
 
-      window.location.href = '/login';
+      if (!isPublicPath) {
+        window.location.href = '/login';
+      }
       return null;
     } try {
       const response = await authFetch(`${API_BASE_URL}/${userId}`);

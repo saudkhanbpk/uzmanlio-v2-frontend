@@ -235,9 +235,25 @@ export const Events = () => {
     }
   };
 
-  const handleJoin = (eventId) => {
-    console.log('Etkinliğe katıl:', eventId);
-    // Here you would handle joining the event (redirect to meeting platform)
+  const handleJoin = (event) => {
+    const joinUrl = event.videoMeetingUrl || event.platform;
+    if (joinUrl) {
+      if (!joinUrl.startsWith('http')) {
+        // Handle cases where platform might be just "Zoom" or "Jitsi" instead of a URL
+        if (joinUrl.toLowerCase().includes('zoom')) {
+          Swal.fire('Bilgi', 'Zoom linki belirtilmemiş. Lütfen etkinlik detaylarını kontrol edin.', 'info');
+        } else if (joinUrl.toLowerCase().includes('jitsi')) {
+          const jitsiRoom = `uzmanlio-${event._id}`;
+          window.open(`/meeting/${jitsiRoom}`, '_blank');
+        } else {
+          Swal.fire('Uyarı', 'Geçerli bir katılım linki bulunamadı.', 'warning');
+        }
+      } else {
+        window.open(joinUrl, '_blank');
+      }
+    } else {
+      Swal.fire('Uyarı', 'Bu etkinlik için henüz bir katılım linki oluşturulmamış.', 'warning');
+    }
   };
 
   const handleEdit = (event) => {
@@ -391,7 +407,12 @@ export const Events = () => {
                         <span>👤 Birebir</span>
                       )}
                       <span>💰 ₺{event.price}</span>
-                      {event.platform && <span>🔗 {event.platform}</span>}
+                      <span className="flex items-center space-x-1">
+                        {event.videoMeetingPlatform === 'google-meet' && <span>💙 Google Meet</span>}
+                        {event.videoMeetingPlatform === 'microsoft-teams' && <span>💜 Teams</span>}
+                        {event.videoMeetingPlatform === 'jitsi' && <span>💚 Jitsi</span>}
+                        {!event.videoMeetingPlatform && event.platform && <span>🔗 {event.platform}</span>}
+                      </span>
                       {event.location && <span>📍 {event.location}</span>}
                     </div>
                   </div>
@@ -419,13 +440,50 @@ export const Events = () => {
                       )}
 
                       {/* Join button for approved events */}
-                      {event.status === 'approved' && (
-                        <button
-                          onClick={() => handleJoin(event.id)}
-                          className="px-3 py-1 bg-primary-100 text-primary-700 rounded text-sm hover:bg-primary-200 transition-colors"
-                        >
-                          Katıl
-                        </button>
+                      {(event.status === 'approved' || event.status === 'scheduled') && (
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => {
+                              const jitsiRoom = `uzmanlio-${event._id}`;
+                              // Expert must join via the frontend route to trigger the "Start Meeting" logic in Meeting.js
+                              const modLink = event.moderatorMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}?role=moderator`;
+                              window.open(modLink, '_blank');
+                            }}
+                            className="px-4 py-1.5 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors flex items-center space-x-1"
+                            title="Moderatör Olarak Başlat"
+                          >
+                            <span>⚡</span>
+                            <span>Başlat</span>
+                          </button>
+
+                          {/* Copy Links Dropdown / Buttons */}
+                          <div className="flex space-x-1">
+                            <button
+                              onClick={() => {
+                                const jitsiRoom = `uzmanlio-${event._id}`;
+                                const guestLink = event.guestMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}`;
+                                navigator.clipboard.writeText(guestLink);
+                                Swal.fire({ title: 'Kopyalandı!', text: 'Danışan linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                              }}
+                              className="p-1.5 text-gray-500 hover:text-primary-600 bg-gray-100 rounded-md transition-colors"
+                              title="Danışan Linkini Kopyala (Guest)"
+                            >
+                              👤🔗
+                            </button>
+                            <button
+                              onClick={() => {
+                                const jitsiRoom = `uzmanlio-${event._id}`;
+                                const modLink = event.moderatorMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}?role=moderator`;
+                                navigator.clipboard.writeText(modLink);
+                                Swal.fire({ title: 'Kopyalandı!', text: 'Moderatör linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                              }}
+                              className="p-1.5 text-gray-500 hover:text-purple-600 bg-gray-100 rounded-md transition-colors"
+                              title="Moderatör Linkini Kopyala (Admin)"
+                            >
+                              🔑🔗
+                            </button>
+                          </div>
+                        </div>
                       )}
                     </div>
 

@@ -28,7 +28,9 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
     isOfflineEvent: event.isOfflineEvent || false,
     selectedClients: event.selectedClients || [],
     // Store the expertId so we know which user's event this is
-    expertId: event.expertId || null
+    expertId: event.expertId || null,
+    videoMeetingUrl: event.videoMeetingUrl || '',
+    videoMeetingPlatform: event.videoMeetingPlatform || ''
   });
 
   const [showAddClientModal, setShowAddClientModal] = useState(false);
@@ -302,6 +304,43 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           {/* Platform and Location */}
           <div className="bg-gray-50 rounded-xl p-6">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h4>
+
+            {/* Display Generated Meeting Link if exists */}
+            {formData.videoMeetingUrl && (
+              <div className="mb-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
+                <label className="block text-sm font-medium text-primary-800 mb-2">
+                  🎥 Otomatik Oluşturulan Katılım Linki ({formData.videoMeetingPlatform})
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={formData.videoMeetingUrl}
+                    className="flex-1 px-3 py-2 bg-white border border-primary-200 rounded-lg text-sm text-gray-700"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(formData.videoMeetingUrl);
+                      // Optional: Show a brief success message
+                    }}
+                    className="p-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors"
+                    title="Kopyala"
+                  >
+                    📋
+                  </button>
+                  <a
+                    href={formData.videoMeetingUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors"
+                  >
+                    Katıl
+                  </a>
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
               {/* Platform - Only visible for Online or Hibrit */}

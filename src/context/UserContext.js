@@ -91,17 +91,17 @@ export function UserProvider({ children }) {
       const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
       console.log('🔄 UserContext: loadUser called, userId:', userId);
 
-      // If no userId, user is not logged in - force logout/redirect
+      // Whitelist for public routes that don't require login
+      const publicPaths = ['/login', '/signup', '/forgot-password', '/accept-invitation', '/decline-invitation', '/verify-email', '/meeting'];
+      const isPublicPath = publicPaths.some(path => window.location.pathname.startsWith(path));
+
+      // If no userId, user is not logged in
       if (!userId) {
-        console.log('🔄 UserContext: No userId found - redirecting to login');
+        console.log('🔄 UserContext: No userId found');
         setLoading(false);
-        // Only redirect if we're not already on login/signup pages
-        if (window.location.pathname !== '/login' &&
-          window.location.pathname !== '/signup' &&
-          window.location.pathname !== '/forgot-password' &&
-          !window.location.pathname.startsWith('/accept-invitation') &&
-          !window.location.pathname.startsWith('/decline-invitation') &&
-          !window.location.pathname.startsWith('/verify-email')) {
+        // Only redirect if we're not on a public path
+        if (!isPublicPath) {
+          console.log('🔄 UserContext: Redirecting to login (not a public path)');
           // Clear any stale auth data
           sessionStorage.clear();
           localStorage.removeItem('accessToken');

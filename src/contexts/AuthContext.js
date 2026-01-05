@@ -50,8 +50,14 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setIsAuthenticated(false);
 
-            // Redirect to login
-            window.location.href = '/login';
+            // Whitelist for public routes that don't should force redirect on logout
+            const publicPaths = ['/login', '/signup', '/forgot-password', '/accept-invitation', '/decline-invitation', '/verify-email', '/meeting'];
+            const isPublicPath = publicPaths.some(path => window.location.pathname.startsWith(path));
+
+            // Redirect to login ONLY if not on a public path
+            if (!isPublicPath) {
+                window.location.href = '/login';
+            }
         }
     }, []);
 
