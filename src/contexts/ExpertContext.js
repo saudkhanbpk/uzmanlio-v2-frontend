@@ -175,6 +175,16 @@ const expertReducer = (state, action) => {
     case EXPERT_ACTIONS.DELETE_EDUCATION:
       return { ...state, education: state.education.filter((e) => e.id !== action.payload) };
 
+    case EXPERT_ACTIONS.ADD_EXPERIENCE:
+      return { ...state, experience: [...state.experience, action.payload] };
+    case EXPERT_ACTIONS.UPDATE_EXPERIENCE:
+      return {
+        ...state,
+        experience: state.experience.map((e) => (e.id === action.payload.id ? action.payload : e)),
+      };
+    case EXPERT_ACTIONS.DELETE_EXPERIENCE:
+      return { ...state, experience: state.experience.filter((e) => e.id !== action.payload) };
+
     default: {
       const actionType = action.type;
 

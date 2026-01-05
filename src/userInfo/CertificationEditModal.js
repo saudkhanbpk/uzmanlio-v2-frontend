@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Certification Edit Modal Component
-export const CertificationEditModal = ({ onClose, certificate }) => {
+export const CertificationEditModal = ({ onClose, certificate, onUpdate }) => {
   const { updateCertificate, loading } = useExpertData();
   const [formData, setFormData] = useState({
     name: '',
@@ -45,6 +45,7 @@ export const CertificationEditModal = ({ onClose, certificate }) => {
       };
 
       await updateCertificate(userId, certificate.id, certificateData);
+      onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to update certificate');
@@ -71,48 +72,48 @@ export const CertificationEditModal = ({ onClose, certificate }) => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Örn: Google Analytics Sertifikası"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Veren Kurum *</label>
             <input
               type="text"
               value={formData.issuer}
-              onChange={(e) => setFormData({...formData, issuer: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, issuer: e.target.value })}
               placeholder="Örn: Google"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Alınma Tarihi *</label>
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Geçerlilik Süresi</label>
               <input
                 type="date"
                 value={formData.expiryDate}
-                onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
           </div>
-          
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"

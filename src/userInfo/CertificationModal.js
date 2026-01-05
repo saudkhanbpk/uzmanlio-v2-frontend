@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Certification Modal Component
-export const CertificationModal = ({ onClose }) => {
+export const CertificationModal = ({ onClose, onUpdate }) => {
   const { addCertificate, loading } = useExpertData();
   const [formData, setFormData] = useState({
     name: '',
@@ -32,6 +32,7 @@ export const CertificationModal = ({ onClose }) => {
       };
 
       await addCertificate(userId, certificateData);
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add certificate');
@@ -58,43 +59,43 @@ export const CertificationModal = ({ onClose }) => {
             <input
               type="text"
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Örn: Google Analytics Sertifikası"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Veren Kurum *</label>
             <input
               type="text"
               value={formData.issuer}
-              onChange={(e) => setFormData({...formData, issuer: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, issuer: e.target.value })}
               placeholder="Örn: Google"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Alınma Tarihi *</label>
               <input
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({...formData, date: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Geçerlilik Süresi</label>
               <input
                 type="date"
                 value={formData.expiryDate}
-                onChange={(e) => setFormData({...formData, expiryDate: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
             </div>
@@ -105,7 +106,7 @@ export const CertificationModal = ({ onClose }) => {
             <input
               type="text"
               value={formData.credentialId}
-              onChange={(e) => setFormData({...formData, credentialId: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, credentialId: e.target.value })}
               placeholder="Sertifika kimlik numarası (opsiyonel)"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
@@ -116,7 +117,7 @@ export const CertificationModal = ({ onClose }) => {
             <input
               type="url"
               value={formData.credentialUrl}
-              onChange={(e) => setFormData({...formData, credentialUrl: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })}
               placeholder="Sertifika doğrulama linki (opsiyonel)"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />

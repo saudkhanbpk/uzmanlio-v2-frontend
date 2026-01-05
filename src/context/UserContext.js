@@ -79,17 +79,27 @@ export function UserProvider({ children }) {
   const setLoading = (loading) => dispatch({ type: 'SET_LOADING', payload: loading });
   const setError = (error) => dispatch({ type: 'SET_ERROR', payload: error });
 
-  // Update a specific field in the user object
-  const updateUserField = (fieldPath, value) => {
-    patchUser({ [fieldPath]: value });
+  // Function to refresh user data manually
+  const refreshUser = async () => {
+    const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
+    if (!userId) return;
+
+    try {
+      const { profileService } = await import('../services/ProfileServices');
+      const userData = await profileService.getProfile(userId);
+      if (userData) {
+        setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+      }
+    } catch (err) {
+      console.error("Failed to refresh user:", err);
+    }
   };
 
   // Automatic user fetch if userId exists but user data is missing
   React.useEffect(() => {
     const loadUser = async () => {
-      // Check sessionStorage first, then localStorage
       const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
-      console.log('🔄 UserContext: loadUser called, userId:', userId);
 
       // Whitelist for public routes that don't require login
       const publicPaths = ['/login', '/signup', '/forgot-password', '/accept-invitation', '/decline-invitation', '/verify-email', '/meeting'];
@@ -110,47 +120,55 @@ export function UserProvider({ children }) {
           localStorage.removeItem('userId');
           localStorage.removeItem('isAuthenticated');
           window.location.href = '/login';
+          if (window.location.pathname !== '/login' &&
+            window.location.pathname !== '/signup' &&
+            window.location.pathname !== '/forgot-password' &&
+            !window.location.pathname.startsWith('/accept-invitation') &&
+            !window.location.pathname.startsWith('/decline-invitation') &&
+            !window.location.pathname.startsWith('/verify-email')) {
+            window.location.href = '/login';
+          }
+          return;
         }
-        return;
-      }
 
-      // If we already have the correct user data loaded, stop loading
-      if (state.user && String(state.user._id) === String(userId) && state.user.information?.name) {
-        console.log('🔄 UserContext: User already loaded, skipping fetch');
-        if (state.loading) setLoading(false);
-        return;
-      }
-
-      console.log('🔄 UserContext: Fetching user data from backend...');
-      try {
-        setLoading(true);
-        // Dynamically import profile service to avoid circular dependencies
-        const { profileService } = await import('../services/ProfileServices');
-
-        const userData = await profileService.getProfile(userId);
-        console.log('🔄 UserContext: Received userData:', userData ? 'SUCCESS' : 'NULL');
-
-        if (userData) {
-          setUser(userData);
-          console.log('🔄 UserContext: User set in context:', userData.information?.name);
-        } else {
-          // Verify if we should logout if user not found?
-          console.warn("User data fetch returned null");
+        try {
+          setLoading(true);
+          const { profileService } = await import('../services/ProfileServices');
+          const userData = await profileService.getProfile(userId);
+          if (userData) {
+            setUser(userData);
+          }
+        } catch (err) {
+          console.error("Failed to load user in Context:", err);
+          setError(err);
+        } finally {
           setLoading(false);
         }
-      } catch (err) {
-        console.error("Failed to load user in Context:", err);
-        setError(err);
-        setLoading(false);
-      } finally {
-        setLoading(false);
+      };
+    }
+
+    loadUser();
+
+    // Cross-tab sync: Listen for changes in localStorage from other tabs
+    const handleStorageChange = (e) => {
+      if (e.key === 'user' && e.newValue) {
+        try {
+          const newUser = JSON.parse(e.newValue);
+          setUser(newUser);
+        } catch (err) {
+          console.error("Error parsing user from localStorage:", err);
+        }
+      }
+      if (e.key === 'userId' && !e.newValue) {
+        // Handle logout in other tabs
+        setUser(null);
+        window.location.href = '/login';
       }
     };
 
-    loadUser();
-  }, []); // Run once on mount 
-  // If user logs out, userId changes. But context might be unmounted/remounted.
-  // Let's stick to mount for now, or listen to localStorage? (Not reactive).
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []); // Run once on mount
 
   return (
     <UserContext.Provider value={{
@@ -159,9 +177,10 @@ export function UserProvider({ children }) {
       error: state.error,
       setUser,
       patchUser,
-      updateUserField,
+      // updateUserField,
       setLoading,
-      setError
+      setError,
+      refreshUser
     }}>
       {children}
     </UserContext.Provider>

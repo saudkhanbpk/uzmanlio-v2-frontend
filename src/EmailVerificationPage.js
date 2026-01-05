@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
+import { useUser } from './context/UserContext';
 
 const EmailVerificationPage = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { setUser } = useUser();
     const [loading, setLoading] = useState(true);
     const [message, setMessage] = useState('');
 
@@ -35,11 +37,15 @@ const EmailVerificationPage = () => {
                         icon: 'success',
                         confirmButtonText: 'OK'
                     }).then(() => {
-                        // Save user in localStorage
-                        localStorage.setItem('user', JSON.stringify(data.user));
+                        // Update Context immediately
+                        if (data.user) {
+                            setUser(data.user);
+                            // Save user in localStorage for persistence
+                            localStorage.setItem('user', JSON.stringify(data.user));
+                        }
+
                         // Update UI message so success icon appears
                         setMessage('Email verified successfully');
-                        // Do NOT navigate anywhere (stays on the same page)
                     });
 
                 } else {

@@ -19,6 +19,7 @@ export const Events = () => {
   const [error, setError] = useState(null);
   const userContext = useUser();
   const user = userContext.user;
+  const userLoadingFromContext = userContext.loading;
   const userSubscription = userContext.user?.subscription;
 
   // Check if user is admin (only admins with institutional plan can see institution view)
@@ -29,20 +30,26 @@ export const Events = () => {
   const {
     institutionUsers,
     fetchInstitutionUsers,
+    refreshInstitutionUsers,
     getAllEvents,
     isLoaded: institutionDataLoaded,
     loading: institutionLoading
   } = useInstitutionUsers();
 
+  const { refreshUser } = useUser();
+
   const userId = localStorage.getItem('userId');
 
-  // Load events on component mount and when view mode changes or user.events changes
+  // Load events on component mount and when view mode changes
   useEffect(() => {
-    console.log("[Events] useEffect triggered - viewMode:", viewMode, "userId:", userId, "userEventsCount:", user?.events?.length || 0);
-    loadEvents();
-  }, [viewMode, userId, user?.events]);
+    // Wait for user to be loaded from context before trying to load events
+    if (userLoadingFromContext) return;
 
-  const loadEvents = async () => {
+    console.log("[Events] useEffect triggered - viewMode:", viewMode, "userId:", userId, "userLoading:", userLoadingFromContext);
+    loadEvents();
+  }, [viewMode, userId, userLoadingFromContext]);
+
+  const loadEvents = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
@@ -52,53 +59,46 @@ export const Events = () => {
       // Check if we're in institution view mode
       if (viewMode === 'institution' && canAccessInstitutionView) {
         console.log("[Events] Institution view mode detected");
-        console.log("[Events] Checking institutionUsers in context:", institutionUsers);
-        console.log("[Events] Number of users in context:", institutionUsers?.length || 0);
 
-        // Check if context already has users data
-        if (institutionUsers && institutionUsers.length > 0) {
+        // If force refresh, we should call refreshInstitutionUsers
+        if (forceRefresh) {
+          console.log("[Events] 🔄 Force refreshing institution data...");
+          const refreshedUsers = await refreshInstitutionUsers(userId, userSubscription);
+          eventsData = getAllEvents(); // getAllEvents should use the updated institutionUsers
+        } else if (institutionUsers && institutionUsers.length > 0) {
           console.log("[Events] ✅ Using cached data from InstitutionUsersContext");
-
-          // Get events from all users in context
           eventsData = getAllEvents();
-          console.log("[Events] Events extracted from context:", eventsData.length);
         } else {
-          console.log("[Events] ⏳ No cached data - Making API call to fetch institution users...");
-
-          // Make API call to fetch all institution users
+          console.log("[Events] ⏳ No cached data - Making API call...");
           const fetchedUsers = await fetchInstitutionUsers(userId, userSubscription);
-          console.log("[Events] API Response - Fetched users:", fetchedUsers?.length || 0);
-
-          // Extract events directly from fetched users (don't rely on context state which hasn't updated yet)
           if (fetchedUsers && fetchedUsers.length > 0) {
-            eventsData = fetchedUsers.flatMap(user => {
-              console.log(`[Events] User ${user.information?.name}: ${user.events?.length || 0} events`);
-              return (user.events || []).map(event => ({
-                ...event,
-                expertId: user._id,
-                expertName: `${user.information?.name || ''} ${user.information?.surname || ''}`.trim()
-              }));
-            });
-            console.log("[Events] Events extracted from fetched users:", eventsData.length);
+            eventsData = fetchedUsers.flatMap(u => (u.events || []).map(event => ({
+              ...event,
+              expertId: u._id,
+              expertName: `${u.information?.name || ''} ${u.information?.surname || ''}`.trim()
+            })));
           }
         }
       } else {
-        // Individual view - use events from UserContext instead of API call
-        console.log("[Events] Individual view mode - using events from UserContext");
+        // Individual view
+        console.log("[Events] Individual view mode");
 
-        // Check if user.events is available in context (populated from backend)
-        if (user?.events && Array.isArray(user.events) && user.events.length > 0) {
-          console.log("[Events] ✅ Using events from UserContext:", user.events.length, "events");
+        if (forceRefresh) {
+          console.log("[Events] 🔄 Force refreshing user data...");
+          await refreshUser();
+          // After refreshUser, the next render will have the new user.events
+          // But since we want to return the data now:
+          eventsData = await eventService.getEvents(userId);
+        } else if (user?.events && Array.isArray(user.events)) {
+          console.log("[Events] ✅ Using events from UserContext");
           eventsData = user.events;
         } else {
-          // Fallback to API call if events not in context (e.g., first load or context not ready)
-          console.log("[Events] ⚠️ No events in UserContext, falling back to API call");
+          console.log("[Events] ⚠️ No events in UserContext, fetching from API");
           eventsData = await eventService.getEvents(userId);
-          console.log("[Events] Events fetched from API:", eventsData?.length || 0);
         }
       }
 
-      console.log("[Events] Final events to display:", eventsData);
+      console.log("[Events] Final events to display:", eventsData?.length);
       setEvents(eventsData || []);
     } catch (err) {
       setError('Etkinlikler yüklenirken bir hata oluştu.');
@@ -106,6 +106,11 @@ export const Events = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const refreshData = async () => {
+    console.log("[Events] refreshData called");
+    await loadEvents(true);
   };
 
 
@@ -164,7 +169,7 @@ export const Events = () => {
       const eventId = event._id;
       const ownerId = getEventOwnerId(event);
       await eventService.updateEventStatus(ownerId, eventId, 'approved');
-      await loadEvents(userId); // Reload events to reflect changes
+      await refreshData(); // Use refreshData instead of loadEvents
 
       // Show success message
       Swal.fire({
@@ -214,7 +219,7 @@ export const Events = () => {
     try {
       const ownerId = getEventOwnerId(event);
       await eventService.updateEventStatus(ownerId, event._id, 'cancelled');
-      await loadEvents(userId); // Reload events to reflect changes
+      await refreshData(); // Use refreshData instead of loadEvents
 
       // Show success message
       Swal.fire({
@@ -266,7 +271,7 @@ export const Events = () => {
       try {
         const ownerId = getEventOwnerId(event);
         await eventService.deleteEvent(ownerId, event._id);
-        await loadEvents(userId); // Reload events to reflect changes
+        await refreshData(); // Use refreshData instead of loadEvents
       } catch (err) {
         alert('Etkinlik silinirken bir hata oluştu.');
         console.error('Error deleting event:', err);
@@ -278,7 +283,7 @@ export const Events = () => {
     try {
       const ownerId = getEventOwnerId(updatedEvent);
       await eventService.updateEvent(ownerId, updatedEvent.id, updatedEvent);
-      await loadEvents(userId); // Reload events to reflect changes
+      await refreshData(); // Use refreshData instead of loadEvents
       setShowEditModal(false);
     } catch (err) {
       alert('Etkinlik güncellenirken bir hata oluştu.');

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useExpertData } from "../hooks/useExpertData";
 
 // Education Modal Component
-export const EducationModal = ({ onClose }) => {
+export const EducationModal = ({ onClose, onUpdate }) => {
   const { addEducation, loading } = useExpertData();
   const [formData, setFormData] = useState({
     institution: '',
@@ -24,12 +24,17 @@ export const EducationModal = ({ onClose }) => {
 
       const educationData = {
         level: formData.degree,
-        name: formData.institution, // university name
+        name: formData.institution,
         department: formData.field,
-        graduationYear: formData.endDate ? new Date(formData.endDate).getFullYear() : null
+        graduationYear: formData.endDate ? new Date(formData.endDate).getFullYear() : null,
+        startDate: formData.startDate ? new Date(formData.startDate + "T00:00:00Z") : null,
+        endDate: formData.current ? null : (formData.endDate ? new Date(formData.endDate + "T00:00:00Z") : null),
+        current: formData.current
       };
 
+
       await addEducation(userId, educationData);
+      if (onUpdate) onUpdate();
       onClose();
     } catch (err) {
       setError(err.message || 'Failed to add education');
@@ -56,18 +61,18 @@ export const EducationModal = ({ onClose }) => {
             <input
               type="text"
               value={formData.institution}
-              onChange={(e) => setFormData({...formData, institution: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
               placeholder="Örn: İstanbul Teknik Üniversitesi"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Derece *</label>
             <select
               value={formData.degree}
-              onChange={(e) => setFormData({...formData, degree: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             >
@@ -79,56 +84,56 @@ export const EducationModal = ({ onClose }) => {
               <option value="sertifika">Sertifika Programı</option>
             </select>
           </div>
-          
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Alan *</label>
             <input
               type="text"
               value={formData.field}
-              onChange={(e) => setFormData({...formData, field: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, field: e.target.value })}
               placeholder="Örn: Bilgisayar Mühendisliği"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               required
             />
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Başlangıç Tarihi *</label>
               <input
                 type="date"
                 value={formData.startDate}
-                onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 required
               />
             </div>
-            
+
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label>
               <input
                 type="date"
                 value={formData.endDate}
-                onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 disabled={formData.current}
               />
             </div>
           </div>
-          
+
           <div className="flex items-center">
             <input
               type="checkbox"
               id="current"
               checked={formData.current}
-              onChange={(e) => setFormData({...formData, current: e.target.checked})}
+              onChange={(e) => setFormData({ ...formData, current: e.target.checked })}
               className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
             />
             <label htmlFor="current" className="ml-2 block text-sm text-gray-700">
               Halen devam ediyor
             </label>
           </div>
-          
+
           <div className="flex space-x-3 pt-4">
             <button
               type="button"
