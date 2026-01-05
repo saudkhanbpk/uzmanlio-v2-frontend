@@ -120,32 +120,27 @@ export function UserProvider({ children }) {
           localStorage.removeItem('userId');
           localStorage.removeItem('isAuthenticated');
           window.location.href = '/login';
-          if (window.location.pathname !== '/login' &&
-            window.location.pathname !== '/signup' &&
-            window.location.pathname !== '/forgot-password' &&
-            !window.location.pathname.startsWith('/accept-invitation') &&
-            !window.location.pathname.startsWith('/decline-invitation') &&
-            !window.location.pathname.startsWith('/verify-email')) {
-            window.location.href = '/login';
-          }
           return;
         }
+        return; // Exit if no user ID (and on public path)
+      }
 
-        try {
-          setLoading(true);
-          const { profileService } = await import('../services/ProfileServices');
-          const userData = await profileService.getProfile(userId);
-          if (userData) {
-            setUser(userData);
-          }
-        } catch (err) {
-          console.error("Failed to load user in Context:", err);
-          setError(err);
-        } finally {
-          setLoading(false);
+      // If userId exists, fetch user data
+      try {
+        setLoading(true);
+        const { profileService } = await import('../services/ProfileServices');
+        const userData = await profileService.getProfile(userId);
+        if (userData) {
+          setUser(userData);
         }
-      };
-    }
+      } catch (err) {
+        console.error("Failed to load user in Context:", err);
+        setError(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
 
     loadUser();
 
