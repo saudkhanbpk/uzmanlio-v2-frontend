@@ -231,6 +231,28 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
                 </select>
               </div>
 
+              {/* Platform Selector - Only visible for Online or Hibrit */}
+              {showPlatform && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Platform *
+                  </label>
+                  <select
+                    name="platform"
+                    value={formData.platform}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="">Platform seçin</option>
+                    <option value="google-meet">Google Meet</option>
+                    <option value="zoom">Zoom</option>
+                    <option value="jitsi">Jitsi Meet</option>
+                    <option value="microsoft-teams">Microsoft Teams</option>
+                    <option value="other">Diğer</option>
+                  </select>
+                </div>
+              )}
+
               {/* Meeting Type - Only visible for Online or Hibrit */}
               {showMeetingType && (
                 <div className="md:col-span-2">
