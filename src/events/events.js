@@ -241,15 +241,18 @@ export const Events = () => {
   };
 
   const handleJoin = (event) => {
-    const joinUrl = event.videoMeetingUrl || event.platform;
+    // Prioritize adminUrl/moderatorUrl since this is the expert app
+    const joinUrl = event.meetingDetails?.adminUrl || event.moderatorMeetingUrl || event.videoMeetingUrl || event.platform;
+
     if (joinUrl) {
       if (!joinUrl.startsWith('http')) {
         // Handle cases where platform might be just "Zoom" or "Jitsi" instead of a URL
         if (joinUrl.toLowerCase().includes('zoom')) {
           Swal.fire('Bilgi', 'Zoom linki belirtilmemiş. Lütfen etkinlik detaylarını kontrol edin.', 'info');
         } else if (joinUrl.toLowerCase().includes('jitsi')) {
+          // Fallback to generating link if not present
           const jitsiRoom = `uzmanlio-${event._id}`;
-          window.open(`/meeting/${jitsiRoom}`, '_blank');
+          window.open(`/meeting/${jitsiRoom}?role=moderator`, '_blank');
         } else {
           Swal.fire('Uyarı', 'Geçerli bir katılım linki bulunamadı.', 'warning');
         }
@@ -413,10 +416,11 @@ export const Events = () => {
                       )}
                       <span>💰 ₺{event.price}</span>
                       <span className="flex items-center space-x-1">
-                        {event.videoMeetingPlatform === 'google-meet' && <span>💙 Google Meet</span>}
-                        {event.videoMeetingPlatform === 'microsoft-teams' && <span>💜 Teams</span>}
-                        {event.videoMeetingPlatform === 'jitsi' && <span>💚 Jitsi</span>}
-                        {!event.videoMeetingPlatform && event.platform && <span>🔗 {event.platform}</span>}
+                        {(event.meetingDetails?.platform === 'google-meet' || event.videoMeetingPlatform === 'google-meet') && <span>💙 Google Meet</span>}
+                        {(event.meetingDetails?.platform === 'microsoft-teams' || event.videoMeetingPlatform === 'microsoft-teams') && <span>💜 Teams</span>}
+                        {(event.meetingDetails?.platform === 'jitsi' || event.videoMeetingPlatform === 'jitsi') && <span>💚 Jitsi</span>}
+                        {(event.meetingDetails?.platform === 'zoom' || event.videoMeetingPlatform === 'zoom') && <span>🔵 Zoom</span>}
+                        {!event.meetingDetails?.platform && !event.videoMeetingPlatform && event.platform && <span>🔗 {event.platform}</span>}
                       </span>
                       {event.location && <span>📍 {event.location}</span>}
                     </div>
@@ -450,9 +454,18 @@ export const Events = () => {
                           <button
                             onClick={() => {
                               const jitsiRoom = `uzmanlio-${event._id}`;
-                              // Expert must join via the frontend route to trigger the "Start Meeting" logic in Meeting.js
-                              const modLink = event.moderatorMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}?role=moderator`;
-                              window.open(modLink, '_blank');
+                              // Unified Start Logic
+                              const startLink = event.meetingDetails?.startUrl ||
+                                event.meetingDetails?.adminUrl ||
+                                event.moderatorMeetingUrl ||
+                                (event.videoMeetingPlatform === 'jitsi' ? `${window.location.origin}/meeting/${jitsiRoom}?role=moderator` : null) ||
+                                event.videoMeetingUrl;
+
+                              if (startLink) {
+                                window.open(startLink, '_blank');
+                              } else {
+                                Swal.fire('Hata', 'Başlatma linki bulunamadı.', 'error');
+                              }
                             }}
                             className="px-4 py-1.5 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors flex items-center space-x-1"
                             title="Moderatör Olarak Başlat"
@@ -466,9 +479,17 @@ export const Events = () => {
                             <button
                               onClick={() => {
                                 const jitsiRoom = `uzmanlio-${event._id}`;
-                                const guestLink = event.guestMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}`;
-                                navigator.clipboard.writeText(guestLink);
-                                Swal.fire({ title: 'Kopyalandı!', text: 'Danışan linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                                const guestLink = event.meetingDetails?.guestUrl ||
+                                  event.guestMeetingUrl ||
+                                  (event.videoMeetingPlatform === 'jitsi' ? `${window.location.origin}/meeting/${jitsiRoom}` : null) ||
+                                  event.videoMeetingUrl;
+
+                                if (guestLink) {
+                                  navigator.clipboard.writeText(guestLink);
+                                  Swal.fire({ title: 'Kopyalandı!', text: 'Danışan linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                                } else {
+                                  Swal.fire({ title: 'Hata', text: 'Danışan linki bulunamadı.', icon: 'error', timer: 1500, showConfirmButton: false });
+                                }
                               }}
                               className="p-1.5 text-gray-500 hover:text-primary-600 bg-gray-100 rounded-md transition-colors"
                               title="Danışan Linkini Kopyala (Guest)"
@@ -478,9 +499,20 @@ export const Events = () => {
                             <button
                               onClick={() => {
                                 const jitsiRoom = `uzmanlio-${event._id}`;
-                                const modLink = event.moderatorMeetingUrl || `${window.location.origin}/meeting/${jitsiRoom}?role=moderator`;
-                                navigator.clipboard.writeText(modLink);
-                                Swal.fire({ title: 'Kopyalandı!', text: 'Moderatör linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                                const modLink = event.meetingDetails?.adminUrl ||
+                                  event.moderatorMeetingUrl ||
+                                  (event.videoMeetingPlatform === 'jitsi' ? `${window.location.origin}/meeting/${jitsiRoom}?role=moderator` : null);
+
+                                if (modLink) {
+                                  navigator.clipboard.writeText(modLink);
+                                  Swal.fire({ title: 'Kopyalandı!', text: 'Moderatör linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                                } else if (event.videoMeetingUrl) {
+                                  // Fallback to videoMeetingUrl if no specific mod link
+                                  navigator.clipboard.writeText(event.videoMeetingUrl);
+                                  Swal.fire({ title: 'Kopyalandı!', text: 'Toplantı linki kopyalandı.', icon: 'success', timer: 1500, showConfirmButton: false });
+                                } else {
+                                  Swal.fire({ title: 'Hata', text: 'Moderatör linki bulunamadı.', icon: 'error', timer: 1500, showConfirmButton: false });
+                                }
                               }}
                               className="p-1.5 text-gray-500 hover:text-purple-600 bg-gray-100 rounded-md transition-colors"
                               title="Moderatör Linkini Kopyala (Admin)"

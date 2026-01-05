@@ -305,144 +305,151 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
           <div className="bg-gray-50 rounded-xl p-6">
             <h4 className="text-lg font-medium text-gray-900 mb-4">Platform ve Konum</h4>
 
-            {/* Display Generated Meeting Link if exists */}
-            {formData.videoMeetingUrl && (
+            {/* Unified Meeting Details Display */}
+            {(event.meetingDetails?.guestUrl || event.meetingDetails?.adminUrl || event.videoMeetingUrl || event.zoomJoinUrl) && (
               <div className="mb-6 p-4 bg-primary-50 border border-primary-100 rounded-lg">
-                <label className="block text-sm font-medium text-primary-800 mb-2">
-                  🎥 Otomatik Oluşturulan Katılım Linki ({formData.videoMeetingPlatform})
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={formData.videoMeetingUrl}
-                    className="flex-1 px-3 py-2 bg-white border border-primary-200 rounded-lg text-sm text-gray-700"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      navigator.clipboard.writeText(formData.videoMeetingUrl);
-                      // Optional: Show a brief success message
-                    }}
-                    className="p-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors"
-                    title="Kopyala"
-                  >
-                    📋
-                  </button>
-                  <a
-                    href={formData.videoMeetingUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors"
-                  >
-                    Katıl
-                  </a>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-primary-800">
+                    🎥 Toplantı Bilgileri
+                  </label>
+                  {event.meetingDetails?.platform && (
+                    <span className="text-xs px-2 py-1 bg-white rounded-full border border-primary-200 text-primary-700 capitalize">
+                      {event.meetingDetails.platform}
+                    </span>
+                  )}
+                </div>
+
+                {/* Meeting ID & Password if available */}
+                {(event.meetingDetails?.meetingId || event.meetingDetails?.password) && (
+                  <div className="flex gap-4 mb-3 text-sm text-gray-700">
+                    {event.meetingDetails?.meetingId && (
+                      <div><span className="font-semibold">ID:</span> {event.meetingDetails.meetingId}</div>
+                    )}
+                    {event.meetingDetails?.password && (
+                      <div><span className="font-semibold">Şifre:</span> {event.meetingDetails.password}</div>
+                    )}
+                  </div>
+                )}
+
+                <div className="space-y-3">
+                  {/* Guest Link */}
+                  {(event.meetingDetails?.guestUrl || event.videoMeetingUrl || event.zoomJoinUrl) && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-primary-600 mb-1">Danışan Linki (Guest)</span>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={event.meetingDetails?.guestUrl || event.videoMeetingUrl || event.zoomJoinUrl}
+                          className="flex-1 px-3 py-2 bg-white border border-primary-200 rounded-lg text-sm text-gray-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(event.meetingDetails?.guestUrl || event.videoMeetingUrl || event.zoomJoinUrl);
+                          }}
+                          className="p-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors"
+                          title="Danışan Linkini Kopyala"
+                        >
+                          📋
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Admin Link */}
+                  {(event.meetingDetails?.adminUrl || event.moderatorMeetingUrl || event.zoomStartUrl) && (
+                    <div className="flex flex-col">
+                      <span className="text-xs text-primary-600 mb-1">Yönetici Linki (Admin)</span>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={event.meetingDetails?.adminUrl || event.moderatorMeetingUrl || event.zoomStartUrl}
+                          className="flex-1 px-3 py-2 bg-white border border-primary-200 rounded-lg text-sm text-gray-700"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText(event.meetingDetails?.adminUrl || event.moderatorMeetingUrl || event.zoomStartUrl);
+                          }}
+                          className="p-2 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors"
+                          title="Yönetici Linkini Kopyala"
+                        >
+                          📋
+                        </button>
+                        <a
+                          href={event.meetingDetails?.startUrl || event.meetingDetails?.adminUrl || event.moderatorMeetingUrl || event.zoomStartUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-4 py-2 bg-primary-600 text-white rounded-lg text-sm hover:bg-primary-700 transition-colors"
+                        >
+                          Başlat
+                        </a>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-              {/* Platform - Only visible for Online or Hibrit */}
-              {showPlatform && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Platform
-                  </label>
-                  <select
-                    name="platform"
-                    value={formData.platform}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option value="">Platform seçin</option>
-                    <option value="zoom">Zoom</option>
-                    <option value="google-meet">Google Meet</option>
-                    <option value="microsoft-teams">Microsoft Teams</option>
-                    <option value="jitsi">Jitsi</option>
-                  </select>
-                </div>
-              )}
-
-              {formData.platform === 'zoom' && event.zoomJoinUrl && (
-                <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-100 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <span className="text-blue-600 mr-2">🔵</span>
-                      <div>
-                        <p className="text-xs font-medium text-blue-800">Zoom Katılım Bağlantısı (Otomatik Oluşturuldu)</p>
-                        <p className="text-sm text-blue-600 truncate max-w-md">{event.zoomJoinUrl}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => window.open(event.zoomStartUrl || event.zoomJoinUrl, '_blank')}
-                      className="text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition-colors"
-                    >
-                      Başlat/Katıl
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Location - Only visible for Yüz Yüze or Hibrit */}
-              {showLocation && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Konum
-                  </label>
-                  <input
-                    type="text"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleInputChange}
-                    placeholder="Etkinlik konumu (adres)"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                </div>
-              )}
-
+            {/* Location - Only visible for Yüz Yüze or Hibrit */}
+            {showLocation && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Maksimum Katılımcı
+                  Konum
                 </label>
                 <input
-                  type="number"
-                  name="maxAttendees"
-                  value={formData.maxAttendees}
+                  type="text"
+                  name="location"
+                  value={formData.location}
                   onChange={handleInputChange}
-                  placeholder="50"
+                  placeholder="Etkinlik konumu (adres)"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Süre (dakika)
-                </label>
-                <input
-                  type="number"
-                  name="duration"
-                  value={formData.duration}
-                  onChange={handleInputChange}
-                  placeholder="120"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Maksimum Katılımcı
+              </label>
+              <input
+                type="number"
+                name="maxAttendees"
+                value={formData.maxAttendees}
+                onChange={handleInputChange}
+                placeholder="50"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Fiyat (₺)
-                </label>
-                <input
-                  type="number"
-                  name="price"
-                  value={formData.price}
-                  onChange={handleInputChange}
-                  placeholder="199"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Süre (dakika)
+              </label>
+              <input
+                type="number"
+                name="duration"
+                value={formData.duration}
+                onChange={handleInputChange}
+                placeholder="120"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Fiyat (₺)
+              </label>
+              <input
+                type="number"
+                name="price"
+                value={formData.price}
+                onChange={handleInputChange}
+                placeholder="199"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
             </div>
           </div>
 
@@ -692,7 +699,7 @@ export const EventEditModal = ({ event, onClose, onDelete, onUpdate }) => {
             </div>
           </div>
         </form>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
