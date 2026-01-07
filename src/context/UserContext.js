@@ -79,6 +79,16 @@ export function UserProvider({ children }) {
   const setLoading = (loading) => dispatch({ type: 'SET_LOADING', payload: loading });
   const setError = (error) => dispatch({ type: 'SET_ERROR', payload: error });
 
+  const updateUserField = (field, value) => {
+    const patch = { [field]: value };
+    patchUser(patch);
+
+    // Sync to localStorage
+    const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+    const updatedUser = { ...currentUser, ...patch };
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+  };
+
   // Function to refresh user data manually
   const refreshUser = async () => {
     const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
@@ -172,7 +182,7 @@ export function UserProvider({ children }) {
       error: state.error,
       setUser,
       patchUser,
-      // updateUserField,
+      updateUserField,
       setLoading,
       setError,
       refreshUser

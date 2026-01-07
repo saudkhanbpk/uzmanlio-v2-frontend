@@ -276,7 +276,7 @@ class ExpertService {
 
   // Bulk operations
   async getExpertProfile(userId) {
-    const res = this.apiCall(`/api/expert/${userId}/profile`);
+    const res = await this.apiCall(`/api/expert/${userId}/profile`);
     localStorage.removeItem("user")
     localStorage.setItem("user", JSON.stringify(res));
     console.log("response:", res);
@@ -284,7 +284,7 @@ class ExpertService {
   }
 
   async updateExpertProfile(userId, profileData) {
-    const res = this.apiCall(`/api/expert/${userId}/profile`, {
+    const res = await this.apiCall(`/api/expert/${userId}/profile`, {
       method: 'PUT',
       body: JSON.stringify(profileData),
     });

@@ -185,6 +185,10 @@ const expertReducer = (state, action) => {
     case EXPERT_ACTIONS.DELETE_EXPERIENCE:
       return { ...state, experience: state.experience.filter((e) => e.id !== action.payload) };
 
+    case EXPERT_ACTIONS.SET_AVAILABILITY:
+    case EXPERT_ACTIONS.UPDATE_AVAILABILITY:
+      return { ...state, availability: action.payload };
+
     default: {
       const actionType = action.type;
 
