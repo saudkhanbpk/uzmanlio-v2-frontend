@@ -6,7 +6,7 @@ import { profileService } from "../services/ProfileServices";
 import { authFetch, authPost } from "../services/authFetch";
 
 export const Profile = () => {
-  const { user, loading, error } = useUser(); // Get user from Context
+  const { user, loading, error, refreshUser } = useUser(); // Get user from Context
   const [updating, setUpdating] = useState(false);
 
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
@@ -194,6 +194,12 @@ export const Profile = () => {
         timer: 1500,
         showConfirmButton: false,
       });
+
+      if (responseData && responseData.expertInformation) {
+        localStorage.setItem('user', JSON.stringify(responseData.expertInformation));
+        sessionStorage.setItem('user', JSON.stringify(responseData.expertInformation));
+      }
+      await refreshUser(); // Update global context immediately
     } catch (error) {
       console.error("Upload failed:", {
         message: error.message,
@@ -239,6 +245,13 @@ export const Profile = () => {
         timer: 1500,
         showConfirmButton: false,
       });
+
+      if (responseData && responseData.expertInformation) {
+        localStorage.setItem('user', JSON.stringify(responseData.expertInformation));
+        sessionStorage.setItem('user', JSON.stringify(responseData.expertInformation));
+      }
+
+      await refreshUser(); // Update global context immediately
     } catch (error) {
       console.error("Update failed:", {
         message: error.message,
