@@ -9,7 +9,7 @@ import { customerService } from "./services/customerService";
 
 // CreatePackage Component
 export const CreatePackage = () => {
-  const { user, patchUser, updateUserField } = useUser();
+  const { user, updateUserField } = useUser();
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const [showAddClientModal, setShowAddClientModal] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -166,7 +166,7 @@ export const CreatePackage = () => {
       // Update UserContext with new package
       if (responseData.package) {
         const currentPackages = user?.packages || [];
-        patchUser({ packages: [...currentPackages, responseData.package] });
+        updateUserField('packages', [...currentPackages, responseData.package]);
       }
 
       // Success alert

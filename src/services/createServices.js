@@ -10,7 +10,7 @@ export const CreateService = () => {
   const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
   const navigate = useNavigate();
   const userId = localStorage.getItem('userId');
-  const { user, patchUser } = useUser();
+  const { user, updateUserField } = useUser();
 
   const [serviceData, setServiceData] = useState({
     title: '',
@@ -138,7 +138,7 @@ export const CreateService = () => {
       // Update UserContext with new service
       if (data.service) {
         const currentServices = user?.services || [];
-        patchUser({ services: [...currentServices, data.service] });
+        updateUserField('services', [...currentServices, data.service]);
       }
 
       // Success alert

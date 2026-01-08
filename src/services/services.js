@@ -435,6 +435,19 @@ export default function Services() {
     }
   };
 
+  // Synchronization helpers for UserContext
+  const handleDeleteServiceSync = (serviceId) => {
+    if (!user || !user.services) return;
+    const updatedServices = user.services.filter(s => (s._id || s.id) !== serviceId);
+    updateUserField('services', updatedServices);
+  };
+
+  const handleDeletePackageSync = (packageId) => {
+    if (!user || !user.packages) return;
+    const updatedPackages = user.packages.filter(p => (p._id || p.id) !== packageId);
+    updateUserField('packages', updatedPackages);
+  };
+
   // Fetch available customers for purchase modal
   const fetchCustomers = async () => {
     try {
@@ -629,6 +642,7 @@ export default function Services() {
                 getStatusDisplay={getStatusDisplay}
                 getStatusColor={getStatusColor}
                 viewMode={viewMode}
+                onDeleteService={handleDeleteServiceSync}
               />
 
               {/* Inactive Services */}
@@ -650,6 +664,7 @@ export default function Services() {
                 getStatusColor={getStatusColor}
                 getStatusDisplay={getStatusDisplay}
                 viewMode={viewMode}
+                onDeleteService={handleDeleteServiceSync}
               />
 
               {/* On Hold Services */}
@@ -671,6 +686,7 @@ export default function Services() {
                 getStatusColor={getStatusColor}
                 getStatusDisplay={getStatusDisplay}
                 viewMode={viewMode}
+                onDeleteService={handleDeleteServiceSync}
               />
 
               {/* Empty state if no services at all */}
@@ -818,6 +834,7 @@ export default function Services() {
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
               viewMode={viewMode}
+              onDeletePackage={handleDeletePackageSync}
             />
 
             {/* Inactive Packages */}
@@ -838,6 +855,7 @@ export default function Services() {
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
               viewMode={viewMode}
+              onDeletePackage={handleDeletePackageSync}
             />
 
             {/* On Hold Packages */}
@@ -858,6 +876,7 @@ export default function Services() {
               getStatusColor={getStatusColor}
               getStatusDisplay={getStatusDisplay}
               viewMode={viewMode}
+              onDeletePackage={handleDeletePackageSync}
             />
 
             {/* Empty state if no packages at all */}
