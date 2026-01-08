@@ -2,19 +2,10 @@
  * Analytics Service
  * Handles fetching analytics data from the backend GA4 integration
  */
+import { authFetch } from './authFetch';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api';
-
-/**
- * Get auth headers with JWT token
- */
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('accessToken');
-    return {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-    };
-};
+const SERVER_URL = process.env.REACT_APP_BACKEND_URL;
+const API_URL = `${SERVER_URL}/api`;
 
 /**
  * Fetch expert's profile page views
@@ -25,12 +16,8 @@ const getAuthHeaders = () => {
  */
 export const fetchProfileViews = async (userId, period = 'monthly', year = new Date().getFullYear()) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/expert/${userId}/profile-views?period=${period}&year=${year}`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/expert/${userId}/profile-views?period=${period}&year=${year}`
         );
 
         if (!response.ok) {
@@ -51,12 +38,8 @@ export const fetchProfileViews = async (userId, period = 'monthly', year = new D
  */
 export const fetchRealtimeVisitors = async (userId) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/expert/${userId}/realtime`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/expert/${userId}/realtime`
         );
 
         if (!response.ok) {
@@ -79,12 +62,8 @@ export const fetchRealtimeVisitors = async (userId) => {
  */
 export const fetchDetailedAnalytics = async (userId, period = 'monthly', year = new Date().getFullYear()) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/expert/${userId}/detailed?period=${period}&year=${year}`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/expert/${userId}/detailed?period=${period}&year=${year}`
         );
 
         if (!response.ok) {
@@ -106,12 +85,8 @@ export const fetchDetailedAnalytics = async (userId, period = 'monthly', year = 
  */
 export const fetchAllExpertsAnalytics = async (period = 'monthly', year = new Date().getFullYear()) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/admin/all-experts?period=${period}&year=${year}`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/admin/all-experts?period=${period}&year=${year}`
         );
 
         if (!response.ok) {
@@ -134,12 +109,8 @@ export const fetchAllExpertsAnalytics = async (period = 'monthly', year = new Da
  */
 export const fetchAdminExpertAnalytics = async (expertId, period = 'monthly', year = new Date().getFullYear()) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/admin/expert/${expertId}?period=${period}&year=${year}`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/admin/expert/${expertId}?period=${period}&year=${year}`
         );
 
         if (!response.ok) {
@@ -162,12 +133,8 @@ export const fetchAdminExpertAnalytics = async (expertId, period = 'monthly', ye
  */
 export const fetchInstitutionAnalytics = async (institutionId, period = 'monthly', year = new Date().getFullYear()) => {
     try {
-        const response = await fetch(
-            `${API_URL}/analytics/institution/${institutionId}/profile-views?period=${period}&year=${year}`,
-            {
-                method: 'GET',
-                headers: getAuthHeaders()
-            }
+        const response = await authFetch(
+            `${API_URL}/analytics/institution/${institutionId}/profile-views?period=${period}&year=${year}`
         );
 
         if (!response.ok) {
