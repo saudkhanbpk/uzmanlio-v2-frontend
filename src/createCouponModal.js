@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 
 // CreateCouponModal Component
 export default function CreateCouponModal({ isOpen, onClose, onSave, initialData }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [couponData, setCouponData] = useState({
     code: '',
     type: 'percentage', // percentage or amount
@@ -49,10 +50,13 @@ export default function CreateCouponModal({ isOpen, onClose, onSave, initialData
     };
 
     try {
+      setIsLoading(true);
       if (onSave) await onSave(payload);
     } catch (err) {
       console.error('Save error in modal:', err);
+      setIsLoading(false);
     } finally {
+      setIsLoading(false);
       onClose();
     }
   };
@@ -137,7 +141,7 @@ export default function CreateCouponModal({ isOpen, onClose, onSave, initialData
               <input
                 type="number"
                 name="maxUsage"
-                 min={0}
+                min={0}
                 value={couponData.maxUsage}
                 onChange={handleInputChange}
                 placeholder="100"
@@ -172,7 +176,7 @@ export default function CreateCouponModal({ isOpen, onClose, onSave, initialData
                 type="submit"
                 className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                {initialData ? 'Güncelle' : 'Oluştur'}
+                {isLoading ? 'Yükleniyor...' : initialData ? 'Güncelle' : 'Oluştur'}
               </button>
             </div>
           </form>
