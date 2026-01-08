@@ -30,14 +30,14 @@ const REFRESH_TOKEN_KEY = 'refreshToken';
  * Get access token from storage
  */
 export const getAccessToken = () => {
-    return sessionStorage.getItem(ACCESS_TOKEN_KEY) || localStorage.getItem(ACCESS_TOKEN_KEY);
+    return localStorage.getItem(ACCESS_TOKEN_KEY) || sessionStorage.getItem(ACCESS_TOKEN_KEY);
 };
 
 /**
  * Get refresh token from storage
  */
 export const getRefreshToken = () => {
-    return sessionStorage.getItem(REFRESH_TOKEN_KEY) || localStorage.getItem(REFRESH_TOKEN_KEY);
+    return localStorage.getItem(REFRESH_TOKEN_KEY) || sessionStorage.getItem(REFRESH_TOKEN_KEY);
 };
 
 /**
