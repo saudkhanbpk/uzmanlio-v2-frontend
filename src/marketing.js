@@ -90,6 +90,21 @@ export const Marketing = () => {
     setShowCouponModal(true);
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+
+    const date = new Date(dateString);
+
+    if (isNaN(date.getTime())) return '-';
+
+    return date.toLocaleDateString('tr-TR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+
   // Email modal flows
   const openCreateEmailModal = () => {
     setSelectedEmail(null);
@@ -342,7 +357,7 @@ export const Marketing = () => {
                         {coupon.usageCount} / {coupon.maxUsage}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {coupon.expiryDate}
+                        {formatDate(coupon.expiryDate)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${coupon.status === 'active'
