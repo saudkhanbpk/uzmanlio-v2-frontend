@@ -443,13 +443,13 @@ export const CreateEvent = () => {
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="Paketlerim">
+                {/* <optgroup label="Paketlerim">
                   {availableServices.filter(s => s.type === 'package').map(service => (
                     <option key={service.id} value={service.id}>
                       {service.title}
                     </option>
                   ))}
-                </optgroup>
+                </optgroup> */}
               </select>
             </div>
 
