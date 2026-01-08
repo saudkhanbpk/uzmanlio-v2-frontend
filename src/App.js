@@ -101,6 +101,8 @@ function AppRoutes() {
   );
 }
 
+import GoogleAnalytics from './components/GoogleAnalytics';
+
 function App() {
   return (
     <div className="App">
@@ -110,6 +112,7 @@ function App() {
             <InstitutionUsersProvider>
               <ExpertProvider>
                 <BrowserRouter>
+                  <GoogleAnalytics />
                   <AppRoutes />
                 </BrowserRouter>
               </ExpertProvider>
