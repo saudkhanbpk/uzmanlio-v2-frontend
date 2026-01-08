@@ -192,7 +192,7 @@ export const BlogCreate = () => {
           <SimpleRichTextEditor
             value={formData.content}
             onChange={handleContentChange}
-            placeholder="Lütfen en az 10 karakter girin. Blog içeriğinizi buraya yazın. Biçimlendirme için Markdown formatını kullanabilirsiniz."
+            placeholder="Lütfen en az 4 karakter girin. Blog içeriğinizi buraya yazın. Biçimlendirme için Markdown formatını kullanabilirsiniz."
             className="min-h-[300px]"
           />
         </div>
